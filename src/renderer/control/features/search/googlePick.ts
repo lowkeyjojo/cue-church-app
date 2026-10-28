@@ -3,6 +3,13 @@ import { call, cleanError } from '../../lib/api'
 import { toast } from '../../lib/toasts'
 import type { GuestPick } from '../../lib/ui'
 
+/** The embedded browser page, as far as bringing images in from it goes. */
+export interface GuestHandle {
+  contentsId: number
+  /** Where the image showing `url` is now, in control-window coordinates, and its natural size. */
+  locate(url: string): Promise<{ x: number; y: number; width: number; height: number } | null>
+}
+
 /**
  * Bring the image the operator opened in the Google pane into Cue, trying in
  * order: the original image URL; copying the image straight out of the page
@@ -10,7 +17,7 @@ import type { GuestPick } from '../../lib/ui'
  */
 export async function ingestGooglePick(
   pick: GuestPick,
-  contentsId: number | null,
+  guest: GuestHandle | null,
   opts: { save?: boolean; query?: string } = {}
 ): Promise<MediaItem | null> {
   const base: WebPick = {
@@ -28,16 +35,21 @@ export async function ingestGooglePick(
     } catch {
       /* try the next way */
     }
-    if (contentsId !== null) {
-      try {
-        const copied = await call('system:copyImageAt', contentsId, pick.x, pick.y)
-        if (copied) {
-          if (opts.save) await call('library:update', copied.id, { saved: true })
-          return copied
-        }
-      } catch {
-        /* fall back to the thumbnail */
+    try {
+      const at = guest && (await guest.locate(pick.url))
+      if (guest && at) {
+        const copied = await call(
+          'system:copyImageAt',
+          guest.contentsId,
+          at.x,
+          at.y,
+          { ...base, width: at.width, height: at.height },
+          { save: opts.save }
+        )
+        if (copied) return copied
       }
+    } catch {
+      /* fall back to the thumbnail */
     }
   }
   const thumb = pick.thumbUrl ?? (pick.full ? undefined : pick.url)

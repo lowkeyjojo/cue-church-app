@@ -5,7 +5,7 @@ import { googleImagesUrl, queryFromGoogleUrl } from '@shared/google'
 import { useApp, useSettings } from '../../lib/store'
 import { useUI, type GuestPick } from '../../lib/ui'
 import { PickBar } from './PickBar'
-import { ingestGooglePick } from './googlePick'
+import { ingestGooglePick, type GuestHandle } from './googlePick'
 import { previewMedia } from '../../lib/planActions'
 import s from './SearchView.module.css'
 
@@ -30,7 +30,35 @@ export interface WebviewElement extends HTMLElement {
   stop(): void
   isLoading(): boolean
   getWebContentsId(): number
+  getZoomFactor(): number
   send(channel: string, ...args: unknown[]): void
+}
+
+/**
+ * Ask the page where an image is right now. Electron copies images out of a
+ * <webview> by a point in the host window, so translate from page coordinates.
+ */
+function locateIn(wv: WebviewElement, url: string): ReturnType<GuestHandle['locate']> {
+  return new Promise((resolve) => {
+    const finish = (at: Awaited<ReturnType<GuestHandle['locate']>>) => {
+      clearTimeout(timer)
+      wv.removeEventListener('ipc-message', onMessage)
+      resolve(at)
+    }
+    const onMessage = (e: Event) => {
+      const ev = e as Event & { channel: string; args: unknown[] }
+      if (ev.channel !== 'cue:located') return
+      const at = ev.args[0] as { url: string; x: number; y: number; width: number; height: number } | null
+      if (at && at.url !== url) return
+      if (!at) return finish(null)
+      const box = wv.getBoundingClientRect()
+      const zoom = wv.getZoomFactor() || 1
+      finish({ x: box.left + at.x * zoom, y: box.top + at.y * zoom, width: at.width, height: at.height })
+    }
+    const timer = setTimeout(() => finish(null), 800)
+    wv.addEventListener('ipc-message', onMessage)
+    wv.send('cue:locate', url)
+  })
 }
 
 export interface BrowserHandle {
@@ -81,6 +109,12 @@ export const GoogleBrowser = forwardRef<
       return
     }
     void wv.loadURL(url).catch(() => undefined)
+  }
+
+  const guest = (): GuestHandle | null => {
+    const wv = view.current
+    if (!wv || !ready.current) return null
+    return { contentsId: wv.getWebContentsId(), locate: (url) => locateIn(wv, url) }
   }
 
   useImperativeHandle(ref, () => ({
@@ -154,7 +188,7 @@ export const GoogleBrowser = forwardRef<
       if (!pick.full) return
       setTimeout(async () => {
         if (seq !== pickSeq.current) return
-        const item = await ingestGooglePick(pick, wv.getWebContentsId(), {
+        const item = await ingestGooglePick(pick, guest(), {
           query: useUI.getState().search.submitted
         })
         if (item && seq === pickSeq.current) {
@@ -208,7 +242,7 @@ export const GoogleBrowser = forwardRef<
           </button>
         </div>
       )}
-      <PickBar contentsId={() => (ready.current && view.current ? view.current.getWebContentsId() : null)} />
+      <PickBar guest={guest} />
     </div>
   )
 })

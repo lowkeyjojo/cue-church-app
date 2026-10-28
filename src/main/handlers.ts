@@ -4,7 +4,7 @@ import { newId } from '@shared/defaults'
 import type { MediaItem, SearchResponse } from '@shared/types'
 import { isHttpUrl } from '@shared/util'
 import { broadcast, handle } from './ipc'
-import { errorMessage, log } from './log'
+import { errorMessage, log, UserError } from './log'
 import type { Importer } from './media/importer'
 import type { MediaProcessor } from './media/processor'
 import type { WebIngest } from './media/webIngest'
@@ -81,7 +81,7 @@ export function registerHandlers(s: Services): void {
   handle('library:remove', (ids) => {
     const live = s.show.state.live
     if (live?.mediaId && ids.includes(live.mediaId)) {
-      throw new Error(`“${live.title}” is on screen right now. Clear the screen before deleting it.`)
+      throw new UserError(`“${live.title}” is on screen right now. Clear the screen before deleting it.`)
     }
     s.library.remove(ids)
   })
@@ -239,7 +239,9 @@ export function registerHandlers(s: Services): void {
   handle('system:chooseFiles', (kind) => chooseFiles(s.control(), kind ?? 'media'))
   handle('system:revealLogs', () => void shell.openPath(logsDir()))
   handle('system:revealLibrary', () => void shell.openPath(mediaRoot()))
-  handle('system:copyImageAt', (contentsId, x, y) => s.web.copyFromPage(contentsId, x, y))
+  handle('system:copyImageAt', (contentsId, x, y, pick, opts) =>
+    s.web.copyFromPage(contentsId, x, y, pick, opts)
+  )
 }
 
 async function chooseFiles(win: BrowserWindow | null, kind: 'media' | 'image' | 'video'): Promise<string[]> {

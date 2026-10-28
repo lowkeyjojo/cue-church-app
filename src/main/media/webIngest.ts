@@ -1,6 +1,6 @@
 import { clipboard, ClipboardItem, session, webContents } from 'electron'
 import type { MediaItem, WebPick } from '@shared/types'
-import { log } from '../log'
+import { log, UserError } from '../log'
 import type { LibraryStore } from '../store/library'
 import type { Importer } from './importer'
 
@@ -54,17 +54,27 @@ export class WebIngest {
         log.warn(`Web ingest failed for ${url.slice(0, 120)}:`, (err as Error).message)
       }
     }
-    throw lastError instanceof Error ? lastError : new Error("Couldn't download that image")
+    throw lastError instanceof Error ? lastError : new UserError("Couldn't download that image")
   }
 
   /**
-   * Last-resort fallback for images a site refuses to serve directly: ask the
-   * embedded browser (which already displays the image) to copy it.
+   * Fallback for images a site refuses to serve directly: ask the embedded
+   * browser, which is already displaying the image, to copy it. `x`/`y` are in
+   * the host window's coordinates (how Electron addresses a <webview> page).
+   * When the pick carries the image's natural size, anything else that ends
+   * up on the clipboard (an overlay, a thumbnail) is rejected rather than shown.
    */
-  async copyFromPage(contentsId: number, x: number, y: number, pick?: WebPick): Promise<MediaItem | null> {
+  async copyFromPage(
+    contentsId: number,
+    x: number,
+    y: number,
+    pick: WebPick,
+    opts: { save?: boolean } = {}
+  ): Promise<MediaItem | null> {
     const contents = webContents.fromId(contentsId)
-    if (!contents || contents.isDestroyed()) return null
+    if (!contents || contents.isDestroyed() || contents.getType() !== 'webview') return null
     const previous = await snapshotClipboard()
+    let png: Uint8Array | null = null
     try {
       clipboard.clear()
       contents.copyImageAt(Math.round(x), Math.round(y))
@@ -73,28 +83,49 @@ export class WebIngest {
         await new Promise((r) => setTimeout(r, 40))
         hasImage = await clipboard.has('image/png')
       }
-      if (!hasImage) return null
-      const item = (await clipboard.read()).find((i) => i.types.includes('image/png'))
-      if (!item) return null
-      const blob = (await item.getType('image/png')) as Blob
-      const png = new Uint8Array(await blob.arrayBuffer())
-      return await this.importer.importBytes(png, {
-        mime: 'image/png',
-        name: pick?.title,
-        saved: false,
-        source: {
-          type: 'web',
-          url: pick?.url,
-          pageUrl: pick?.pageUrl,
-          provider: pick?.provider,
-          title: pick?.title
-        }
-      })
+      const item = hasImage ? (await clipboard.read()).find((i) => i.types.includes('image/png')) : undefined
+      if (item) png = new Uint8Array(await ((await item.getType('image/png')) as Blob).arrayBuffer())
     } finally {
       // Put the operator's clipboard back the way it was.
       await restoreClipboard(previous)
     }
+    if (!png) return null
+    const size = pngSize(png)
+    if (pick.width && pick.height && (!size || !matchesSize(size, pick.width, pick.height))) {
+      log.warn(`Copied image was ${size?.width}×${size?.height}, expected ${pick.width}×${pick.height}`)
+      return null
+    }
+    return this.importer.importBytes(png, {
+      mime: 'image/png',
+      name: pick.title,
+      saved: !!opts.save,
+      source: {
+        type: 'web',
+        url: pick.url.startsWith('data:') ? undefined : pick.url,
+        pageUrl: pick.pageUrl,
+        provider: pick.provider,
+        query: pick.query,
+        title: pick.title
+      }
+    })
   }
+}
+
+/** Width and height from a PNG's header. */
+export function pngSize(png: Uint8Array): { width: number; height: number } | null {
+  if (png.length < 24 || png[0] !== 0x89 || png[1] !== 0x50) return null
+  const view = new DataView(png.buffer, png.byteOffset, png.byteLength)
+  return { width: view.getUint32(16), height: view.getUint32(20) }
+}
+
+/**
+ * The browser copies an image's full decoded bitmap, which can be larger than
+ * its natural size on high-density `srcset` images, but never smaller and
+ * never a different shape.
+ */
+function matchesSize(got: { width: number; height: number }, width: number, height: number): boolean {
+  const aspect = got.width / got.height / (width / height)
+  return got.width >= width * 0.98 && aspect > 0.97 && aspect < 1.03
 }
 
 async function download(
@@ -107,11 +138,11 @@ async function download(
   }
   if (pick.pageUrl) headers.Referer = pick.pageUrl
   const res = await ses.fetch(url, { headers, signal: AbortSignal.timeout(45_000), redirect: 'follow' })
-  if (!res.ok) throw new Error(`The website refused to share this image (HTTP ${res.status})`)
+  if (!res.ok) throw new UserError(`The website refused to share this image (HTTP ${res.status})`)
   const max = pick.kind === 'video' ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES
   const declared = Number(res.headers.get('content-length') ?? 0)
-  if (declared > max) throw new Error('This file is too large to bring in')
-  if (!res.body) throw new Error('The website sent an empty response')
+  if (declared > max) throw new UserError('This file is too large to bring in')
+  if (!res.body) throw new UserError('The website sent an empty response')
   const reader = res.body.getReader()
   const chunks: Uint8Array[] = []
   let total = 0
@@ -121,7 +152,7 @@ async function download(
     total += value.byteLength
     if (total > max) {
       await reader.cancel()
-      throw new Error('This file is too large to bring in')
+      throw new UserError('This file is too large to bring in')
     }
     chunks.push(value)
   }

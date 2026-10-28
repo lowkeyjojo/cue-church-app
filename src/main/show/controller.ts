@@ -42,6 +42,8 @@ export class ShowController extends Emitter<{
 }> {
   state: ShowState
   playback: PlaybackStatus | null = null
+  /** The last session ended unexpectedly with something on screen, which has been put back. */
+  readonly recoveredFromCrash: boolean
   private endedHandled = ''
   private file = new JsonStore<ShowFile>(dataPath('show.json'), () => ({ version: 1, cleanExit: true }))
 
@@ -55,9 +57,11 @@ export class ShowController extends Emitter<{
     const s = settings.data
     this.state = initialShowState(s.transition, s.audio.volume)
     const saved = this.file.data
-    if (saved.state && !saved.cleanExit) {
+    const restored = saved.state && !saved.cleanExit ? this.validate(saved.state) : null
+    this.recoveredFromCrash = !!(restored && (restored.live || restored.ambient.active))
+    if (restored) {
       // Cue didn't shut down cleanly: put the audience screen back the way it was.
-      this.state = { ...this.state, ...this.validate(saved.state) }
+      this.state = { ...this.state, ...restored }
     } else if (s.output.startup === 'ambient') {
       this.state = {
         ...this.state,
@@ -89,10 +93,6 @@ export class ShowController extends Emitter<{
       ambient: { active: true, presentation: this.ambientPresentation(config) },
       rev: this.state.rev + 1
     })
-  }
-
-  get recoveredFromCrash(): boolean {
-    return !this.file.data.cleanExit && !!this.file.data.state
   }
 
   dispatch(cmd: ShowCommand): void {

@@ -103,12 +103,17 @@ async function start(): Promise<void> {
       pageUrl: fromLink.pageUrl ?? image.pageURL,
       provider: 'google'
     }
+    const save = action === 'save'
     try {
       let item
       try {
-        item = await web.ingest(pick, { save: action === 'save' })
+        item = await web.ingest({ ...pick, thumbUrl: undefined }, { save })
       } catch (err) {
-        item = await web.copyFromPage(image.contentsId, image.x, image.y, pick)
+        // The page is showing the image, so copy it from there before settling for the thumbnail.
+        const shown = { ...pick, url: image.srcURL }
+        item =
+          (await web.copyFromPage(image.contentsId, image.x, image.y, shown, { save })) ??
+          (pick.thumbUrl !== pick.url ? await web.ingest({ ...pick, url: image.srcURL }, { save }) : null)
         if (!item) throw err
       }
       if (action === 'preview') dispatch({ type: 'preview', target: { type: 'media', mediaId: item.id } })

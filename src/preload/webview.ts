@@ -206,7 +206,40 @@ function start(): void {
     lastKey = ''
     scan()
   })
+  ipcRenderer.on('cue:locate', (_e, url: string) => ipcRenderer.sendToHost('cue:located', locate(url)))
   schedule(500)
+}
+
+/**
+ * Where the image showing `url` is on screen right now (it may have moved
+ * since it was picked): a point that hits the image itself rather than
+ * anything layered over it, plus its natural size.
+ */
+function locate(url: string): { url: string; x: number; y: number; width: number; height: number } | null {
+  const img = Array.from(document.images).find((i) => (i.currentSrc || i.src) === url && i.naturalWidth > 0)
+  if (!img) return null
+  const r = img.getBoundingClientRect()
+  const left = Math.max(r.left, 0)
+  const top = Math.max(r.top, 0)
+  const right = Math.min(r.right, innerWidth)
+  const bottom = Math.min(r.bottom, innerHeight)
+  if (right - left < 4 || bottom - top < 4) return null
+  for (const [fx, fy] of [
+    [0.5, 0.5],
+    [0.3, 0.3],
+    [0.7, 0.3],
+    [0.3, 0.7],
+    [0.7, 0.7],
+    [0.5, 0.15],
+    [0.5, 0.85]
+  ]) {
+    const x = Math.round(left + (right - left) * fx)
+    const y = Math.round(top + (bottom - top) * fy)
+    if (document.elementFromPoint(x, y) === img) {
+      return { url, x, y, width: img.naturalWidth, height: img.naturalHeight }
+    }
+  }
+  return null
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true })

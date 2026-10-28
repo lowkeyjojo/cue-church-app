@@ -15,7 +15,7 @@ import {
 } from '@shared/media'
 import type { Id, MediaItem, MediaKind, MediaSource } from '@shared/types'
 import { prettyName } from '@shared/util'
-import { log } from '../log'
+import { log, UserError } from '../log'
 import type { LibraryStore } from '../store/library'
 import type { MediaProcessor } from './processor'
 
@@ -74,7 +74,7 @@ export class Importer {
   private async importFile(path: string, collectionId?: Id): Promise<MediaItem> {
     const ext = extOf(path)
     const kind = kindForExt(ext)
-    if (!kind) throw new Error('Unsupported file type')
+    if (!kind) throw new UserError('Unsupported file type')
     const info = await stat(path)
     const hash = await quickHash(path, info.size)
     const existing = this.library.byHash(hash)
@@ -116,11 +116,12 @@ export class Importer {
   ): Promise<MediaItem> {
     const sniffed = sniffMime(bytes)
     const mime = sniffed ?? opts.mime ?? 'application/octet-stream'
-    if (mime === 'text/html') throw new Error('That link is a web page, not an image')
-    if (mime === 'image/heic') throw new Error('HEIC photos are not supported yet. Export the photo as JPEG.')
+    if (mime === 'text/html') throw new UserError('That link is a web page, not an image')
+    if (mime === 'image/heic')
+      throw new UserError('HEIC photos are not supported yet. Export the photo as JPEG.')
     const ext = extForMime(mime)
     const kind: MediaKind | null = kindForExt(ext)
-    if (!kind || kind === 'deck') throw new Error("That file isn't an image, video or PDF Cue can show")
+    if (!kind || kind === 'deck') throw new UserError("That file isn't an image, video or PDF Cue can show")
     const hash = fingerprint(bytes)
     const existing = this.library.byHash(hash)
     if (existing) {

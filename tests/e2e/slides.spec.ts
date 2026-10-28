@@ -1,0 +1,71 @@
+import { expect, test } from '@playwright/test'
+import { Cue } from './support/cue'
+
+// Text on screen: a spontaneous slide typed mid-service, and a deck whose
+// typo gets fixed while it is on screen.
+test.describe.configure({ mode: 'serial' })
+
+let cue: Cue
+test.beforeAll(async () => {
+  cue = await Cue.launch()
+})
+test.afterAll(async () => {
+  await cue?.close()
+})
+
+test('a quick text slide goes straight to the screen', async () => {
+  await cue.control.keyboard.press('ControlOrMeta+t')
+  const dialog = cue.control.getByRole('dialog', { name: 'Quick text slide' })
+  await dialog.getByRole('textbox').fill('Please stand for the reading')
+  // The dialog previews it exactly as the room will see it.
+  await expect(dialog.getByText('Please stand for the reading', { exact: true }).last()).toBeVisible()
+  await dialog.getByRole('button', { name: 'Show on TV' }).click()
+  await expect(dialog).toBeHidden()
+  await expect.poll(async () => (await cue.state()).live?.title).toBe('Please stand for the reading')
+  const output = await cue.output()
+  await expect(output.getByText('Please stand for the reading')).toBeVisible()
+})
+
+test('a big word can be staged in Preview first', async () => {
+  await cue.control.keyboard.press('ControlOrMeta+t')
+  const dialog = cue.control.getByRole('dialog', { name: 'Quick text slide' })
+  await dialog.getByRole('radio', { name: 'Big word' }).click()
+  await dialog.getByRole('textbox').first().fill('PRAY')
+  await dialog.getByRole('button', { name: 'Preview' }).click()
+  await expect.poll(async () => (await cue.state()).preview?.title).toBe('PRAY')
+  expect((await cue.state()).live?.title).toBe('Please stand for the reading')
+  await cue.control.keyboard.press('Space')
+  await expect.poll(async () => (await cue.state()).live?.title).toBe('PRAY')
+})
+
+test('slides edited while on screen update for the audience as you type', async () => {
+  await cue.control.getByRole('button', { name: 'New service plan' }).click()
+  await cue.control.getByRole('button', { name: 'Add to plan' }).click()
+  await cue.control.getByRole('menuitem', { name: 'Text slides…' }).click()
+  const editor = cue.control.getByRole('dialog')
+  const title = editor.getByRole('textbox', { name: 'Title', exact: true })
+  await title.fill('Amazing Grace')
+  await editor.getByRole('button', { name: 'Show slide' }).click()
+  const output = await cue.output()
+  await expect(output.getByText('Amazing Grace', { exact: true })).toBeVisible()
+  await expect(editor).toContainText('This deck is on screen')
+
+  await title.fill('Amazing Grace — verse 1')
+  await expect(output.getByText('Amazing Grace — verse 1', { exact: true })).toBeVisible()
+
+  await editor.getByRole('button', { name: 'Add slide' }).click()
+  await editor.getByRole('textbox', { name: 'Text', exact: true }).fill('How sweet the sound')
+  await editor.getByRole('button', { name: 'Done' }).click()
+  await expect(editor).toBeHidden()
+  await expect
+    .poll(async () => (await cue.library()).find((i) => i.kind === 'deck')?.deck?.slides.length)
+    .toBe(2)
+  // The live deck picked up the new slide: → goes to it.
+  await cue.control.keyboard.press('ArrowRight')
+  await expect(output.getByText('How sweet the sound')).toBeVisible()
+})
+
+test('nothing went wrong behind the scenes', async () => {
+  expect(cue.pageErrors).toEqual([])
+  expect(cue.errors()).toEqual([])
+})

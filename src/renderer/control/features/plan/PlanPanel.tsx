@@ -204,14 +204,12 @@ function PlanHeader({ plan, plans }: { plan: Plan; plans: Plan[] }) {
   ]
   const items: MenuEntry[] = [
     { type: 'label', label: 'Service plans' },
-    ...plans
-      .slice(0, 12)
-      .map((p): MenuEntry => ({
-        type: 'check',
-        label: p.date ? `${p.name} · ${p.date}` : p.name,
-        checked: p.id === plan.id,
-        onSelect: () => selectPlan(p.id)
-      })),
+    ...plans.slice(0, 12).map((p): MenuEntry => ({
+      type: 'check',
+      label: p.date ? `${p.name} · ${p.date}` : p.name,
+      checked: p.id === plan.id,
+      onSelect: () => selectPlan(p.id)
+    })),
     { type: 'separator' },
     ...actions
   ]

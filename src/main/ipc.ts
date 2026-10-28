@@ -1,6 +1,6 @@
 import { ipcMain, type WebContents } from 'electron'
-import type { CueArgs, CueEvent, CueEvents, CueMethod, CueResult } from '@shared/ipc'
-import { errorMessage, log } from './log'
+import type { CueArgs, CueEvent, CueEvents, CueMethod, CueResult, InvokeReply } from '@shared/ipc'
+import { errorMessage, log, UserError } from './log'
 
 type Handler<M extends CueMethod> = (...args: CueArgs<M>) => CueResult<M> | Promise<CueResult<M>>
 
@@ -24,19 +24,19 @@ export function broadcast<E extends CueEvent>(event: E, payload: CueEvents[E]): 
 }
 
 export function installIpc(): void {
-  ipcMain.handle('cue:invoke', async (event, method: CueMethod, ...args: unknown[]) => {
+  ipcMain.handle('cue:invoke', async (event, method: CueMethod, ...args: unknown[]): Promise<InvokeReply> => {
     if (!controls.has(event.sender)) {
       log.warn(`Rejected ${method} from untrusted sender`)
-      throw new Error('Not allowed')
+      return { ok: false, error: 'Not allowed' }
     }
     const fn = handlers.get(method)
-    if (!fn) throw new Error(`Unknown method ${method}`)
+    if (!fn) return { ok: false, error: `Unknown method ${method}` }
     try {
-      return await fn(...args)
+      return { ok: true, value: await fn(...args) }
     } catch (err) {
-      log.error(`${method} failed:`, err)
-      // Re-throw a plain Error so the renderer gets a readable message.
-      throw new Error(errorMessage(err), { cause: err })
+      if (err instanceof UserError) log.warn(`${method}: ${err.message}`)
+      else log.error(`${method} failed:`, err)
+      return { ok: false, error: errorMessage(err) }
     }
   })
 }

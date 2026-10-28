@@ -406,19 +406,24 @@ function Grid({
     void importPaths(paths)
   }
 
-  if (empty) {
-    return (
-      <div
-        className={clsx(s.grid, dropping && s.gridDrop)}
-        onDragOver={(e) => {
-          if (e.dataTransfer.types.includes('Files')) {
-            e.preventDefault()
-            setDropping(true)
-          }
-        }}
-        onDragLeave={() => setDropping(false)}
-        onDrop={onDrop}
-      >
+  // One scroll element for both states, so its size is tracked from the first import on.
+  return (
+    <div
+      ref={scroller}
+      className={clsx(s.grid, dropping && s.gridDrop)}
+      onClick={(e) => e.target === e.currentTarget && setSelection([])}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes('Files')) {
+          e.preventDefault()
+          setDropping(true)
+        }
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropping(false)
+      }}
+      onDrop={onDrop}
+    >
+      {empty ? (
         <EmptyState
           icon={<Upload />}
           title="Your library is empty"
@@ -431,46 +436,43 @@ function Grid({
           Drag photos, videos, PDFs and audio here — or search the web and save what you find. Everything is
           copied into Cue so it works offline.
         </EmptyState>
-      </div>
-    )
-  }
-
-  return (
-    <div ref={scroller} className={s.grid} onClick={(e) => e.target === e.currentTarget && setSelection([])}>
-      {!list.length && (
+      ) : !list.length ? (
         <EmptyState compact icon={<Search />} title="Nothing here">
           No media matches this view.
         </EmptyState>
-      )}
-      <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
-        {virtualizer.getVirtualItems().map((row) => (
-          <div
-            key={row.key}
-            className={s.gridRow}
-            style={{
-              transform: `translateY(${row.start}px)`,
-              gridTemplateColumns: `repeat(${columns}, ${tileW}px)`,
-              gap
-            }}
-          >
-            {list.slice(row.index * columns, row.index * columns + columns).map((item, i) => {
-              const index = row.index * columns + i
-              return (
-                <Tile
-                  key={item.id}
-                  item={item}
-                  selected={selection.includes(item.id)}
-                  selection={selection}
-                  renaming={renaming === item.id}
-                  onRename={() => setRenaming(item.id)}
-                  onRenamed={() => setRenaming(null)}
-                  onClick={(e) => click(e, index)}
-                />
-              )
-            })}
+      ) : (
+        width > 0 && (
+          <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+            {virtualizer.getVirtualItems().map((row) => (
+              <div
+                key={row.key}
+                className={s.gridRow}
+                style={{
+                  transform: `translateY(${row.start}px)`,
+                  gridTemplateColumns: `repeat(${columns}, ${tileW}px)`,
+                  gap
+                }}
+              >
+                {list.slice(row.index * columns, row.index * columns + columns).map((item, i) => {
+                  const index = row.index * columns + i
+                  return (
+                    <Tile
+                      key={item.id}
+                      item={item}
+                      selected={selection.includes(item.id)}
+                      selection={selection}
+                      renaming={renaming === item.id}
+                      onRename={() => setRenaming(item.id)}
+                      onRenamed={() => setRenaming(null)}
+                      onClick={(e) => click(e, index)}
+                    />
+                  )
+                })}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        )
+      )}
     </div>
   )
 }

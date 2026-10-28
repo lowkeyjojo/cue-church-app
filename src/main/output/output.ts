@@ -107,8 +107,11 @@ export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback
   /** Place, create or remove the audience window according to settings and connected displays. */
   apply(): void {
     const out = this.settings.data.output
+    // Tests have no second screen: there, CUE_OUTPUT_MODE stands in for "auto".
     const mode: OutputMode =
-      isE2E && process.env.CUE_OUTPUT_MODE ? (process.env.CUE_OUTPUT_MODE as OutputMode) : out.mode
+      isE2E && process.env.CUE_OUTPUT_MODE && out.mode === 'auto'
+        ? (process.env.CUE_OUTPUT_MODE as OutputMode)
+        : out.mode
     const displays = screen.getAllDisplays()
     const controlDisplay =
       this.control && !this.control.isDestroyed()

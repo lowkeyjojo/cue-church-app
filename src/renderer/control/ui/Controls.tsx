@@ -2,7 +2,10 @@ import { Slider as RS, Switch as RSw } from 'radix-ui'
 import clsx from 'clsx'
 import { ChevronDown, LoaderCircle } from 'lucide-react'
 import {
+  cloneElement,
   forwardRef,
+  isValidElement,
+  useId,
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
@@ -42,7 +45,9 @@ export function Segmented<T extends string>({
             type="button"
             role="radio"
             aria-checked={value === o.value}
-            aria-label={o.tooltip ?? (typeof o.label === 'string' ? o.label : o.value)}
+            // A visible label is the name; icon-only segments are named by their tooltip.
+            aria-label={typeof o.label === 'string' ? undefined : (o.tooltip ?? o.value)}
+            aria-description={typeof o.label === 'string' ? o.tooltip : undefined}
             className={clsx(s.segment, value === o.value && s.segmentOn)}
             onClick={() => onChange(o.value)}
           >
@@ -99,12 +104,14 @@ export function Switch({
   checked,
   onChange,
   ariaLabel,
-  disabled
+  disabled,
+  'aria-describedby': describedBy
 }: {
   checked: boolean
   onChange: (v: boolean) => void
   ariaLabel?: string
   disabled?: boolean
+  'aria-describedby'?: string
 }) {
   return (
     <RSw.Root
@@ -112,6 +119,7 @@ export function Switch({
       checked={checked}
       onCheckedChange={onChange}
       aria-label={ariaLabel}
+      aria-describedby={describedBy}
       disabled={disabled}
     >
       <RSw.Thumb className={s.switchThumb} />
@@ -164,13 +172,23 @@ export function Field({
   inline?: boolean
   className?: string
 }) {
+  // The label names the control; the hint describes it (rather than lengthening its name).
+  const hintId = useId()
+  const control =
+    hint && isValidElement<{ 'aria-describedby'?: string }>(children)
+      ? cloneElement(children, { 'aria-describedby': hintId })
+      : children
   return (
     <label className={clsx(s.field, inline && s.fieldInline, className)}>
       <span className={s.fieldText}>
         <span className={s.fieldLabel}>{label}</span>
-        {hint && <span className={s.fieldHint}>{hint}</span>}
+        {hint && (
+          <span className={s.fieldHint} id={hintId} aria-hidden>
+            {hint}
+          </span>
+        )}
       </span>
-      <span className={s.fieldControl}>{children}</span>
+      <span className={s.fieldControl}>{control}</span>
     </label>
   )
 }

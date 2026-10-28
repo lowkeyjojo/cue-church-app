@@ -7,14 +7,14 @@ import { useApp, useSettings } from '../../lib/store'
 import { useUI } from '../../lib/ui'
 import { Button, IconButton } from '../../ui/Button'
 import { Spinner } from '../../ui/Controls'
-import { ingestGooglePick } from './googlePick'
+import { ingestGooglePick, type GuestHandle } from './googlePick'
 import s from './SearchView.module.css'
 
 /**
  * Floating bar for the image currently open in the Google pane:
  * preview it, put it on screen, save it or add it to the plan in one click.
  */
-export function PickBar({ contentsId }: { contentsId: () => number | null }) {
+export function PickBar({ guest }: { guest: () => GuestHandle | null }) {
   const pick = useUI((st) => st.search.pick)
   const pickedId = useUI((st) => st.search.pickedMediaId)
   const busy = useUI((st) => st.search.busy)
@@ -38,7 +38,7 @@ export function PickBar({ contentsId }: { contentsId: () => number | null }) {
     if (item && !save) return item
     setSearch({ busy: true })
     try {
-      const got = await ingestGooglePick(pick, contentsId(), { save, query })
+      const got = await ingestGooglePick(pick, guest(), { save, query })
       if (got) setSearch({ pickedMediaId: got.id })
       return got
     } finally {
