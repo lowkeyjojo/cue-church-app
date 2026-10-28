@@ -124,7 +124,12 @@ export function registerHandlers(s: Services): void {
     }
     return s.library.add(item)
   })
-  handle('library:updateDeck', (id, deck) => s.library.update(id, { deck }))
+  handle('library:updateDeck', (id, deck) => {
+    const item = s.library.update(id, { deck })
+    // A deck on screen is updated before the operator's next key press is handled.
+    s.library.publish()
+    return item
+  })
   handle('library:duplicate', (id) => {
     const item = s.library.get(id)
     if (!item || item.kind !== 'deck' || !item.deck) return null

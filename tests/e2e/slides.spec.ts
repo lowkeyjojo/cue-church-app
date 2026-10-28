@@ -62,6 +62,7 @@ test('slides edited while on screen update for the audience as you type', async 
     .poll(async () => (await cue.library()).find((i) => i.kind === 'deck')?.deck?.slides.length)
     .toBe(2)
   // The live deck picked up the new slide: → goes to it.
+  expect((await cue.state()).live?.pageCount).toBe(2)
   await cue.control.keyboard.press('ArrowRight')
   await expect(output.getByText('How sweet the sound')).toBeVisible()
 })

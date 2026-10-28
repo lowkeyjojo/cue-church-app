@@ -146,6 +146,11 @@ export class LibraryStore extends Emitter<{
     this.store.flush()
   }
 
+  /** Tell listeners about pending changes now, rather than with the next batch. */
+  publish(): void {
+    this.flushPending()
+  }
+
   private changed(item: MediaItem): void {
     this.store.save()
     this.pending.set(item.id, item)
