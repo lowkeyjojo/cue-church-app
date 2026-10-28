@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Eye, Save, Tv } from 'lucide-react'
 import { newDeck, newSlide } from '@shared/defaults'
 import { BIBLE_TRANSLATIONS, parseReference, type TranslationId } from '@shared/scripture'
@@ -48,6 +48,8 @@ export function QuickSlideDialog({ initialText }: { initialText?: string }) {
   const [passage, setPassage] = useState<ScriptureSlides | null>(null)
   const [page, setPage] = useState(0)
   const [lookupError, setLookupError] = useState<string | null>(null)
+  /** The verse text a lookup put in the fields, as opposed to text the operator typed. */
+  const lookedUp = useRef<{ body: string; footer: string } | null>(null)
 
   useEffect(() => {
     const wanted = reference.trim()
@@ -56,6 +58,14 @@ export function QuickSlideDialog({ initialText }: { initialText?: string }) {
       setLookupError(null)
       return
     }
+    // An earlier lookup's verse must not resurface under a different reference.
+    const forgetLookup = () => {
+      const was = lookedUp.current
+      lookedUp.current = null
+      if (!was) return
+      setBody((text) => (text === was.body ? '' : text))
+      setFooter((text) => (text === was.footer ? '' : text))
+    }
     let live = true
     const t = setTimeout(async () => {
       try {
@@ -63,17 +73,21 @@ export function QuickSlideDialog({ initialText }: { initialText?: string }) {
         if (!live) return
         setLookupError(null)
         if (found.slides.length > 1) {
+          forgetLookup()
           setPassage(found)
           setPage(0)
         } else {
           // One slide: it becomes ordinary text to adjust before showing.
+          const verse = { body: found.slides[0].body ?? '', footer: found.slides[0].footer ?? '' }
+          lookedUp.current = verse
           setPassage(null)
-          setBody(found.slides[0].body ?? '')
-          setFooter(found.slides[0].footer ?? '')
+          setBody(verse.body)
+          setFooter(verse.footer)
         }
       } catch (err) {
         if (!live) return
-        // Never leave the previous passage ready to show under a reference that failed.
+        // Nothing from an earlier lookup stays ready to show under a reference that failed.
+        forgetLookup()
         setPassage(null)
         setLookupError(cleanError(err) || "Couldn't look that up")
       }
