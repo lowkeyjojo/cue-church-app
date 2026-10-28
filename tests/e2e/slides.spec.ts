@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { Cue } from './support/cue'
+import { Cue, printLogsOnFailure } from './support/cue'
 
 // Text on screen: a spontaneous slide typed mid-service, and a deck whose
 // typo gets fixed while it is on screen.
 test.describe.configure({ mode: 'serial' })
+printLogsOnFailure()
 
 let cue: Cue
 test.beforeAll(async () => {
@@ -78,11 +79,20 @@ test('a Bible verse goes on screen straight from the command palette', async () 
 })
 
 test('a long passage is shown over several slides, in the translation chosen', async () => {
+  const psalm = await cue.invoke('scripture:passage', 'Psalm 23', 'kjv')
+  expect(psalm.verses.map((v) => v.verse)).toEqual([1, 2, 3, 4, 5, 6])
   await cue.control.keyboard.press('ControlOrMeta+t')
   const dialog = cue.control.getByRole('dialog', { name: 'Quick text slide' })
   await dialog.getByRole('radio', { name: 'Scripture' }).click()
   await dialog.getByRole('radio', { name: 'KJV' }).click()
-  await dialog.getByRole('textbox', { name: 'Look up a passage' }).fill('Psalm 23')
+  const lookup = dialog.getByRole('textbox', { name: 'Look up a passage' })
+  await lookup.fill('Psalm 23')
+  await expect(dialog).toContainText('Psalm 23 (KJV) fills 3 slides')
+  // A reference that doesn't exist says why, and the previous passage is no longer ready to show.
+  await lookup.fill('Psalm 23:9')
+  await expect(dialog).toContainText('Psalm 23 has 6 verses')
+  await expect(dialog).not.toContainText('fills 3 slides')
+  await lookup.fill('Psalm 23')
   await expect(dialog).toContainText('Psalm 23 (KJV) fills 3 slides')
   await dialog.getByRole('button', { name: 'Show on TV' }).click()
   await expect.poll(async () => (await cue.state()).live?.title).toBe('Psalm 23 (KJV)')

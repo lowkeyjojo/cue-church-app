@@ -1,11 +1,12 @@
 import { expect, test } from '@playwright/test'
-import { brightness, Cue } from './support/cue'
+import { brightness, Cue, printLogsOnFailure } from './support/cue'
 import { startMockGoogle, type MockGoogle } from './support/mock-google'
 
 // The headline workflow: search Google Images inside Cue, click a result,
 // and it's in Preview, full size, one key away from the screen. A local
 // stand-in for Google keeps the test offline and deterministic.
 test.describe.configure({ mode: 'serial' })
+printLogsOnFailure()
 
 let cue: Cue
 let google: MockGoogle

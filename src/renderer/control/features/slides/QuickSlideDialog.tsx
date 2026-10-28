@@ -72,7 +72,10 @@ export function QuickSlideDialog({ initialText }: { initialText?: string }) {
           setFooter(found.slides[0].footer ?? '')
         }
       } catch (err) {
-        if (live) setLookupError(cleanError(err))
+        if (!live) return
+        // Never leave the previous passage ready to show under a reference that failed.
+        setPassage(null)
+        setLookupError(cleanError(err) || "Couldn't look that up")
       }
     }, 250)
     return () => {
@@ -142,7 +145,16 @@ export function QuickSlideDialog({ initialText }: { initialText?: string }) {
           />
           {layout === 'scripture' && (
             <div className={s.lookup}>
-              <Field label="Look up a passage" hint={lookupError ?? 'John 3:16, Psalm 23, Rom 8:38–39'}>
+              <Field
+                label="Look up a passage"
+                hint={
+                  lookupError ? (
+                    <span className={s.lookupError}>{lookupError}</span>
+                  ) : (
+                    'John 3:16, Psalm 23, Rom 8:38–39'
+                  )
+                }
+              >
                 <TextField
                   autoFocus={first === 'reference'}
                   value={reference}
@@ -162,8 +174,8 @@ export function QuickSlideDialog({ initialText }: { initialText?: string }) {
           )}
           {passage ? (
             <p className={s.passageNote}>
-              {passage.label} fills {passage.slides.length} slides, shown in order: press → on the screen to
-              move on.
+              {passage.label} fills {passage.slides.length} slides. Once it's showing, press → for the next
+              one.
             </p>
           ) : (
             <>

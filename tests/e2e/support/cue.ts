@@ -3,7 +3,13 @@
  * isolated data folder, and gives tests a view of both sides: the control
  * window as a Playwright page, and the main process's show state.
  */
-import { _electron as electron, type ElectronApplication, type Locator, type Page } from '@playwright/test'
+import {
+  _electron as electron,
+  test,
+  type ElectronApplication,
+  type Locator,
+  type Page
+} from '@playwright/test'
 import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -66,6 +72,35 @@ export interface Rgb {
   b: number
 }
 
+/** Every Cue launched in this worker, with when it closed, so a failed test can show its log. */
+const launched: { cue: Cue; closedAt?: number }[] = []
+
+/**
+ * When a test fails, print what each Cue involved in it logged: those still
+ * running, and those the test launched and closed. CI machines are gone by
+ * the time anyone looks, so the log has to be in the output.
+ */
+export function printLogsOnFailure(): void {
+  let startedAt = 0
+  test.beforeEach(() => {
+    startedAt = Date.now()
+  })
+  // Playwright requires the (empty) fixtures argument to be destructured.
+  // eslint-disable-next-line no-empty-pattern
+  test.afterEach(async ({}, info) => {
+    if (info.status === info.expectedStatus) return
+    for (const { cue, closedAt } of launched) {
+      if (closedAt !== undefined && closedAt < startedAt) continue
+      console.log(`--- Cue's log (${cue.dataDir}) ---\n${cue.logs.slice(-60).join('\n')}`)
+    }
+  })
+}
+
+async function logFile(dataDir: string): Promise<string> {
+  const text = await readFile(join(dataDir, 'logs', 'cue.log'), 'utf8').catch(() => '(no log file)')
+  return text.slice(-6000)
+}
+
 export class Cue {
   readonly pageErrors: string[] = []
 
@@ -87,12 +122,19 @@ export class Cue {
         : { ...opts.settings, ui: { firstRunDone: true, ...opts.settings?.ui } }
       await writeFile(join(dataDir, 'settings.json'), JSON.stringify(seed))
     }
-    const app = await electron.launch({
-      args: [repoRoot, ...platformArgs, ...(opts.args ?? [])],
-      cwd: repoRoot,
-      env: { ...testEnv(dataDir), ...opts.env },
-      timeout: 60_000
-    })
+    let app: ElectronApplication
+    try {
+      app = await electron.launch({
+        args: [repoRoot, ...platformArgs, ...(opts.args ?? [])],
+        cwd: repoRoot,
+        env: { ...testEnv(dataDir), ...opts.env },
+        timeout: 60_000
+      })
+    } catch (err) {
+      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${await logFile(dataDir)}`, {
+        cause: err
+      })
+    }
     const logs: string[] = []
     for (const stream of [app.process().stdout, app.process().stderr]) {
       stream?.on('data', (chunk: Buffer) => {
@@ -105,10 +147,12 @@ export class Cue {
     } catch (err) {
       await app.close().catch(() => undefined)
       // Cue's own log file, in case its console output wasn't captured.
-      const file = await readFile(join(dataDir, 'logs', 'cue.log'), 'utf8').catch(() => '(no log file)')
-      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${file.slice(-6000)}`, { cause: err })
+      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${await logFile(dataDir)}`, {
+        cause: err
+      })
     }
     const cue = new Cue(app, control, dataDir, logs)
+    launched.push({ cue })
     control.on('pageerror', (err) => cue.pageErrors.push(`${err.name}: ${err.message}`))
     await control.waitForLoadState('domcontentloaded')
     await control.getByTestId('take').waitFor()
@@ -215,6 +259,7 @@ export class Cue {
   /** Quit normally; the data folder is deleted unless it is kept for a relaunch. */
   async close(opts: { keepData?: boolean } = {}): Promise<void> {
     await this.app.close().catch(() => undefined)
+    this.markClosed()
     if (!opts.keepData) await rm(this.dataDir, { recursive: true, force: true }).catch(() => undefined)
   }
 
@@ -224,6 +269,12 @@ export class Cue {
     const exited = new Promise((resolve) => proc.once('exit', resolve))
     proc.kill('SIGKILL')
     await exited
+    this.markClosed()
+  }
+
+  private markClosed(): void {
+    const entry = launched.find((l) => l.cue === this)
+    if (entry) entry.closedAt = Date.now()
   }
 }
 

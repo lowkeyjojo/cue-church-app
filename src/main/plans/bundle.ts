@@ -7,7 +7,7 @@ import { Unzip, UnzipInflate, Zip, ZipDeflate, ZipPassThrough, strToU8 } from 'f
 import { newId } from '@shared/defaults'
 import type { Deck, Id, MediaItem, MediaKind, Plan, PlanEntry } from '@shared/types'
 import { UserError } from '../errors'
-import { log } from '../log'
+import { errorMessage, log } from '../log'
 import { dataPath } from '../paths'
 import type { LibraryStore } from '../store/library'
 import type { PlansStore } from '../store/plans'
@@ -107,7 +107,14 @@ export async function exportPlan(plan: Plan, library: LibraryStore, dest: string
 function waitForDrain(out: NodeJS.WritableStream & { writableNeedDrain: boolean }, source: ReadStream): void {
   if (!out.writableNeedDrain || source.isPaused()) return
   source.pause()
-  out.once('drain', () => source.resume())
+  // A file that is ended (or fails) before it drains never emits 'drain', but always closes.
+  const resume = () => {
+    out.off('drain', resume)
+    out.off('close', resume)
+    source.resume()
+  }
+  out.on('drain', resume)
+  out.on('close', resume)
 }
 
 const ITEM_ID = /^[0-9a-z]{1,40}$/
@@ -209,7 +216,18 @@ export async function importPlanBundle(
     log.error('Plan import failed:', err)
     throw new UserError(`Couldn't import that plan: ${(err as Error).message}`)
   } finally {
-    await rm(temp, { recursive: true, force: true })
+    // A leftover temporary folder must not undo an import that worked; it's cleared at the next start.
+    await rm(temp, { recursive: true, force: true }).catch((err) =>
+      log.warn(`Couldn't remove ${temp}:`, errorMessage(err))
+    )
+  }
+}
+
+/** Remove temporary folders left by imports that were interrupted or couldn't be cleaned up at the time. */
+export async function clearImportLeftovers(): Promise<void> {
+  for (const name of await readdir(dataPath()).catch(() => [])) {
+    if (name.startsWith('import-'))
+      await rm(dataPath(name), { recursive: true, force: true }).catch(() => undefined)
   }
 }
 
@@ -239,8 +257,11 @@ const GB = 1024 ** 3
 
 async function extract(file: string, dest: string): Promise<void> {
   // Leave room on the disk: a damaged or malicious file can't fill it up.
-  const { bavail, bsize } = await statfs(dest)
-  const limit = Math.max(0, bavail * bsize - GB)
+  const free = await statfs(dest).then(
+    ({ bavail, bsize }) => bavail * bsize,
+    () => Infinity
+  )
+  const limit = Math.max(0, free - GB)
   let written = 0
   const writes: Promise<void>[] = []
   await new Promise<void>((resolve, reject) => {
@@ -256,9 +277,10 @@ async function extract(file: string, dest: string): Promise<void> {
       mkdirSync(dirname(target), { recursive: true })
       const out = createWriteStream(target)
       writes.push(
+        // Closed, not just finished: Windows won't move a folder while a file in it is open.
         new Promise<void>((res, rej) => {
-          out.on('finish', res)
           out.on('error', rej)
+          out.on('close', res)
         })
       )
       entry.ondata = (err, data, final) => {

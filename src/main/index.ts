@@ -15,7 +15,7 @@ import { MediaWorker } from './media/worker'
 import { buildMenu } from './menu'
 import { OutputManager } from './output/output'
 import { dataPath, initPaths, isE2E, resourcePath } from './paths'
-import { importPlanBundle } from './plans/bundle'
+import { clearImportLeftovers, importPlanBundle } from './plans/bundle'
 import { handleAppProtocol, handleMediaProtocol, registerSchemes } from './protocol'
 import { Bible } from './scripture/bible'
 import { ShowController } from './show/controller'
@@ -63,12 +63,14 @@ async function waitForLock(): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 200))
     if (existsSync(launchNote(launchId))) {
       rmSync(launchNote(launchId), { force: true })
+      log.info('Handed over to the running Cue')
       return app.quit()
     }
     if (lock()) {
       log.info(`Started after waiting ${waited} ms for the previous Cue to close`)
       return start()
     }
+    if (waited % 2000 === 0) log.info(`Still waiting for the previous Cue (${waited} ms)`)
   }
   log.warn('Another Cue is running but did not respond')
   app.quit()
@@ -76,6 +78,8 @@ async function waitForLock(): Promise<void> {
 
 process.on('uncaughtException', (err) => log.error('Uncaught exception:', err))
 process.on('unhandledRejection', (err) => log.error('Unhandled rejection:', err))
+// The console line is written at once (pipes are synchronous on Windows), so it survives a quick exit.
+process.on('exit', (code) => log.info(`Cue exited (code ${code})`))
 
 async function start(): Promise<void> {
   rmSync(dataPath('launches'), { recursive: true, force: true })
@@ -224,6 +228,7 @@ async function start(): Promise<void> {
   rebuildMenu()
 
   processor.resumePending()
+  void clearImportLeftovers()
   library.pruneTransient((id) => plans.referencedMedia().has(id) || history.referencedMedia().has(id))
   if (show.recoveredFromCrash) {
     log.warn('Recovered show state after an unexpected shutdown')

@@ -4,13 +4,14 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { brightness, Cue, platformArgs, repoRoot, testEnv, type Rgb } from './support/cue'
+import { brightness, Cue, platformArgs, printLogsOnFailure, repoRoot, testEnv, type Rgb } from './support/cue'
 
 const electronBinary = createRequire(import.meta.url)('electron') as string
 
 // Live services can't wait: Cue has to come back exactly where it was after
 // a crash or power cut, and the operator controls the output window.
 const dominant = (c: Rgb) => (c.r > c.g && c.r > c.b ? 'red' : c.g > c.b ? 'green' : 'blue')
+printLogsOnFailure()
 
 test('after a crash the audience screen comes back as it was; after a normal quit it starts clean', async () => {
   const first = await Cue.launch()

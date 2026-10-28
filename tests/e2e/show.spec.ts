@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { brightness, Cue } from './support/cue'
+import { brightness, Cue, printLogsOnFailure } from './support/cue'
 
 // A brand-new install: the welcome walkthrough, then the sample service run
 // the way an operator would on a Sunday morning.
 test.describe.configure({ mode: 'serial' })
+printLogsOnFailure()
 
 let cue: Cue
 test.beforeAll(async () => {

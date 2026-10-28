@@ -48,6 +48,7 @@ export const log = {
 export { UserError } from './errors'
 
 export function errorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message
-  return String(err)
+  // Never an empty message: the operator would see a failure that says nothing.
+  if (err instanceof Error) return err.message || err.name || 'Something went wrong'
+  return String(err) || 'Something went wrong'
 }

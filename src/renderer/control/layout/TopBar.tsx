@@ -17,7 +17,7 @@ export function TopBar() {
       </div>
       <button className={s.palette} onClick={() => open('palette', true)}>
         <Search size={14} />
-        <span className={s.paletteText}>Find media, plan items and actions…</span>
+        <span className={s.paletteText}>Find media, plan items, actions or a verse…</span>
         <span className={s.paletteKeys}>
           <kbd>{modKey === '⌘' ? <Command size={10} /> : 'Ctrl'}</kbd>
           <kbd>K</kbd>

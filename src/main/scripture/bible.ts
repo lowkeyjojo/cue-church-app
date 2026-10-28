@@ -60,7 +60,11 @@ export class Bible {
         c === endChapter
           ? (ref.endVerse ?? (ref.verse !== undefined && !ref.endChapter ? from : chapter.length))
           : chapter.length
-      if (from > chapter.length) throw new UserError(`${name} ${c} has ${chapter.length} verses`)
+      if (from > chapter.length) {
+        // "Psalm 23 has 6 verses", "Jude has 25 verses"
+        const where = book.chapters.length === 1 ? name : formatReference({ book: ref.book, chapter: c })
+        throw new UserError(`${where} has ${chapter.length} verses`)
+      }
       for (let v = from; v <= Math.min(to, chapter.length); v++) {
         const text = chapter[v - 1]
         if (text) verses.push({ chapter: c, verse: v, text })

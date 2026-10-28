@@ -3,7 +3,7 @@ import { copyFile, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { MediaItem } from '../../src/shared/types'
-import { brightness, Cue, fixture, type Rgb } from './support/cue'
+import { brightness, Cue, fixture, printLogsOnFailure, type Rgb } from './support/cue'
 import { makePdf } from './support/pdf'
 import { gradientPng } from './support/png'
 import { makeWav } from './support/wav'
@@ -11,6 +11,7 @@ import { makeWav } from './support/wav'
 // Bringing in the church's own media and running it: photos, PDF slides,
 // video and audio, with the on-screen controls an operator reaches for.
 test.describe.configure({ mode: 'serial' })
+printLogsOnFailure()
 
 let cue: Cue
 let dir: string

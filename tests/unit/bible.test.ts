@@ -28,6 +28,8 @@ describe('Bible', () => {
 
   it('explains what went wrong', async () => {
     await expect(bible.passage('John 3:99')).rejects.toThrow('John 3 has 36 verses')
+    await expect(bible.passage('Psalm 23:9')).rejects.toThrow('Psalm 23 has 6 verses')
+    await expect(bible.passage('Jude 30')).rejects.toThrow('Jude has 25 verses')
     await expect(bible.passage('Hezekiah 1:1')).rejects.toThrow("isn't a Bible reference")
     // The WEB keeps this later addition in a footnote.
     await expect(bible.passage('Acts 8:37', 'web')).rejects.toThrow("isn't in the WEB text")

@@ -4,12 +4,13 @@ import { mkdir, mkdtemp, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import { newDeck, newSlide } from '../../src/shared/defaults'
-import { Cue } from './support/cue'
+import { Cue, printLogsOnFailure } from './support/cue'
 import { gradientPng } from './support/png'
 
 // Planning a service: building the running order by drag and drop, then
 // taking it to the church computer as a single .cueplan file.
 test.describe.configure({ mode: 'serial' })
+printLogsOnFailure()
 
 let cue: Cue
 let dir: string
