@@ -1,0 +1,232 @@
+.hero {
+  position: relative;
+  padding: 6px 0 4px;
+}
+.heroGlow {
+  position: absolute;
+  top: -60px;
+  right: -40px;
+  width: 260px;
+  height: 200px;
+  background: radial-gradient(closest-side, var(--amber-a24), transparent);
+  pointer-events: none;
+}
+.lead {
+  position: relative;
+  margin: 0 0 18px;
+  color: var(--text-1);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.features > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: var(--r-12);
+  background: var(--bg-3);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.features svg {
+  color: var(--amber-400);
+}
+.features strong {
+  color: var(--text-1);
+  font-size: 13px;
+}
+.stepBody {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+.statusCard {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  width: 100%;
+  border-radius: var(--r-12);
+  background: var(--bg-3);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  color: var(--amber-400);
+}
+.statusCard div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.statusCard strong {
+  color: var(--text-1);
+  font-size: 13px;
+}
+.statusCard span {
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.nameField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 260px;
+  font-size: 12.5px;
+  font-weight: 550;
+}
+.nameField small {
+  color: var(--text-3);
+  font-weight: 400;
+}
+.bigKeys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+.bigKeys > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 10px;
+  border-radius: var(--r-12);
+  background: var(--bg-3);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  color: var(--text-2);
+  font-size: 12.5px;
+  text-align: center;
+}
+.bigKeys span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.bigKbd {
+  min-width: 52px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+  font-size: 15px;
+  color: var(--text-1);
+}
+.note {
+  display: flex;
+  gap: 7px;
+  margin: 0;
+  color: var(--text-3);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.note svg {
+  flex: none;
+  margin-top: 2px;
+}
+.dots {
+  display: flex;
+  gap: 6px;
+  margin-right: auto;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bg-6);
+}
+.dotOn {
+  background: var(--amber-400);
+}
+
+.shortcuts {
+  display: grid;
+  gap: 18px;
+}
+.groupTitle {
+  margin: 0 0 8px;
+  color: var(--text-3);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.keyList {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 8px 14px;
+  align-items: center;
+}
+.keys {
+  display: inline-flex;
+  gap: 4px;
+}
+.keyLabel {
+  color: var(--text-1);
+  font-size: 12.5px;
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  padding-bottom: 6px;
+}
+.aboutMark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #2a2b31, #131417);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.aboutMark span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffd596, #f2a33a 60%, #c9761b);
+  box-shadow: 0 0 24px rgba(242, 163, 58, 0.7);
+}
+.aboutName {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.aboutVersion {
+  color: var(--text-3);
+  font-size: 12px;
+}
+.aboutText {
+  margin: 6px 0;
+  color: var(--text-2);
+  font-size: 13px;
+}
+.aboutMeta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 6px 0;
+  max-width: 100%;
+  font-size: 11.5px;
+  text-align: left;
+}
+.aboutMeta dt {
+  color: var(--text-3);
+}
+.aboutMeta dd {
+  margin: 0;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

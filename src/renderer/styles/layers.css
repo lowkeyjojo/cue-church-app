@@ -1,0 +1,2 @@
+/* Layer order: resets, primitives, focus rings. Unlayered feature styles win over all of them. */
+@layer base, ui, focus;
