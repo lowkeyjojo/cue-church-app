@@ -102,7 +102,7 @@ export class Cue {
       control = await windowByUrl(app, 'control.html')
     } catch (err) {
       await app.close().catch(() => undefined)
-      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${logs.join('\n')}`)
+      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${logs.join('\n')}`, { cause: err })
     }
     const cue = new Cue(app, control, dataDir, logs)
     control.on('pageerror', (err) => cue.pageErrors.push(`${err.name}: ${err.message}`))
