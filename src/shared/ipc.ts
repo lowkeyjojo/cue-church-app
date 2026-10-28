@@ -2,6 +2,7 @@
  * Typed IPC contracts. The control window talks to main exclusively through
  * `CueApi` (request/response) and `CueEvents` (main -> renderer broadcasts).
  */
+import type { Passage, TranslationId } from './scripture'
 import type {
   AppInfo,
   Collection,
@@ -28,9 +29,10 @@ import type {
   WebPick
 } from './types'
 
-export type MediaItemPatch = Partial<
-  Pick<MediaItem, 'name' | 'favorite' | 'tags' | 'defaults' | 'collections' | 'saved'>
->
+/** The fields the control window may change on a library item. */
+export const MEDIA_ITEM_EDITABLE = ['name', 'favorite', 'tags', 'defaults', 'collections', 'saved'] as const
+
+export type MediaItemPatch = Partial<Pick<MediaItem, (typeof MEDIA_ITEM_EDITABLE)[number]>>
 
 export type NewPlanEntry = Omit<PlanEntry, 'id'>
 
@@ -52,6 +54,8 @@ export interface CueApi {
   'library:remove': (ids: Id[]) => void
   'library:reveal': (id: Id) => void
   'library:createDeck': (name: string, deck?: Deck, opts?: { saved?: boolean }) => MediaItem
+  /** Look up a Bible passage ("John 3:16", "Psalm 23") in the bundled translations. */
+  'scripture:passage': (reference: string, translation?: TranslationId) => Passage & { book: string }
   'library:updateDeck': (id: Id, deck: Deck) => MediaItem | null
   'library:duplicate': (id: Id) => MediaItem | null
   'library:reprocess': (id: Id) => void

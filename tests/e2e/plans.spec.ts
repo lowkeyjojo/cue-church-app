@@ -1,7 +1,9 @@
 import { expect, test, type Locator } from '@playwright/test'
-import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises'
+import { strToU8, zipSync } from 'fflate'
+import { mkdir, mkdtemp, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
+import { newDeck, newSlide } from '../../src/shared/defaults'
 import { Cue } from './support/cue'
 import { gradientPng } from './support/png'
 
@@ -92,6 +94,14 @@ test('number keys preview plan items and Space runs them in order', async () => 
 })
 
 test('a plan exports with its media and imports on another computer', async () => {
+  // Slides live in the library file rather than a media folder; they travel too.
+  const deck = await cue.invoke(
+    'library:createDeck',
+    'Welcome slides',
+    newDeck({ slides: [newSlide({ layout: 'title', title: 'He is risen' })] })
+  )
+  const [plan] = await cue.plans()
+  await cue.invoke('plans:addEntries', plan.id, [{ type: 'media', mediaId: deck.id }])
   const file = join(dir, 'easter.cueplan')
   await cue.app.evaluate(({ dialog }, path) => {
     dialog.showSaveDialog = (async () => ({
@@ -114,11 +124,12 @@ test('a plan exports with its media and imports on another computer', async () =
     await expect(other.control.getByRole('button', { name: 'Switch service plan' })).toContainText(
       'Easter Sunday'
     )
-    const [plan] = await other.plans()
-    expect(plan.entries.map((e) => e.type)).toEqual(['media', 'media', 'section', 'color'])
+    const [imported] = await other.plans()
+    expect(imported.entries.map((e) => e.type)).toEqual(['media', 'media', 'section', 'color', 'media'])
     const library = await other.library()
-    expect(library.map((i) => i.name).sort()).toEqual(['Cross at dawn', 'Empty tomb'])
-    expect(library.every((i) => i.status === 'ready' && i.width === 1280)).toBe(true)
+    expect(library.map((i) => i.name).sort()).toEqual(['Cross at dawn', 'Empty tomb', 'Welcome slides'])
+    expect(library.filter((i) => i.kind === 'image').every((i) => i.width === 1280)).toBe(true)
+    expect(library.find((i) => i.kind === 'deck')?.deck?.slides[0].title).toBe('He is risen')
     await other.control.getByTestId('plan-entry').first().dblclick()
     await expect.poll(async () => (await other.state()).live?.title).toBe('Empty tomb')
     expect(other.errors()).toEqual([])
@@ -134,8 +145,40 @@ test('opening a .cueplan file (double-click) imports it and brings it up', async
       'Easter Sunday'
     )
     await expect(other.control.getByText('Plan imported')).toBeVisible()
-    await expect(other.control.getByTestId('plan-entry')).toHaveCount(3)
+    await expect(other.control.getByTestId('plan-entry')).toHaveCount(4)
     expect(other.errors()).toEqual([])
+  } finally {
+    await other.close()
+  }
+})
+
+test('a tampered plan file cannot reach outside Cue', async () => {
+  // A folder next to Cue's data that a crafted file tries to pull into the library.
+  const victim = join(dir, `victim-${Date.now()}`)
+  await mkdir(victim)
+  await writeFile(join(victim, 'notes.txt'), 'keep me')
+  const escape = `../../../${basename(victim)}`
+  const manifest = {
+    format: 'cue-plan',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    plan: { id: 'x', name: 'Tampered', entries: [{ id: 'e', type: 'media', mediaId: escape }] },
+    items: [{ id: escape, kind: 'image', name: 'Evil', file: '../../notes.txt', status: 'ready', source: {} }]
+  }
+  const bad = join(dir, 'tampered.cueplan')
+  await writeFile(bad, zipSync({ 'plan.json': strToU8(JSON.stringify(manifest)) }))
+
+  const other = await Cue.launch({ dataDir: join(dir, 'tamper-data') })
+  try {
+    await other.app.evaluate(({ dialog }, path) => {
+      dialog.showOpenDialog = (async () => ({
+        canceled: false,
+        filePaths: [path]
+      })) as typeof dialog.showOpenDialog
+    }, bad)
+    await other.invoke('plans:import')
+    expect(await readdir(victim)).toEqual(['notes.txt'])
+    expect(await other.library()).toEqual([])
   } finally {
     await other.close()
   }

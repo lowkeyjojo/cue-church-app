@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, nativeTheme } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import type { UiCommand } from '@shared/ipc'
 import { parseGoogleLink } from '@shared/google'
 import type { ShowCommand, WebPick } from '@shared/types'
@@ -13,9 +14,10 @@ import { WebIngest } from './media/webIngest'
 import { MediaWorker } from './media/worker'
 import { buildMenu } from './menu'
 import { OutputManager } from './output/output'
-import { dataPath, initPaths, isE2E } from './paths'
+import { dataPath, initPaths, isE2E, resourcePath } from './paths'
 import { importPlanBundle } from './plans/bundle'
 import { handleAppProtocol, handleMediaProtocol, registerSchemes } from './protocol'
+import { Bible } from './scripture/bible'
 import { ShowController } from './show/controller'
 import { ensureStarterContent } from './starter'
 import { HistoryStore } from './store/history'
@@ -56,6 +58,7 @@ else void waitForLock()
  * moment: then keep trying, so a quick relaunch isn't silently ignored.
  */
 async function waitForLock(): Promise<void> {
+  log.info('Another Cue holds the lock: handing over to it, or waiting for it to close')
   for (let waited = 200; waited <= 15_000; waited += 200) {
     await new Promise((resolve) => setTimeout(resolve, 200))
     if (existsSync(launchNote(launchId))) {
@@ -109,6 +112,7 @@ async function start(): Promise<void> {
   show.on('playback', (p) => broadcast('show:playback', p))
   show.on('toast', (t) => broadcast('toast', t))
   output.on('playback', (p) => show.onPlayback(p))
+  output.on('ready', () => show.resumePlayback())
   output.on('changed', (snap) => {
     broadcast('displays:changed', snap)
     rebuildMenu()
@@ -170,6 +174,7 @@ async function start(): Promise<void> {
   }
 
   registerHandlers({
+    bible: new Bible((id) => readFile(resourcePath('bible', `${id}.json.gz`))),
     settings,
     library,
     plans,
@@ -191,7 +196,9 @@ async function start(): Promise<void> {
   /** Import a .cueplan opened from the file manager and bring it up in the plan panel. */
   const importPlanFile = async (file: string) => {
     try {
-      const plan = await importPlanBundle(file, library, plans)
+      const plan = await importPlanBundle(file, library, plans, (items) =>
+        items.filter((i) => i.status === 'processing').forEach((i) => processor.enqueue(i.id))
+      )
       settings.update({ ui: { planId: plan.id } })
       broadcast('plans:open', plan.id)
       broadcast('toast', { kind: 'success', title: 'Plan imported', message: `“${plan.name}” is ready.` })
@@ -280,7 +287,7 @@ async function start(): Promise<void> {
     plans.flush()
     history.flush()
     output.destroy()
-    worker.destroy()
+    worker.shutdown()
   })
 
   if (isE2E) {

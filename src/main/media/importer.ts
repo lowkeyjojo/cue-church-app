@@ -22,6 +22,8 @@ import type { MediaProcessor } from './processor'
 const MAX_DEPTH = 3
 
 export class Importer {
+  private pending = new Map<string, Promise<MediaItem>>()
+
   constructor(
     private library: LibraryStore,
     private processor: MediaProcessor,
@@ -77,14 +79,38 @@ export class Importer {
     if (!kind) throw new UserError('Unsupported file type')
     const info = await stat(path)
     const hash = await quickHash(path, info.size)
-    const existing = this.library.byHash(hash)
-    if (existing) {
-      const collections =
-        collectionId && !existing.collections.includes(collectionId)
-          ? [...existing.collections, collectionId]
-          : existing.collections
-      return this.library.update(existing.id, { saved: true, collections }) ?? existing
+    const item = await this.once(hash, () => this.copyIn(path, ext, kind, info.size, hash))
+    if (collectionId && !item.collections.includes(collectionId)) {
+      return (
+        this.library.update(item.id, { saved: true, collections: [...item.collections, collectionId] }) ??
+        item
+      )
     }
+    return item.saved ? item : (this.library.update(item.id, { saved: true }) ?? item)
+  }
+
+  /**
+   * Run one import per content at a time, so the same file dropped twice (or a
+   * plan and its media arriving together) becomes one library item.
+   */
+  private once(hash: string, work: () => Promise<MediaItem>): Promise<MediaItem> {
+    const existing = this.library.byHash(hash)
+    if (existing) return Promise.resolve(existing)
+    let running = this.pending.get(hash)
+    if (!running) {
+      running = work().finally(() => this.pending.delete(hash))
+      this.pending.set(hash, running)
+    }
+    return running
+  }
+
+  private async copyIn(
+    path: string,
+    ext: string,
+    kind: MediaKind,
+    size: number,
+    hash: string
+  ): Promise<MediaItem> {
     const id = newId()
     const dir = this.library.itemDir(id)
     await mkdir(dir, { recursive: true })
@@ -98,11 +124,10 @@ export class Importer {
         name: prettyName(basename(path)),
         file: fileName,
         mime: mimeForExt(ext),
-        bytes: info.size,
+        bytes: size,
         hash,
         source: { type: 'file', originalPath: path },
-        saved: true,
-        collections: collectionId ? [collectionId] : []
+        saved: true
       })
     )
     this.processor.enqueue(id)
@@ -123,12 +148,18 @@ export class Importer {
     const kind: MediaKind | null = kindForExt(ext)
     if (!kind || kind === 'deck') throw new UserError("That file isn't an image, video or PDF Cue can show")
     const hash = fingerprint(bytes)
-    const existing = this.library.byHash(hash)
-    if (existing) {
-      return opts.saved && !existing.saved
-        ? (this.library.update(existing.id, { saved: true }) ?? existing)
-        : existing
-    }
+    const item = await this.once(hash, () => this.writeIn(bytes, mime, kind, ext, hash, opts))
+    return opts.saved && !item.saved ? (this.library.update(item.id, { saved: true }) ?? item) : item
+  }
+
+  private async writeIn(
+    bytes: Uint8Array,
+    mime: string,
+    kind: MediaKind,
+    ext: string,
+    hash: string,
+    opts: { name?: string; source: MediaSource; saved: boolean }
+  ): Promise<MediaItem> {
     const id = newId()
     const dir = this.library.itemDir(id)
     await mkdir(dir, { recursive: true })

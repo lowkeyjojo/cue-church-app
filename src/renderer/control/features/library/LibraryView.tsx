@@ -384,7 +384,7 @@ function Grid({
     return () => window.removeEventListener('cue:reveal-media', reveal)
   }, [list, columns, virtualizer])
 
-  const click = (e: React.MouseEvent, index: number) => {
+  const click = (e: React.MouseEvent | React.KeyboardEvent, index: number) => {
     const id = list[index].id
     if (e.shiftKey && anchor.current >= 0) {
       const [a, b] = [Math.min(anchor.current, index), Math.max(anchor.current, index)]
@@ -495,7 +495,7 @@ function Tile({
   renaming: boolean
   onRename: () => void
   onRenamed: () => void
-  onClick: (e: React.MouseEvent) => void
+  onClick: (e: React.MouseEvent | React.KeyboardEvent) => void
 }) {
   const show = useShow()!
   const collections = useApp((st) => st.collections)
@@ -608,8 +608,18 @@ function Tile({
           preview && !live && s.tilePreview,
           item.status === 'error' && s.tileError
         )}
+        role="button"
+        tabIndex={0}
+        aria-label={item.name}
         onClick={onClick}
         onDoubleClick={() => item.status !== 'error' && showMedia(item.id)}
+        // Reached with Tab, Enter or Space previews it; after a click, Space still means Show.
+        onKeyDown={(e) => {
+          if (e.target === e.currentTarget && !e.defaultPrevented && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            onClick(e)
+          }
+        }}
         draggable={!renaming}
         onDragStart={(e) => setMediaDrag(e, targets)}
         data-testid="library-tile"
@@ -633,6 +643,8 @@ function Tile({
           <button
             className={clsx(s.fav, item.favorite && s.favOn)}
             aria-label={item.favorite ? 'Remove from favorites' : 'Add to favorites'}
+            // One Tab stop per tile; favorites are in its context menu too.
+            tabIndex={-1}
             onClick={(e) => {
               e.stopPropagation()
               void attempt('library:update', item.id, { favorite: !item.favorite })

@@ -95,6 +95,11 @@ export function GenerativeBackground({ theme, resolution = 0.5, fps = 30 }: Prop
   const canvas = useRef<HTMLCanvasElement>(null)
   const [fallback, setFallback] = useState(false)
   const colors = (AMBIENT_THEMES[theme] ?? AMBIENT_THEMES.ember).colors
+  // The render loop reads these, so a new theme doesn't rebuild the WebGL context.
+  const settings = useRef({ colors, resolution, fps })
+  useEffect(() => {
+    settings.current = { colors, resolution, fps }
+  }, [colors, resolution, fps])
 
   useEffect(() => {
     const el = canvas.current
@@ -132,14 +137,20 @@ export function GenerativeBackground({ theme, resolution = 0.5, fps = 30 }: Prop
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
     const uRes = gl.getUniformLocation(prog, 'uRes')
     const uTime = gl.getUniformLocation(prog, 'uTime')
-    colors.forEach((c, i) => gl.uniform3fv(gl.getUniformLocation(prog, `uC${i}`), rgb(c)))
+    const uColors = [0, 1, 2, 3].map((i) => gl.getUniformLocation(prog, `uC${i}`))
 
     let raf = 0
     let last = 0
+    let palette: readonly string[] | null = null
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame)
+      const { colors, resolution, fps } = settings.current
       if (now - last < 1000 / fps) return
       last = now
+      if (palette !== colors) {
+        colors.forEach((c, i) => gl.uniform3fv(uColors[i], rgb(c)))
+        palette = colors
+      }
       const w = Math.max(2, Math.round(el.clientWidth * resolution))
       const h = Math.max(2, Math.round(el.clientHeight * resolution))
       if (el.width !== w || el.height !== h) {
@@ -155,15 +166,17 @@ export function GenerativeBackground({ theme, resolution = 0.5, fps = 30 }: Prop
     raf = requestAnimationFrame(frame)
     const lost = (e: Event) => {
       e.preventDefault()
+      cancelAnimationFrame(raf)
       setFallback(true)
     }
     el.addEventListener('webglcontextlost', lost)
     return () => {
       cancelAnimationFrame(raf)
       el.removeEventListener('webglcontextlost', lost)
+      // Only on unmount: a lost context can't be used again on the same canvas.
       gl.getExtension('WEBGL_lose_context')?.loseContext()
     }
-  }, [colors, resolution, fps])
+  }, [])
 
   if (fallback) {
     const [c0, c1, c2, c3] = colors

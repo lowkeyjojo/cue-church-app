@@ -77,7 +77,8 @@ export const DEFAULT_SETTINGS: Settings = {
   slides: {
     renderQuality: 1440,
     theme: DEFAULT_SLIDE_THEME,
-    background: DEFAULT_SLIDE_BACKGROUND
+    background: DEFAULT_SLIDE_BACKGROUND,
+    bible: 'web'
   },
   ui: {
     leftWidth: 288,

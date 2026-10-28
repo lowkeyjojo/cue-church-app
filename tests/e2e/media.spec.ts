@@ -76,6 +76,25 @@ test('importing the same file twice reuses the library item', async () => {
   expect(again.id).toBe(items.photo.id)
 })
 
+test('library tiles work from the keyboard, and Space after a click shows the preview', async () => {
+  const tiles = cue.control.getByTestId('library-tile')
+  // Reached with the keyboard (Tab), a tile previews itself on Enter; nothing goes on screen.
+  const photo = tiles.filter({ hasText: 'Sunrise portrait' })
+  await photo.focus()
+  await cue.control.keyboard.press('Shift+Tab')
+  await cue.control.keyboard.press('Tab')
+  await expect(photo).toBeFocused()
+  await cue.control.keyboard.press('Enter')
+  await expect.poll(async () => (await cue.state()).preview?.mediaId).toBe(items.photo.id)
+  expect((await cue.state()).live?.mediaId).not.toBe(items.photo.id)
+  // Clicked with the mouse, the tile previews and Space shows it, as everywhere else.
+  await tiles.filter({ hasText: 'Sermon notes' }).click()
+  await expect.poll(async () => (await cue.state()).preview?.mediaId).toBe(items.slides.id)
+  await cue.control.keyboard.press('Space')
+  await expect.poll(async () => (await cue.state()).live?.mediaId).toBe(items.slides.id)
+  await cue.dispatch({ type: 'clear' })
+})
+
 test('a PDF pages forward and back on screen', async () => {
   await cue.control.getByTestId('library-tile').filter({ hasText: 'Sermon notes' }).dblclick()
   await expect.poll(async () => (await cue.state()).live?.title).toBe('Sermon notes')
@@ -122,6 +141,21 @@ test('video plays, pauses with K, and seeks', async () => {
   await expect.poll(async () => (await cue.playback())?.currentTime ?? 0).toBeGreaterThan(2.3)
   await cue.control.keyboard.press('k')
   await expect.poll(async () => (await cue.playback())?.paused).toBe(false)
+})
+
+test('if the audience window reloads, the video carries on where it was', async () => {
+  await cue.dispatch({ type: 'show', target: { type: 'media', mediaId: items.video.id } })
+  await expect.poll(async () => (await cue.playback())?.currentTime ?? 0).toBeGreaterThan(1.2)
+  await cue.dispatch({ type: 'video', action: 'pause' })
+  await expect.poll(async () => (await cue.playback())?.paused).toBe(true)
+  const at = (await cue.playback())!.currentTime
+  await cue.app.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().includes('audience.html'))
+    win?.webContents.reload()
+  })
+  await expect.poll(async () => (await cue.state()).live?.transport?.seek.time ?? 0).toBeCloseTo(at, 1)
+  await expect.poll(async () => (await cue.playback())?.currentTime ?? 0).toBeGreaterThan(at - 0.3)
+  expect((await cue.playback())?.paused).toBe(true)
 })
 
 test('audio plays through the output', async () => {

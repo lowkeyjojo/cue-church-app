@@ -32,21 +32,24 @@ flowchart LR
 | `src/main/show/`         | `ShowController`: resolves what to show, persists it, handles video endings        |
 | `src/main/output/`       | `OutputManager`: places the audience window on the right display                   |
 | `src/main/plans/`        | `.cueplan` export and import (a zip of the plan and its media)                     |
+| `src/main/scripture/`    | Bible lookups in the bundled translations                                          |
 | `src/main/search/`       | Wikimedia Commons, Openverse and Pexels search                                     |
 | `src/preload/`           | Sandboxed bridges for each kind of window, plus the Google guest page              |
 | `src/renderer/stage/`    | The **Stage**: everything the audience sees, shared by the output and the monitors |
 | `src/renderer/control/`  | The operator UI: layout, features, stores, UI primitives                           |
 | `src/renderer/audience/` | The audience window: a stateless mirror of main's show state                       |
 | `src/renderer/worker/`   | The hidden worker page: decoders and pdf.js                                        |
+| `resources/bible/`       | The World English Bible and King James Version, gzipped JSON                       |
 | `tests/unit/`            | Vitest unit tests                                                                  |
 | `tests/e2e/`             | Playwright tests that drive the built app                                          |
 
 ## Processes and windows
 
 - **Main process** (`src/main/index.ts`) creates the stores and services, wires their events to the windows, and answers the control window's calls. Nothing else holds state that matters: renderers can reload or crash and pick up where they were.
+- **One Cue at a time.** A second launch (say, double-clicking a `.cueplan` file) hands its files to the running Cue, which confirms by writing a note to `launches/` in the data folder, and then quits. If nobody answers, because a Cue has just crashed and Windows still holds its lock, the launch keeps trying for up to 15 seconds and then starts normally.
 - **Control window** loads `control.html`. Its preload exposes `window.cue` with `invoke(method, ...args)` and `on(event, listener)`. A zustand store (`lib/store.ts`) mirrors main's state from events; a second store (`lib/ui.ts`) holds UI-only state such as the current tab, dialogs and selection.
 - **Audience window** loads `audience.html` and renders `<Stage role="output">` from the `ShowState` main sends it. It reports video and audio playback back to main, which re-broadcasts it so the Live monitor stays in sync.
-- **Media worker** is a hidden window with Chromium's decoders and pdf.js. Main sends it tasks (image and video thumbnails, media probing, PDF pages) and enforces a timeout on each, so a bad file can never hang an import.
+- **Media worker** is a hidden window with Chromium's decoders and pdf.js. Main sends it tasks (image and video thumbnails, media probing, PDF pages) and enforces a timeout on each, so a bad file can never hang an import. If the worker crashes or a task times out, the worker is restarted; the other files it was working on are retried once, so one corrupt file doesn't fail its neighbours. On quit, the worker and the audience window are shut down for good: a late event can't open a window that would keep Cue running.
 - **Google Images** runs in a `<webview>` inside the control window, in its own session (`persist:web`) with its own cookies. A guest preload (`src/preload/webview.ts`) watches for the image the operator opens and tells the control window about it.
 
 ### IPC
@@ -54,7 +57,7 @@ flowchart LR
 The contract is typed in `src/shared/ipc.ts`:
 
 - `CueApi` maps each method (`show:dispatch`, `library:import`, `plans:export`…) to its arguments and result. Main registers handlers with `handle(method, fn)` (`src/main/handlers.ts`). Only the control window is a trusted caller; anything else is rejected.
-- Failures come back as `{ ok: false, error }` values rather than rejected promises. The preload turns them back into thrown `Error`s, so the renderer can simply `await` and catch. Errors thrown as `UserError` (a site refusing a download, an unsupported file) are expected and logged as warnings without stack traces.
+- Failures come back as `{ ok: false, error }` values rather than rejected promises. The preload turns them back into thrown `Error`s, so the renderer can simply `await` and catch. Errors thrown as `UserError` (`src/main/errors.ts`: a site refusing a download, an unsupported file, a reference that isn't in the Bible) are expected and logged as warnings without stack traces; their message is written for the operator.
 - `CueEvents` are broadcast from main to the control window: `show:state`, `library:upsert`, `plans:changed`, `settings:changed`, `displays:changed`, `toast`, `progress`, `ui:command` and `plans:open`.
 
 ## The show engine
@@ -68,18 +71,22 @@ The contract is typed in `src/shared/ipc.ts`:
 - **Overlays.** Blackout and ambient sit above the content, so lifting them reveals exactly what was there. Ambient keeps its presentation while fading out.
 - **Video.** Transport is declarative: Live carries `playing` and a `seek { time, nonce }`. Bumping the nonce asks the output to jump; the output reports its position back as `PlaybackStatus`.
 
-`ShowController` (`src/main/show/controller.ts`) builds presentations from library items and plan entries, applies per-item options (fit, start and end times, loop, end action), keeps on-screen presentations up to date when their media changes (a PDF still rendering, a deck edited live), and writes the state to `show.json` with `cleanExit: false`. A clean quit sets it to `true`; if Cue starts and finds `false` with something on screen, it puts the audience screen back the way it was.
+`ShowController` (`src/main/show/controller.ts`) builds presentations from library items and plan entries, applies per-item options (fit, start and end times, loop, end action), keeps on-screen presentations up to date when their media changes (a PDF still rendering, a deck edited live), and writes the state to `show.json` with `cleanExit: false`. A clean quit sets it to `true`; if Cue starts and finds `false` with something on screen, it puts the audience screen back the way it was. It also notes the live video's position every few seconds, so a video picks up where it was when the audience window reloads or Cue restarts.
 
 ## The Stage
 
 `src/renderer/stage/Stage.tsx` renders the audience picture, and the very same component draws the Preview and Live monitors in the control window, so what you see is what the room sees.
 
 - **Layers:** content (with transitions) → credit → ambient → test pattern → blackout → display identification.
-- **Transitions:** each presentation instance gets a slot. A new slot loads invisibly and is revealed only once its media is ready, then fades or dips in while the old one leaves, so there's never a flash of black or a half-loaded image. Cut, fade and dip are supported.
+- **Transitions:** each presentation instance gets a slot. A new slot loads invisibly and is revealed only once its media is ready (a slide waits for its fonts and its background picture or video), then fades or dips in while the old one leaves, so there's never a flash of black or a half-loaded image. Cut, fade and dip are supported. Each PDF page is its own slot; slides that share a background share one, and only their words cross-fade (`SlideView`), so a looping background video plays on. A video cut away from stays mounted, unseen, until its sound has faded out, so a cut never clicks.
 - **Pictures:** fit, fill and blur-fill (the image over a blurred, enlarged copy of itself), plus zoom and pan in normalized coordinates, so a zoom set in a small monitor matches the TV exactly.
 - **Video and audio** play only on the output, through the chosen audio device (`setSinkId`) with short volume ramps. The monitors show the same frames but stay silent, following the output's playback reports.
 - **Slides** are laid out on a fixed 1920 × 1080 canvas and scaled to fit, so a deck looks identical everywhere; text shrinks to fit its box automatically.
-- **Ambient** is either a WebGL shader (slow, drifting light, driven by the wall clock so every view is in step) or a playlist of the church's own photos and videos with a gentle Ken Burns move, with an optional text, clock or countdown on top.
+- **Ambient** is either a WebGL shader (slow, drifting light, driven by the wall clock so every view is in step) or a playlist of the church's own photos and videos with a gentle Ken Burns move, with an optional text, clock or countdown on top. Each playlist item fades in over the previous one once it has loaded.
+
+## Scripture
+
+References are parsed in `src/shared/scripture.ts`: all 66 books with their usual abbreviations ("jn", "1 cor", "Ps", "II Kings"), single verses, ranges, whole chapters, ranges across chapters ("Rom 8:38–9:2") and one-chapter books ("Jude 3"). `Bible` (`src/main/scripture/bible.ts`) loads a translation from `resources/bible/<id>.json.gz` on first use (`{ id, name, abbr, books: [{ id, name, chapters: string[][] }] }`) and answers `scripture:passage`. In the renderer, `lib/scripture.ts` turns a passage into scripture slides: verse numbers appear as superscripts when there's more than one verse, and `splitPassage` spreads a long passage over the fewest slides that hold it, evenly. One slide is shown directly; several become a deck that stays out of the library unless it's saved. `scripts/build-bible.mjs` (`npm run bible`) downloads and converts the texts. Only public-domain translations are bundled.
 
 ## Media
 
@@ -128,7 +135,7 @@ All data lives in the user data folder (see the README). Each store is a `JsonSt
 
 ## Tests
 
-- **Unit** (`npm test`): the show reducer's workflow rules, the justified image grid and utilities.
+- **Unit** (`npm test`): the show reducer's workflow rules, scripture references and lookups, file-format detection, the justified image grid and utilities.
 - **End to end** (`npm run test:e2e`): Playwright launches the built app per spec file, with `CUE_E2E=1`, a throwaway `CUE_USER_DATA` folder and `CUE_OUTPUT_MODE=window`, and drives it like an operator: keyboard, clicks, drag and drop. It checks results both in main's state (exposed as `globalThis.__cue` only in E2E mode) and in the pixels of the audience window. `CUE_GOOGLE_BASE` points the Google pane at a local stand-in (`tests/e2e/support/mock-google.ts`) that reproduces the thumbnail-then-original behaviour and hotlink protection. Fixtures (PNG, PDF, WAV) are generated by the tests; a small WebM clip is checked in.
 
 ## Build

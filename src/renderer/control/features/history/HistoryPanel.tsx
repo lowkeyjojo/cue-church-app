@@ -83,8 +83,17 @@ function HistoryRow({ entry }: { entry: HistoryEntry }) {
         className={clsx(s.row, isLive && s.live)}
         draggable={!!entry.mediaId}
         onDragStart={(e) => entry.mediaId && setMediaDrag(e, [entry.mediaId])}
+        role="button"
+        tabIndex={0}
+        aria-label={entry.title}
         onClick={() => previewPresentation(entry.presentation)}
         onDoubleClick={() => showPresentation(entry.presentation)}
+        onKeyDown={(e) => {
+          if (!e.defaultPrevented && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            previewPresentation(entry.presentation)
+          }
+        }}
         title={`${entry.title} — click to preview, double-click to show`}
       >
         <PresentationThumb p={entry.presentation} className={s.thumb} />

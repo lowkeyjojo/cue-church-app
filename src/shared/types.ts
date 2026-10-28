@@ -3,6 +3,8 @@
  * (main <-> control <-> audience <-> worker) is described here.
  */
 
+import type { TranslationId } from './scripture'
+
 export type Id = string
 
 export interface Rect {
@@ -495,6 +497,8 @@ export interface Settings {
     renderQuality: 1080 | 1440 | 2160
     theme: SlideTheme
     background: SlideBackground
+    /** Translation for scripture lookups. */
+    bible: TranslationId
   }
   ui: {
     leftWidth: number

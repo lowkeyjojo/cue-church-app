@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { fontFamily } from '@shared/defaults'
 import type { AmbientOverlay, Presentation, ResolvedAmbient } from '@shared/types'
+import { afterPaint } from '../afterPaint'
 import type { StageRole } from '../context'
 import { GenerativeBackground } from '../GenerativeBackground'
 import { SLIDE_H, SLIDE_W } from '../slides/SlideView'
@@ -71,52 +72,91 @@ function Playlist({ ambient, seed, role }: { ambient: ResolvedAmbient; seed: str
   const interval = Math.max(4, config.interval) * 1000
   const single = order.length === 1
   const [tick, setTick] = useState(() => Math.floor(Date.now() / interval))
+  const firstTick = useRef(tick)
   useEffect(() => {
     if (single) return
     const t = setInterval(() => setTick(Math.floor(Date.now() / interval)), 500)
     return () => clearInterval(t)
   }, [interval, single])
 
-  const index = single ? 0 : tick % order.length
-  const visible = single ? [0] : [index, (index - 1 + order.length) % order.length]
+  // The outgoing item stays put underneath while the next one fades in over it.
+  const shown = single || tick === firstTick.current ? [tick] : [tick - 1, tick]
   return (
     <div className="stage-fill">
-      {visible
-        .slice()
-        .reverse()
-        .map((i, layer) => {
-          const item = order[i]
-          const current = i === index
-          const style: CSSProperties = {
-            opacity: current ? 1 : 0,
-            transition: 'opacity 1600ms ease',
-            zIndex: layer
-          }
-          const kb = config.kenBurns && item.kind === 'image'
-          return (
-            <div key={`${item.id}:${current ? tick : tick - 1}`} className="stage-fill" style={style}>
-              {item.kind === 'video' ? (
-                <video
-                  className="stage-media fit-fill"
-                  src={item.src}
-                  autoPlay={role !== 'preview'}
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                />
-              ) : (
-                <img
-                  className={`stage-media fit-fill${kb ? ` ambient-kb ambient-kb-${tick % 4}` : ''}`}
-                  style={kb ? { animationDuration: `${interval + 2000}ms` } : undefined}
-                  src={item.src}
-                  alt=""
-                  draggable={false}
-                />
-              )}
-            </div>
-          )
-        })}
+      {shown.map((at) => {
+        const item = order[single ? 0 : at % order.length]
+        return (
+          <PlaylistItem
+            key={`${item.id}:${at}`}
+            item={item}
+            kenBurns={config.kenBurns && item.kind === 'image' ? at % 4 : null}
+            duration={interval + 2000}
+            // The first item appears with the scene itself.
+            fade={at === firstTick.current ? 0 : 1600}
+            playing={role !== 'preview'}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+function PlaylistItem({
+  item,
+  kenBurns,
+  duration,
+  fade,
+  playing
+}: {
+  item: ResolvedAmbient['media'][number]
+  /** Which of the slow drifts to use, or null for a still picture. */
+  kenBurns: number | null
+  duration: number
+  fade: number
+  playing: boolean
+}) {
+  const [loaded, setLoaded] = useState(false)
+  const img = useRef<HTMLImageElement>(null)
+  // Only fade in once there is something to see; a file that won't load stays hidden.
+  const show = useCallback(() => afterPaint(() => setLoaded(true)), [])
+  useEffect(() => {
+    if (item.kind === 'video') return
+    let live = true
+    img.current?.decode().then(
+      () => live && show(),
+      () => undefined
+    )
+    return () => {
+      live = false
+    }
+  }, [item, show])
+  const style: CSSProperties = {
+    opacity: loaded ? 1 : 0,
+    transition: fade ? `opacity ${fade}ms ease` : undefined
+  }
+  return (
+    <div className="stage-fill" style={style}>
+      {item.kind === 'video' ? (
+        <video
+          className="stage-media fit-fill"
+          src={item.src}
+          autoPlay={playing}
+          muted
+          loop
+          playsInline
+          preload="auto"
+          onLoadedData={show}
+        />
+      ) : (
+        <img
+          ref={img}
+          className={`stage-media fit-fill${kenBurns === null ? '' : ` ambient-kb ambient-kb-${kenBurns}`}`}
+          style={kenBurns === null ? undefined : { animationDuration: `${duration}ms` }}
+          src={item.src}
+          alt=""
+          draggable={false}
+        />
+      )}
     </div>
   )
 }

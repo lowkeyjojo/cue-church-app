@@ -1,7 +1,7 @@
 import { ContextMenu as CM, DropdownMenu as DM } from 'radix-ui'
 import { Check, ChevronRight } from 'lucide-react'
 import clsx from 'clsx'
-import type { ReactElement, ReactNode } from 'react'
+import { useRef, type ReactElement, type ReactNode } from 'react'
 import s from './Menu.module.css'
 
 export type MenuEntry =
@@ -34,7 +34,9 @@ export type MenuEntry =
 /** Dropdown and context menus share item rendering; their item parts are structurally identical. */
 const Parts = DM as unknown as typeof DM
 
-function Items({ items, M = Parts }: { items: MenuEntry[]; M?: typeof DM }) {
+type Select = (action: () => void) => void
+
+function Items({ items, select, M = Parts }: { items: MenuEntry[]; select: Select; M?: typeof DM }) {
   const visible = items.filter(Boolean) as Exclude<MenuEntry, false | '' | 0 | null | undefined>[]
   // Drop leading/trailing/double separators left behind by conditional items.
   const cleaned = visible.filter((e, i, arr) => {
@@ -58,7 +60,7 @@ function Items({ items, M = Parts }: { items: MenuEntry[]; M?: typeof DM }) {
               key={i}
               className={s.item}
               checked={e.checked}
-              onSelect={e.onSelect}
+              onSelect={() => select(e.onSelect)}
               disabled={e.disabled}
             >
               <span className={s.icon}>{e.icon}</span>
@@ -78,7 +80,7 @@ function Items({ items, M = Parts }: { items: MenuEntry[]; M?: typeof DM }) {
               </M.SubTrigger>
               <M.Portal>
                 <M.SubContent className={s.content} sideOffset={4} alignOffset={-5} collisionPadding={8}>
-                  <Items items={e.items} M={M} />
+                  <Items items={e.items} select={select} M={M} />
                 </M.SubContent>
               </M.Portal>
             </M.Sub>
@@ -87,7 +89,7 @@ function Items({ items, M = Parts }: { items: MenuEntry[]; M?: typeof DM }) {
           <M.Item
             key={i}
             className={clsx(s.item, e.danger && s.danger)}
-            onSelect={e.onSelect}
+            onSelect={() => select(e.onSelect)}
             disabled={e.disabled}
           >
             <span className={s.icon}>{e.icon}</span>
@@ -98,6 +100,28 @@ function Items({ items, M = Parts }: { items: MenuEntry[]; M?: typeof DM }) {
       })}
     </>
   )
+}
+
+/**
+ * Menu actions run once the menu has fully closed. While it's open it holds
+ * focus, so an action that opens an inline rename or a notes field would lose
+ * that focus back to the row, where typing fires live shortcuts. Radix also
+ * puts focus back on whatever opened the menu; anything the action focused
+ * itself keeps it.
+ */
+function useDeferredSelect(): { select: Select; onCloseAutoFocus: (event: Event) => void } {
+  const pending = useRef<(() => void) | null>(null)
+  return {
+    select: (action) => (pending.current = action),
+    onCloseAutoFocus: (event) => {
+      const action = pending.current
+      pending.current = null
+      action?.()
+      const active = document.activeElement
+      if (active && active !== document.body && !active.closest('[data-radix-menu-content]'))
+        event.preventDefault()
+    }
+  }
 }
 
 export function DropdownMenu({
@@ -115,19 +139,21 @@ export function DropdownMenu({
   width?: number
   onOpenChange?: (open: boolean) => void
 }) {
+  const { select, onCloseAutoFocus } = useDeferredSelect()
   return (
     <DM.Root onOpenChange={onOpenChange}>
       <DM.Trigger asChild>{trigger}</DM.Trigger>
       <DM.Portal>
         <DM.Content
           className={s.content}
+          onCloseAutoFocus={onCloseAutoFocus}
           align={align}
           side={side}
           sideOffset={6}
           collisionPadding={8}
           style={width ? { minWidth: width } : undefined}
         >
-          <Items items={items} />
+          <Items items={items} select={select} />
         </DM.Content>
       </DM.Portal>
     </DM.Root>
@@ -145,13 +171,18 @@ export function ContextMenu({
   disabled?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
+  const { select, onCloseAutoFocus } = useDeferredSelect()
   if (disabled) return children
   return (
     <CM.Root onOpenChange={onOpenChange}>
       <CM.Trigger asChild>{children}</CM.Trigger>
       <CM.Portal>
-        <CM.Content className={s.content} collisionPadding={8}>
-          <Items items={typeof items === 'function' ? items() : items} M={CM as unknown as typeof DM} />
+        <CM.Content className={s.content} collisionPadding={8} onCloseAutoFocus={onCloseAutoFocus}>
+          <Items
+            items={typeof items === 'function' ? items() : items}
+            select={select}
+            M={CM as unknown as typeof DM}
+          />
         </CM.Content>
       </CM.Portal>
     </CM.Root>

@@ -12,6 +12,7 @@ import {
   Volume2
 } from 'lucide-react'
 import { FONTS } from '@shared/defaults'
+import { BIBLE_TRANSLATIONS, type TranslationId } from '@shared/scripture'
 import type { FitMode, FontId, OutputMode, Settings, SettingsPatch, SlideTheme } from '@shared/types'
 import { attempt, dispatch } from '../../lib/api'
 import { useApp, useSettings, useShow } from '../../lib/store'
@@ -455,6 +456,21 @@ function SlidesSettings({ settings }: { settings: Settings }) {
               }
             />
           </div>
+        </Field>
+      </Group>
+      <Group title="Scripture">
+        <Field label="Bible translation" hint="For passages you look up; both are public domain" inline>
+          <Select
+            className={s.medium}
+            value={settings.slides.bible}
+            onChange={(e) => update({ slides: { bible: e.target.value as TranslationId } })}
+          >
+            {BIBLE_TRANSLATIONS.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name} ({b.abbr})
+              </option>
+            ))}
+          </Select>
         </Field>
       </Group>
       <Group title="PDF quality">

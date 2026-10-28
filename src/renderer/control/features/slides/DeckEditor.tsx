@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
   ArrowDown,
@@ -53,17 +53,25 @@ function Editor({ item, deck: initial, onClose }: { item: MediaItem; deck: Deck;
   })
   const [name, setName] = useState(item.name)
   const [ref, size] = useElementSize<HTMLDivElement>()
+  const thumbs = useRef<(HTMLButtonElement | null)[]>([])
   const saveDeck = useMemo(
     () => debounce((d: Deck) => void attempt('library:updateDeck', item.id, d), 350),
     [item.id]
   )
   const latest = useRef(deck)
+  const pendingName = useRef<string | null>(null)
+  const saveName = useCallback(() => {
+    const next = pendingName.current?.trim()
+    pendingName.current = null
+    if (next) void attempt('library:update', item.id, { name: next })
+  }, [item.id])
 
   useEffect(() => {
     latest.current = deck
   }, [deck])
-  // Flush pending edits when the editor closes.
+  // Flush pending edits when the editor closes (Escape closes it without a blur).
   useEffect(() => () => saveDeck.flush(latest.current), [saveDeck])
+  useEffect(() => saveName, [saveName])
 
   const change = (next: Deck) => {
     setDeck(next)
@@ -92,10 +100,18 @@ function Editor({ item, deck: initial, onClose }: { item: MediaItem; deck: Deck;
     change({ ...deck, slides })
     setIndex(i + 1)
   }
+  /** Returns the slide selected afterwards: the same one, or the removed one's neighbour. */
   const remove = (i: number) => {
-    if (deck.slides.length <= 1) return
+    if (deck.slides.length <= 1) return index
     change({ ...deck, slides: deck.slides.filter((_, x) => x !== i) })
-    setIndex(Math.max(0, Math.min(index, deck.slides.length - 2)))
+    const next = i < index ? index - 1 : Math.min(index, deck.slides.length - 2)
+    setIndex(next)
+    return next
+  }
+  /** Select from the keyboard: focus goes along, so Delete acts on the slide that is selected. */
+  const focusSlide = (i: number) => {
+    setIndex(i)
+    requestAnimationFrame(() => thumbs.current[i]?.focus())
   }
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir
@@ -149,12 +165,14 @@ function Editor({ item, deck: initial, onClose }: { item: MediaItem; deck: Deck;
         <input
           className={s.name}
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() =>
-            name.trim() &&
-            name.trim() !== item.name &&
-            attempt('library:update', item.id, { name: name.trim() })
-          }
+          onChange={(e) => {
+            setName(e.target.value)
+            pendingName.current = e.target.value
+          }}
+          onBlur={() => {
+            saveName()
+            if (!name.trim()) setName(item.name)
+          }}
           aria-label="Slide deck name"
         />
       }
@@ -219,16 +237,23 @@ function Editor({ item, deck: initial, onClose }: { item: MediaItem; deck: Deck;
               ]}
             >
               <button
+                ref={(el) => {
+                  thumbs.current[i] = el
+                }}
                 className={clsx(s.thumbButton, i === index && s.thumbOn)}
+                // One stop for Tab; the arrow keys move within the list.
+                tabIndex={i === index ? 0 : -1}
+                aria-current={i === index}
                 onClick={() => setIndex(i)}
                 onKeyDown={(e) => {
-                  if (e.key === 'ArrowDown' && i < deck.slides.length - 1) setIndex(i + 1)
-                  if (e.key === 'ArrowUp' && i > 0) setIndex(i - 1)
-                  if (
-                    (e.key === 'Delete' || e.key === 'Backspace') &&
-                    !(e.target instanceof HTMLInputElement)
-                  )
-                    remove(i)
+                  const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
+                  if (step) {
+                    e.preventDefault()
+                    if (deck.slides[i + step]) focusSlide(i + step)
+                  } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                    e.preventDefault()
+                    focusSlide(remove(i))
+                  }
                 }}
               >
                 <span className={s.thumbNum}>{i + 1}</span>

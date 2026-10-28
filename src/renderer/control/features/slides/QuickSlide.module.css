@@ -14,6 +14,32 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
 }
+.lookup {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+.passageNote {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
 .preview {
   aspect-ratio: 16 / 9;
   border-radius: var(--r-10);

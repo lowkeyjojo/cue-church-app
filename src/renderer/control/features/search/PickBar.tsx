@@ -39,7 +39,8 @@ export function PickBar({ guest }: { guest: () => GuestHandle | null }) {
     setSearch({ busy: true })
     try {
       const got = await ingestGooglePick(pick, guest(), { save, query })
-      if (got) setSearch({ pickedMediaId: got.id })
+      // The operator may have opened another image meanwhile; don't attach this one to it.
+      if (got && useUI.getState().search.pick === pick) setSearch({ pickedMediaId: got.id })
       return got
     } finally {
       setSearch({ busy: false })

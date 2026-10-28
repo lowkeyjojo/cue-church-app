@@ -21,7 +21,8 @@ A guide for whoever is at the computer on Sunday. Cue has two screens: **yours**
 
 - **Make a plan:** **New service plan** from the plan menu (the plan name at the top left), or **File → New Service Plan**.
 - **Add things:** drag files from your computer onto the plan, drag items from the Library, or use **Add to plan** for text slides, a countdown, a black screen or a section heading.
-- **Slides:** export PowerPoint or Keynote presentations as PDF and import the PDF, or make text slides in Cue. Slides with lyrics or long passages can be split into one slide per paragraph in the editor.
+- **Slides:** export PowerPoint or Keynote presentations as PDF and import the PDF, or make text slides in Cue. Slides with lyrics or long passages can be split into one slide per paragraph in the editor. Give a song's slides one background (a photo or a looping video) and only the words change from slide to slide; the background keeps playing.
+- **Bible readings:** in a quick text slide (Ctrl/⌘ + T) choose **Scripture** and type the reference, then **Save to plan**. A long reading is spread over several slides.
 - **Countdown:** **Add to plan → Ambient or countdown**. Choose a background, then a countdown _for_ a number of minutes or _until_ a time, and the message to show at zero.
 - **Notes:** each plan item has private notes, such as "show when the pastor mentions Ephesus". Only you see them.
 - **Taking it to church:** use **Export with media…** from the plan menu. You get a single `.cueplan` file; double-click it on the church computer and the plan opens with everything in it.
@@ -48,12 +49,15 @@ A guide for whoever is at the computer on Sunday. Cue has two screens: **yours**
 | Pause or play a video               | **K**; drag the timeline to jump                                          |
 | Mute                                | **M**                                                                     |
 
+**Space means Show, even after you've clicked a button.** If you move around Cue with **Tab** instead of the mouse, Space and Enter press the button you're on, as in any app (on a library item, Enter puts it in Preview), and **Ctrl + Enter** (⌘ Enter) shows the preview.
+
 **When the pastor mentions something you don't have:** press **Ctrl + L** (⌘ L on a Mac), type what you need and press Enter. Click an image in the results: Cue fetches the full-size picture and puts it in Preview. Check it, then press **Ctrl + Enter** (⌘ Enter) to show it. Press **R** afterwards to go back to the slides.
 
 Other quick ways in:
 
 - **Paste** (Ctrl/⌘ + V) an image, or a link to one, anywhere in Cue to put it in Preview.
 - **Quick text slide** (Ctrl/⌘ + T): type a verse, a phrase or an announcement and show it.
+- **A Bible verse:** press Ctrl/⌘ + K and type the reference, such as `John 3:16`, `ps 23` or `1 cor 13 4-7`. Press **Enter** to put it in Preview, or **Shift + Enter** to show it straight away. A long passage comes up as several slides: press **→** to move through them. To change the wording first, choose **Open … in a quick slide**. The World English Bible (WEB) and King James Version (KJV) are built in and work without internet; pick the default in **Settings → Slides**, or switch for one passage in the quick slide.
 - **Find anything** (Ctrl/⌘ + K): plan items, library media, slides and actions.
 - **Free images:** in Search, switch from Google to Wikimedia Commons, Openverse or Pexels for openly licensed photos with credits.
 

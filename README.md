@@ -11,7 +11,8 @@ Cue is a cross-platform church presentation application for macOS and Windows. I
 - **Service plans.** Line up slides, PDFs, photos, videos, countdowns and section headings, then run the service with one key. The next item waits in Preview automatically. Plans export as a single `.cueplan` file with all their media, so you can prepare at home and run at church.
 - **Spontaneous moments.** Show a map the pastor just mentioned, paste an image or link (Ctrl/⌘+V), or type a quick text slide (Ctrl/⌘+T). **Back** (R) returns to your sermon slides at the page you left.
 - **Media library.** Images, animated GIFs, videos, audio and PDFs are copied into Cue so everything works offline. Favorites, collections, "Recently shown" and a "Shown today" history make things easy to find again.
-- **Slides.** Import PDF presentations (PowerPoint and Keynote: export as PDF) or make simple text slides with title, scripture, big-word and lower-third layouts. Edit a deck while it's on screen and the audience sees the fix as you type.
+- **Slides.** Import PDF presentations (PowerPoint and Keynote: export as PDF) or make simple text slides with title, scripture, big-word and lower-third layouts. Edit a deck while it's on screen and the audience sees the fix as you type. Between slides that share a background only the words change, so a motion background keeps playing.
+- **Scripture.** Type a reference such as `John 3:16`, `ps 23` or `Rom 8:38-39` into the command palette (Ctrl/⌘+K) or a quick text slide and the passage is ready to show. The World English Bible and the King James Version are built in and work offline; a long passage is spread evenly over as many slides as it needs.
 - **Ambient mode.** Calm motion backgrounds or a slideshow of your own photos and videos, with an optional welcome message, clock or countdown, for before, between and after the service (A).
 - **Full control of the screen.** Blackout (B), fit / fill / blur-fill, zoom and pan, cut / fade / dip transitions, video transport with loop and end actions, volume and mute, choice of audio output (HDMI or sound desk), overscan inset, a test pattern and display identification.
 - **Built for live use.** Cue never puts the audience window on your own screen, switches to the TV when it's plugged in, keeps the computer awake, and after a crash or power cut puts the audience screen back exactly as it was.
@@ -44,31 +45,34 @@ The [Operator guide](docs/OPERATOR_GUIDE.md) walks through a whole service, with
 
 ## Keyboard shortcuts
 
-| Key                | Action                                                   |
-| ------------------ | -------------------------------------------------------- |
-| Space              | Show the preview on screen                               |
-| Ctrl/⌘ + Enter     | Show the preview, even while typing or browsing Google   |
-| → / ←              | Next / previous slide or page (also Page Down / Page Up) |
-| B                  | Blackout on/off (Shift + Ctrl/⌘ + B works anywhere)      |
-| A                  | Ambient on/off (Shift + Ctrl/⌘ + A works anywhere)       |
-| R                  | Back to what was showing before (e.g. your slides)       |
-| F                  | Cycle fit → fill → blur                                  |
-| + / − / 0          | Zoom in, zoom out, reset zoom                            |
-| K / M              | Play or pause video / mute                               |
-| 1 … 9              | Preview plan item 1–9                                    |
-| Ctrl/⌘ + K         | Command palette: find media, plan items and actions      |
-| Ctrl/⌘ + L         | Search images                                            |
-| Ctrl/⌘ + V         | Paste an image, link or text into Preview                |
-| Ctrl/⌘ + T         | Quick text slide                                         |
-| Ctrl/⌘ + I         | Import media                                             |
-| Ctrl/⌘ + 1 / 2 / 3 | Show, Search or Library tab                              |
-| Ctrl/⌘ + ,         | Settings                                                 |
+| Key                | Action                                                    |
+| ------------------ | --------------------------------------------------------- |
+| Space              | Show the preview on screen                                |
+| Ctrl/⌘ + Enter     | Show the preview, even while typing or browsing Google    |
+| → / ←              | Next / previous slide or page (also Page Down / Page Up)  |
+| B                  | Blackout on/off (Shift + Ctrl/⌘ + B works anywhere)       |
+| A                  | Ambient on/off (Shift + Ctrl/⌘ + A works anywhere)        |
+| R                  | Back to what was showing before (e.g. your slides)        |
+| F                  | Cycle fit → fill → blur                                   |
+| + / − / 0          | Zoom in, zoom out, reset zoom                             |
+| K / M              | Play or pause video / mute                                |
+| 1 … 9              | Preview plan item 1–9                                     |
+| Ctrl/⌘ + K         | Command palette: media, plan items, actions, Bible verses |
+| Ctrl/⌘ + L         | Search images                                             |
+| Ctrl/⌘ + V         | Paste an image, link or text into Preview                 |
+| Ctrl/⌘ + T         | Quick text slide                                          |
+| Ctrl/⌘ + I         | Import media                                              |
+| Ctrl/⌘ + 1 / 2 / 3 | Show, Search or Library tab                               |
+| Ctrl/⌘ + ,         | Settings                                                  |
+
+After you click anything with the mouse, Space still means Show. When you move around with Tab instead, Space and Enter press the focused control as usual (on a library item, Enter puts it in Preview).
 
 ## Image search, copyright and privacy
 
 - **Google Images** runs as the real Google page inside Cue. Cue doesn't scrape or proxy Google's results or call any unofficial API. It notices the image you open and fetches that one file for you, so Google's own terms, SafeSearch (on by default) and usage-rights filter apply as usual. Google's own Custom Search JSON API stops serving results on 1 January 2027, which is another reason Cue embeds the page rather than depending on it.
 - **Wikimedia Commons, Openverse and Pexels** are searched through their public APIs. Results show the author and license; a Pexels API key (free) is optional.
 - **Copyright:** images you find online usually belong to someone. Cue records where every image came from (page, author, license) and can show a small credit on screen. Prefer the Creative Commons filter or the openly licensed sources when you can, and follow your church's copyright licenses (e.g. for song lyrics).
+- **Bible text:** Cue includes only public-domain translations. The World English Bible (published by eBible.org) comes from [TehShrike/world-english-bible](https://github.com/TehShrike/world-english-bible) and the King James Version from [thiagobodruk/bible](https://github.com/thiagobodruk/bible); `npm run bible` rebuilds both. The KJV is public domain except in the United Kingdom, where the Crown's rights in it are administered by Cambridge University Press. Modern translations such as the NIV or ESV are licensed, so type or paste their text into a slide under your church's license instead.
 - **Privacy:** Cue has no account, no analytics and no telemetry. Your library, plans and settings stay on your computer. Pages in the browser pane keep their own cookies, separate from Cue's windows.
 
 ## Development
@@ -91,13 +95,14 @@ npm run dev
 | `npm start`         | Run the built bundle                                                         |
 | `npm run typecheck` | TypeScript, for both the Node and the browser side                           |
 | `npm run lint`      | ESLint (`npm run format` applies Prettier)                                   |
-| `npm test`          | Unit tests (Vitest): the show reducer, layout and utilities                  |
+| `npm test`          | Unit tests (Vitest): the show reducer, scripture, layout and utilities       |
 | `npm run test:e2e`  | Build, then drive the real app with Playwright (uses Xvfb on headless Linux) |
 | `npm run check`     | Typecheck, lint and unit tests together                                      |
 | `npm run dist:mac`  | Package for macOS (on a Mac): `release/<version>/*.dmg` and `.zip`           |
 | `npm run dist:win`  | Package for Windows (on Windows): installer and portable `.exe`              |
 | `npm run dist:dir`  | Unpacked app for the current platform, for a quick smoke test                |
 | `npm run icons`     | Redraw the app icons in `build/` and `resources/`                            |
+| `npm run bible`     | Download the bundled Bible translations again into `resources/bible/`        |
 
 The end-to-end suite launches Cue with a throwaway data folder and a local stand-in for Google Images, so it needs no network. Pass Playwright arguments through, for example `npm run test:e2e -- tests/e2e/google.spec.ts`, and add `--no-build` to reuse the current `out/`.
 
@@ -119,7 +124,7 @@ Logs are in `logs/cue.log` (Settings → Library → **Show logs**). Set `CUE_US
 
 ## Project status
 
-Cue 0.9 is feature-complete for the workflows above and covered by unit and end-to-end tests on every platform in CI. The earlier Apple Silicon prototype's source wasn't available in this repository, so Cue was rebuilt from scratch around the same Google-image-to-audience workflow.
+Cue 0.9 is feature-complete for the workflows above, with unit tests and an end-to-end suite that CI runs on Linux, macOS and Windows. The earlier Apple Silicon prototype's source wasn't available in this repository, so Cue was rebuilt from scratch around the same Google-image-to-audience workflow.
 
 Before relying on it in a service:
 

@@ -1,5 +1,6 @@
 import { clipboard, ClipboardItem, session, webContents } from 'electron'
 import type { MediaItem, WebPick } from '@shared/types'
+import { isHttpUrl } from '@shared/util'
 import { log, UserError } from '../log'
 import type { LibraryStore } from '../store/library'
 import type { Importer } from './importer'
@@ -132,6 +133,8 @@ async function download(
   url: string,
   pick: WebPick
 ): Promise<{ bytes: Uint8Array; mime: string | undefined }> {
+  // Only the web: a page must never be able to point Cue at local files or app-internal schemes.
+  if (!isHttpUrl(url)) throw new UserError("That isn't a web address Cue can bring in")
   const ses = session.fromPartition(WEB_PARTITION)
   const headers: Record<string, string> = {
     Accept: 'image/avif,image/webp,image/apng,image/*,video/*;q=0.9,*/*;q=0.5'

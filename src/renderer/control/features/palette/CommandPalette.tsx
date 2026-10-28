@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Dialog as D } from 'radix-ui'
 import clsx from 'clsx'
 import {
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   CircleOff,
@@ -10,6 +11,7 @@ import {
   Keyboard,
   Landmark,
   Moon,
+  PenLine,
   Plus,
   ScanSearch,
   Settings,
@@ -19,11 +21,14 @@ import {
   Type,
   Upload
 } from 'lucide-react'
-import type { MediaItem, PlanEntry } from '@shared/types'
-import { attempt, dispatch } from '../../lib/api'
+import { BIBLE_TRANSLATIONS, formatReference, parseReference, type TranslationId } from '@shared/scripture'
+import type { MediaItem, PlanEntry, Settings as AppSettings } from '@shared/types'
+import { attempt, cleanError, dispatch } from '../../lib/api'
 import { GOOGLE_SEARCH_EVENT, runUiCommand } from '../../lib/commands'
 import { previewEntry, previewMedia, showEntry, showMedia, useCurrentPlan } from '../../lib/planActions'
-import { useApp } from '../../lib/store'
+import { lookUpScripture, presentSlides } from '../../lib/scripture'
+import { useApp, useSettings } from '../../lib/store'
+import { toast } from '../../lib/toasts'
 import { useUI } from '../../lib/ui'
 import { AmbientThumb, MediaThumb } from '../common/Thumb'
 import { entryInfo, itemSubtitle } from '../plan/entryInfo'
@@ -31,7 +36,7 @@ import s from './CommandPalette.module.css'
 
 interface Command {
   id: string
-  group: 'Actions' | 'Service plan' | 'Library' | 'Search the web'
+  group: 'Scripture' | 'Actions' | 'Service plan' | 'Library' | 'Search the web'
   label: string
   detail?: string
   icon?: ReactNode
@@ -56,6 +61,7 @@ function score(text: string, words: string[]): number {
 export function CommandPalette() {
   const close = useUI((st) => st.close)
   const items = useApp((st) => st.items)
+  const settings = useSettings()
   const plan = useCurrentPlan()
   const [query, setQuery] = useState('')
   const [index, setIndex] = useState(0)
@@ -191,6 +197,34 @@ export function CommandPalette() {
     if (words.length) actions.forEach((a) => add(a))
     else actions.slice(0, 6).forEach((a) => add(a))
 
+    // "John 3:16", "ps 23": the passage, ready to preview or show.
+    const verse = parseReference(q)
+    if (verse && settings) {
+      const translation = settings.slides.bible
+      const abbr = BIBLE_TRANSLATIONS.find((t) => t.id === translation)?.abbr
+      const reference = formatReference(verse)
+      out.push(
+        {
+          id: 'scripture',
+          group: 'Scripture',
+          label: `${reference} (${abbr})`,
+          icon: <BookOpen size={15} />,
+          score: 0,
+          run: () => void scripture(q, translation, settings.slides, false),
+          runLive: () => void scripture(q, translation, settings.slides, true)
+        },
+        {
+          id: 'scripture-edit',
+          group: 'Scripture',
+          label: `Open ${reference} in a quick slide…`,
+          detail: 'adjust the text first',
+          icon: <PenLine size={15} />,
+          score: 0,
+          run: () => useUI.getState().open('quickSlide', { text: q })
+        }
+      )
+    }
+
     if (plan) {
       plan.entries
         .filter((e): e is PlanEntry => e.type !== 'section')
@@ -249,14 +283,14 @@ export function CommandPalette() {
       })
     }
 
-    const order = { Actions: 0, 'Service plan': 1, Library: 2, 'Search the web': 3 }
+    const order = { Scripture: 0, Actions: 1, 'Service plan': 2, Library: 3, 'Search the web': 4 }
     const grouped = out.sort((a, b) => order[a.group] - order[b.group] || b.score - a.score)
     // Keep each group short.
     const counts: Record<string, number> = {}
     return grouped.filter(
       (c) => (counts[c.group] = (counts[c.group] ?? 0) + 1) <= (c.group === 'Library' ? 30 : 12)
     )
-  }, [query, items, plan])
+  }, [query, items, plan, settings])
 
   useEffect(() => setIndex(0), [query])
   useEffect(() => {
@@ -280,7 +314,7 @@ export function CommandPalette() {
           <input
             className={s.input}
             autoFocus
-            placeholder="Find plan items, media and actions — or search the web…"
+            placeholder="Find plan items, media, actions or a Bible passage — or search the web…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -333,6 +367,20 @@ export function CommandPalette() {
       </D.Portal>
     </D.Root>
   )
+}
+
+async function scripture(
+  reference: string,
+  translation: TranslationId,
+  look: AppSettings['slides'],
+  live: boolean
+): Promise<void> {
+  try {
+    const { label, slides } = await lookUpScripture(reference, translation)
+    await presentSlides(slides, label, look, live)
+  } catch (err) {
+    toast.error(cleanError(err))
+  }
 }
 
 function searchWeb(provider: 'google' | 'wikimedia', query: string) {

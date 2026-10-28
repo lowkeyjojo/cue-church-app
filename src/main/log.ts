@@ -45,8 +45,7 @@ export const log = {
   error: (...args: unknown[]) => write('error', args)
 }
 
-/** An expected failure with a message meant for the operator (a site refusing a download, an unsupported file). */
-export class UserError extends Error {}
+export { UserError } from './errors'
 
 export function errorMessage(err: unknown): string {
   if (err instanceof Error) return err.message

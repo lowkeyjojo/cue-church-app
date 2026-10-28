@@ -72,6 +72,22 @@ function inWidget(target: EventTarget | null, selector: string): boolean {
   return target instanceof Element && !!target.closest(selector)
 }
 
+const ACTIVATABLE =
+  'button, a[href], summary, [role="button"], [role="switch"], [role="tab"], [role="radio"], [role="checkbox"], [role="option"]'
+
+/**
+ * A control reached with the keyboard keeps Space and Enter for itself, as
+ * everywhere else. One that was just clicked with the mouse doesn't: there Space
+ * still means "Show", which is what an operator expects. (`:focus-visible` can't
+ * tell the two apart: Chromium turns it on as soon as a key is pressed.)
+ */
+function keyboardControl(target: EventTarget | null, clicked: Element | null): boolean {
+  return target instanceof Element && target !== clicked && target.matches(ACTIVATABLE)
+}
+
+/** Holding a key shouldn't flicker the blackout or page through the sermon; zooming may repeat. */
+const REPEATABLE = new Set(['+', '=', '-', '_'])
+
 function show(cmd: ShowCommand) {
   dispatch(cmd)
 }
@@ -79,7 +95,14 @@ function show(cmd: ShowCommand) {
 /** Install Cue's keyboard shortcuts on the control window. */
 export function useKeyboard(): void {
   useEffect(() => {
+    // Which control the mouse last focused, so Space and Enter know who they belong to.
+    let pointer = false
+    let clicked: Element | null = null
+    const onPointer = () => (pointer = true)
+    const onFocus = (e: FocusEvent) => (clicked = pointer && e.target instanceof Element ? e.target : null)
+
     const onKey = (e: KeyboardEvent) => {
+      pointer = false
       if (e.defaultPrevented || e.isComposing) return
       const primary = isMac ? e.metaKey : e.ctrlKey
       const key = e.key
@@ -87,6 +110,10 @@ export function useKeyboard(): void {
       // Modifier shortcuts work everywhere, including while typing.
       if (primary && !e.altKey) {
         const k = key.toLowerCase()
+        if (e.repeat && (key === 'Enter' || (e.shiftKey && (k === 'b' || k === 'a')))) {
+          e.preventDefault()
+          return
+        }
         if (key === 'Enter' && !e.shiftKey) {
           // Dialogs (e.g. the command palette) use ⌘/Ctrl+Enter themselves.
           if (anyDialogOpen()) return
@@ -136,6 +163,11 @@ export function useKeyboard(): void {
       const state = useApp.getState().show
       const live = state?.live ?? null
       const arrowNav = inWidget(e.target, '[data-arrow-nav]')
+      if ((key === ' ' || key === 'Enter') && keyboardControl(e.target, clicked)) return
+      if (e.repeat && !REPEATABLE.has(key) && !(arrowNav && (key === 'ArrowDown' || key === 'ArrowUp'))) {
+        e.preventDefault()
+        return
+      }
       let handled = true
       switch (key) {
         case ' ':
@@ -207,6 +239,12 @@ export function useKeyboard(): void {
     }
     // Capture phase: decide before a focused button turns Space/Enter into a click.
     window.addEventListener('keydown', onKey, true)
-    return () => window.removeEventListener('keydown', onKey, true)
+    window.addEventListener('pointerdown', onPointer, true)
+    window.addEventListener('focusin', onFocus, true)
+    return () => {
+      window.removeEventListener('keydown', onKey, true)
+      window.removeEventListener('pointerdown', onPointer, true)
+      window.removeEventListener('focusin', onFocus, true)
+    }
   }, [])
 }

@@ -2,12 +2,12 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import type { Presentation, TransitionSettings } from '@shared/types'
 import { pageFile } from '@shared/util'
 import { useStage } from './context'
-import { SlideView } from './slides/SlideView'
+import { slideBackground, SlideView } from './slides/SlideView'
 import type { Size } from './useElementSize'
 import { AmbientView } from './views/AmbientView'
 import { ColorView } from './views/ColorView'
 import { ImageView } from './views/ImageView'
-import { VideoView } from './views/VideoView'
+import { LEAVE_AUDIO_MS, VideoView } from './views/VideoView'
 
 /**
  * Lifecycle of something on screen:
@@ -32,9 +32,17 @@ interface Slot {
 }
 
 const READY_TIMEOUT = 2500
+/** The Preview monitor changes quickly, whatever the live transition is. */
+const PREVIEW_TRANSITION: TransitionSettings = { kind: 'fade', duration: 140 }
 
-export function slotKey(p: Presentation): string {
-  return p.kind === 'pdf' || p.kind === 'deck' ? `${p.id}#${p.page ?? 0}` : p.id
+/**
+ * Each PDF page is its own picture. Slides that share a background share a
+ * slot: only their words change, so a moving background plays on.
+ */
+function slotKey(p: Presentation): string {
+  if (p.kind === 'pdf') return `${p.id}#${p.page ?? 0}`
+  if (p.kind === 'deck' && p.deck) return `${p.id}#${JSON.stringify(slideBackground(p.deck, p.page ?? 0))}`
+  return p.id
 }
 
 export function ContentLayer({
@@ -81,27 +89,30 @@ export function ContentLayer({
     commit(next)
   }, [commit])
 
-  /** Run the configured transition from whatever is visible to `key`. */
+  /** Run the configured transition from whatever is visible to the slot `show` (null: to nothing). */
   const reveal = useCallback(
-    (key: string | null) => {
-      const t = transitionRef.current
+    (show: number | null) => {
+      const t = role === 'preview' ? PREVIEW_TRANSITION : transitionRef.current
       const now = performance.now()
-      const d = role === 'preview' ? 140 : t.kind === 'cut' ? 0 : t.duration
-      const kind = role === 'preview' ? 'fade' : t.kind
+      const d = t.kind === 'cut' ? 0 : t.duration
+      const kind = t.kind
       let total = 0
       const next = slotsRef.current.map((s): Slot => {
-        if (s.key === key && s.phase === 'loading') {
+        if (s.seq === show && s.phase === 'loading') {
           const delay = kind === 'dip' ? d / 2 : 0
           const ms = kind === 'dip' ? d / 2 : d
           total = Math.max(total, delay + ms)
           return { ...s, phase: d ? 'in' : 'shown', ms, delay, endsAt: now + delay + ms }
         }
-        if (s.phase === 'stale' || (key === null && (s.phase === 'shown' || s.phase === 'in'))) {
+        if (s.phase === 'stale' || (show === null && (s.phase === 'shown' || s.phase === 'in'))) {
           // Crossfade: the outgoing image lingers a little so the screen never dips toward black.
           const delay = kind === 'fade' ? d * 0.35 : 0
           const ms = kind === 'fade' ? d * 0.65 : kind === 'dip' ? d / 2 : 0
-          total = Math.max(total, delay + ms)
-          return { ...s, phase: 'out', ms, delay, endsAt: now + delay + ms }
+          // Sound fades out even on a cut: keep the video (unseen) until it has.
+          const audible = role === 'output' && (s.p.kind === 'video' || s.p.kind === 'audio')
+          const end = Math.max(delay + ms, audible ? LEAVE_AUDIO_MS + 50 : 0)
+          total = Math.max(total, end)
+          return { ...s, phase: 'out', ms, delay, endsAt: now + end }
         }
         return s
       })
@@ -112,8 +123,8 @@ export function ContentLayer({
   )
 
   const ready = useCallback(
-    (key: string) => {
-      if (slotsRef.current.some((s) => s.key === key && s.phase === 'loading')) reveal(key)
+    (slot: number) => {
+      if (slotsRef.current.some((s) => s.seq === slot && s.phase === 'loading')) reveal(slot)
     },
     [reveal]
   )
@@ -124,8 +135,17 @@ export function ContentLayer({
     const prev = slotsRef.current
     const current = key ? prev.find((s) => s.key === key && s.phase !== 'out') : undefined
     if (current) {
-      if (current.p !== presentation)
+      if (current.phase === 'stale') {
+        // Back to what is still on screen before the newer content arrived (→ then ←):
+        // keep it, and drop whatever was loading so it can't take over later.
+        commit(
+          prev
+            .filter((s) => s.phase !== 'loading')
+            .map((s) => (s === current ? { ...s, p: presentation!, phase: 'shown' as Phase } : s))
+        )
+      } else if (current.p !== presentation) {
         commit(prev.map((s) => (s === current ? { ...s, p: presentation! } : s)))
+      }
       return
     }
     // Something new: whatever is visible goes stale; anything still loading is dropped.
@@ -133,9 +153,10 @@ export function ContentLayer({
       .filter((s) => s.phase !== 'loading')
       .map((s) => (s.phase === 'shown' || s.phase === 'in' ? { ...s, phase: 'stale' as Phase } : s))
     if (presentation && key) {
-      next.push({ key, seq: ++seq.current, p: presentation, phase: 'loading', ms: 0, delay: 0, endsAt: 0 })
+      const slot = ++seq.current
+      next.push({ key, seq: slot, p: presentation, phase: 'loading', ms: 0, delay: 0, endsAt: 0 })
       commit(next.slice(-4))
-      later(READY_TIMEOUT, () => ready(key))
+      later(READY_TIMEOUT, () => ready(slot))
     } else {
       commit(next)
       reveal(null)
@@ -145,13 +166,29 @@ export function ContentLayer({
   return (
     <>
       {slots.map((s) => (
-        <SlotView key={s.seq} slot={s} size={size} onReady={ready} />
+        <SlotView
+          key={s.seq}
+          slot={s}
+          size={size}
+          transition={role === 'preview' ? PREVIEW_TRANSITION : transition}
+          onReady={ready}
+        />
       ))}
     </>
   )
 }
 
-function SlotView({ slot, size, onReady }: { slot: Slot; size: Size; onReady: (key: string) => void }) {
+function SlotView({
+  slot,
+  size,
+  transition,
+  onReady
+}: {
+  slot: Slot
+  size: Size
+  transition: TransitionSettings
+  onReady: (slot: number) => void
+}) {
   const { role } = useStage()
   const p = slot.p
   const visible = slot.phase === 'in' || slot.phase === 'shown' || slot.phase === 'stale'
@@ -159,11 +196,11 @@ function SlotView({ slot, size, onReady }: { slot: Slot; size: Size; onReady: (k
     opacity: visible ? 1 : 0,
     transition: slot.ms ? `opacity ${slot.ms}ms cubic-bezier(0.4, 0, 0.2, 1) ${slot.delay}ms` : 'none'
   }
-  const ready = useCallback(() => onReady(slot.key), [onReady, slot.key])
+  const ready = useCallback(() => onReady(slot.seq), [onReady, slot.seq])
   const leaving = slot.phase === 'out'
   return (
     <div className="stage-slot" style={style} data-kind={p.kind} data-phase={slot.phase} data-key={slot.key}>
-      <ItemView p={p} size={size} role={role} leaving={leaving} onReady={ready} />
+      <ItemView p={p} size={size} role={role} transition={transition} leaving={leaving} onReady={ready} />
     </div>
   )
 }
@@ -172,12 +209,14 @@ function ItemView({
   p,
   size,
   role,
+  transition,
   leaving,
   onReady
 }: {
   p: Presentation
   size: Size
   role: ReturnType<typeof useStage>['role']
+  transition: TransitionSettings
   leaving: boolean
   onReady: () => void
 }) {
@@ -206,6 +245,7 @@ function ItemView({
           width={size.width}
           height={size.height}
           role={role}
+          transition={transition}
           onReady={onReady}
         />
       ) : null

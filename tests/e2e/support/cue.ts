@@ -4,7 +4,8 @@
  * window as a Playwright page, and the main process's show state.
  */
 import { _electron as electron, type ElectronApplication, type Locator, type Page } from '@playwright/test'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import type { CueArgs, CueMethod, CueResult } from '../../../src/shared/ipc'
@@ -53,7 +54,7 @@ export interface LaunchOptions {
   firstRun?: boolean
   settings?: SettingsPatch
   env?: Record<string, string>
-  /** Reuse a data folder from an earlier launch (to relaunch after a crash or quit). */
+  /** Use this data folder: a fresh one, or one from an earlier launch (to relaunch after a crash or quit). */
   dataDir?: string
   /** Extra command-line arguments, e.g. a file to open. */
   args?: string[]
@@ -78,7 +79,8 @@ export class Cue {
 
   static async launch(opts: LaunchOptions = {}): Promise<Cue> {
     const dataDir = opts.dataDir ?? (await mkdtemp(join(tmpdir(), 'cue-e2e-')))
-    if (!opts.dataDir) {
+    if (!existsSync(join(dataDir, 'settings.json'))) {
+      await mkdir(dataDir, { recursive: true })
       // Skip the welcome walkthrough (and sample service) unless the test is about first run.
       const seed: SettingsPatch = opts.firstRun
         ? { ...opts.settings }
@@ -99,10 +101,12 @@ export class Cue {
     }
     let control: Page
     try {
-      control = await windowByUrl(app, 'control.html')
+      control = await windowByUrl(app, 'control.html', opts.dataDir ? 30_000 : 15_000)
     } catch (err) {
       await app.close().catch(() => undefined)
-      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${logs.join('\n')}`, { cause: err })
+      // Cue's own log file, in case its console output wasn't captured.
+      const file = await readFile(join(dataDir, 'logs', 'cue.log'), 'utf8').catch(() => '(no log file)')
+      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${file.slice(-6000)}`, { cause: err })
     }
     const cue = new Cue(app, control, dataDir, logs)
     control.on('pageerror', (err) => cue.pageErrors.push(`${err.name}: ${err.message}`))
@@ -223,8 +227,12 @@ export class Cue {
   }
 }
 
-export async function windowByUrl(app: ElectronApplication, fragment: string): Promise<Page> {
-  for (let i = 0; i < 150; i++) {
+export async function windowByUrl(
+  app: ElectronApplication,
+  fragment: string,
+  timeoutMs = 15_000
+): Promise<Page> {
+  for (let i = 0; i < timeoutMs / 100; i++) {
     const page = app.windows().find((w) => w.url().includes(fragment))
     if (page) return page
     await new Promise((r) => setTimeout(r, 100))

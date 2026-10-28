@@ -30,6 +30,13 @@ interface ShowFile {
   version: 1
   cleanExit: boolean
   state?: Persisted
+  /** Where the live video or audio had got to, so a restart can carry on from there. */
+  position?: Position
+}
+
+interface Position {
+  id: Id
+  time: number
 }
 
 /** Commands that can replace what's live; they snapshot video position first so Back can resume it. */
@@ -44,6 +51,9 @@ export class ShowController extends Emitter<{
   playback: PlaybackStatus | null = null
   /** The last session ended unexpectedly with something on screen, which has been put back. */
   readonly recoveredFromCrash: boolean
+  /** The live video's last reported position; survives output reloads, unlike `playback`. */
+  private position: Position | null = null
+  private savedPosition = 0
   private endedHandled = ''
   private file = new JsonStore<ShowFile>(dataPath('show.json'), () => ({ version: 1, cleanExit: true }))
 
@@ -58,6 +68,15 @@ export class ShowController extends Emitter<{
     this.state = initialShowState(s.transition, s.audio.volume)
     const saved = this.file.data
     const restored = saved.state && !saved.cleanExit ? this.validate(saved.state) : null
+    const live = restored?.live
+    if (live && isTimed(live) && live.transport && saved.position?.id === live.id) {
+      // Pick the video up where it was, not where it started.
+      restored.live = {
+        ...live,
+        transport: { ...live.transport, seek: { ...live.transport.seek, time: saved.position.time } }
+      }
+      this.position = saved.position
+    }
     this.recoveredFromCrash = !!(restored && (restored.live || restored.ambient.active))
     if (restored) {
       // Cue didn't shut down cleanly: put the audience screen back the way it was.
@@ -115,6 +134,7 @@ export class ShowController extends Emitter<{
     if (!live || status.presentationId !== live.id) return
     this.playback = status
     this.emit('playback', status)
+    this.rememberPosition(live.id, status.ended ? (live.startAt ?? 0) : status.currentTime)
     const key = `${live.id}:${live.transport?.seek.nonce ?? 0}`
     if (status.ended && this.endedHandled !== key && !live.loop) {
       this.endedHandled = key
@@ -129,6 +149,32 @@ export class ShowController extends Emitter<{
       else if (live.endAction === 'ambient') this.dispatch({ type: 'ambient', on: true })
       else if (live.endAction === 'clear') this.dispatch({ type: 'clear' })
     }
+  }
+
+  private rememberPosition(id: Id, time: number): void {
+    this.position = { id, time }
+    // Saving every few seconds is plenty to resume a video after a crash.
+    if (Math.abs(time - this.savedPosition) >= 5) {
+      this.savedPosition = time
+      this.persist()
+    }
+  }
+
+  /**
+   * The audience window was reloaded or reconnected: carry on where the live
+   * video was, rather than from where it went live.
+   */
+  resumePlayback(): void {
+    const live = this.state.live
+    const pos = this.position
+    if (!isTimed(live) || !live.transport || pos?.id !== live.id) return
+    if (Math.abs(pos.time - live.transport.seek.time) < 0.5) return
+    const seek = { time: pos.time, nonce: live.transport.seek.nonce + 1 }
+    this.commit({
+      ...this.state,
+      live: { ...live, transport: { ...live.transport, seek } },
+      rev: this.state.rev + 1
+    })
   }
 
   resolve(target: ShowTarget): Presentation | null {
@@ -205,6 +251,10 @@ export class ShowController extends Emitter<{
   markCleanExit(): void {
     this.file.data = { version: 1, cleanExit: true, state: this.persisted() }
     this.file.flush()
+  }
+
+  private currentPosition(): Position | undefined {
+    return this.position && this.position.id === this.state.live?.id ? this.position : undefined
   }
 
   private context(): ShowContext {
@@ -432,7 +482,12 @@ export class ShowController extends Emitter<{
   }
 
   private persist(): void {
-    this.file.data = { version: 1, cleanExit: false, state: this.persisted() }
+    this.file.data = {
+      version: 1,
+      cleanExit: false,
+      state: this.persisted(),
+      position: this.currentPosition()
+    }
     this.file.save()
   }
 

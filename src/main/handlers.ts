@@ -3,12 +3,14 @@ import { basename } from 'node:path'
 import { newId } from '@shared/defaults'
 import type { MediaItem, SearchResponse } from '@shared/types'
 import { isHttpUrl } from '@shared/util'
+import { MEDIA_ITEM_EDITABLE, type MediaItemPatch } from '@shared/ipc'
 import { broadcast, handle } from './ipc'
 import { errorMessage, log, UserError } from './log'
 import type { Importer } from './media/importer'
 import type { MediaProcessor } from './media/processor'
 import type { WebIngest } from './media/webIngest'
 import type { OutputManager } from './output/output'
+import type { Bible } from './scripture/bible'
 import { dataPath, isE2E, logsDir, mediaRoot } from './paths'
 import { exportPlan, importPlanBundle } from './plans/bundle'
 import { searchOpenverse, searchPexels, searchWikimedia, type Fetcher } from './search/providers'
@@ -19,6 +21,7 @@ import type { PlansStore } from './store/plans'
 import type { SettingsStore } from './store/settings'
 
 export interface Services {
+  bible: Bible
   settings: SettingsStore
   library: LibraryStore
   plans: PlansStore
@@ -77,7 +80,16 @@ export function registerHandlers(s: Services): void {
     s.importer.importBytes(new Uint8Array(data), { name, mime, source: { type: 'paste' }, saved: false })
   )
   handle('library:importWeb', (pick, opts) => s.web.ingest(pick, opts))
-  handle('library:update', (id, patch) => s.library.update(id, patch))
+  handle('scripture:passage', (reference, translation) =>
+    s.bible.passage(reference, translation ?? s.settings.data.slides.bible)
+  )
+  handle('library:update', (id, patch) => {
+    // Only operator-editable fields: never the id or file names that locate the media on disk.
+    const allowed = Object.fromEntries(
+      Object.entries(patch ?? {}).filter(([key]) => (MEDIA_ITEM_EDITABLE as readonly string[]).includes(key))
+    ) as MediaItemPatch
+    return s.library.update(id, allowed)
+  })
   handle('library:remove', (ids) => {
     const live = s.show.state.live
     if (live?.mediaId && ids.includes(live.mediaId)) {
@@ -183,7 +195,9 @@ export function registerHandlers(s: Services): void {
     }
     const result = win ? await dialog.showOpenDialog(win, options) : await dialog.showOpenDialog(options)
     if (result.canceled || !result.filePaths[0]) return null
-    const plan = await importPlanBundle(result.filePaths[0], s.library, s.plans)
+    const plan = await importPlanBundle(result.filePaths[0], s.library, s.plans, (items) =>
+      items.filter((i) => i.status === 'processing').forEach((i) => s.processor.enqueue(i.id))
+    )
     broadcast('toast', { kind: 'success', title: 'Plan imported', message: `“${plan.name}” is ready.` })
     return plan
   })

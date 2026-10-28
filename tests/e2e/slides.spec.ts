@@ -65,6 +65,36 @@ test('slides edited while on screen update for the audience as you type', async 
   await expect(output.getByText('How sweet the sound')).toBeVisible()
 })
 
+test('a Bible verse goes on screen straight from the command palette', async () => {
+  await cue.control.keyboard.press('ControlOrMeta+k')
+  const palette = cue.control.getByRole('dialog', { name: 'Command palette' })
+  await palette.getByRole('textbox').fill('jn 3 16')
+  await expect(palette.getByRole('button', { name: 'John 3:16 (WEB)' })).toBeVisible()
+  await cue.control.keyboard.press('Shift+Enter')
+  await expect.poll(async () => (await cue.state()).live?.title).toBe('John 3:16 (WEB)')
+  const output = await cue.output()
+  await expect(output.getByText(/For God so loved the world/)).toBeVisible()
+  await expect(output.getByText('John 3:16 (WEB)')).toBeVisible()
+})
+
+test('a long passage is shown over several slides, in the translation chosen', async () => {
+  await cue.control.keyboard.press('ControlOrMeta+t')
+  const dialog = cue.control.getByRole('dialog', { name: 'Quick text slide' })
+  await dialog.getByRole('radio', { name: 'Scripture' }).click()
+  await dialog.getByRole('radio', { name: 'KJV' }).click()
+  await dialog.getByRole('textbox', { name: 'Look up a passage' }).fill('Psalm 23')
+  await expect(dialog).toContainText('Psalm 23 (KJV) fills 3 slides')
+  await dialog.getByRole('button', { name: 'Show on TV' }).click()
+  await expect.poll(async () => (await cue.state()).live?.title).toBe('Psalm 23 (KJV)')
+  const output = await cue.output()
+  await expect(output.getByText(/The LORD is my shepherd/)).toBeVisible()
+  await cue.control.keyboard.press('ArrowRight')
+  await expect(output.getByText(/Yea, though I walk through the valley/)).toBeVisible()
+  expect((await cue.state()).live?.page).toBe(1)
+  // Shown for the moment rather than kept: it isn't added to the library.
+  expect((await cue.library()).find((i) => i.name === 'Psalm 23 (KJV)')?.saved).toBe(false)
+})
+
 test('nothing went wrong behind the scenes', async () => {
   expect(cue.pageErrors).toEqual([])
   expect(cue.errors()).toEqual([])

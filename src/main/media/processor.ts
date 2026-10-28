@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { ImageProbe, VideoProbe, WorkerReply } from '@shared/ipc'
 import { isAnimated } from '@shared/media'
@@ -40,7 +40,11 @@ export class MediaProcessor {
   enqueue(id: Id): void {
     if (this.active.has(id)) return
     this.active.add(id)
-    void this.process(id).finally(() => this.active.delete(id))
+    void this.process(id).finally(async () => {
+      this.active.delete(id)
+      // Deleted while it was being processed: clear away anything written meanwhile.
+      if (!this.library.get(id)) await rm(this.library.itemDir(id), { recursive: true, force: true })
+    })
   }
 
   private async process(id: Id): Promise<void> {
@@ -63,6 +67,7 @@ export class MediaProcessor {
           break
       }
     } catch (err) {
+      if (!this.library.get(id)) return
       const message = friendlyError(item, errorMessage(err))
       log.warn(`Processing ${item.kind} "${item.name}" failed:`, errorMessage(err))
       this.library.update(id, { status: 'error', error: message })
@@ -167,6 +172,8 @@ export class MediaProcessor {
   }
 
   private async writeFile(id: Id, name: string, data: Uint8Array): Promise<void> {
+    // Don't bring back the folder of an item that was deleted while it was being processed.
+    if (!this.library.get(id)) return
     const file = join(this.library.itemDir(id), name)
     await mkdir(join(file, '..'), { recursive: true })
     await writeFile(file, data)

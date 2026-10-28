@@ -9,6 +9,9 @@ interface Props {
   onReady: () => void
 }
 
+/** How long a leaving video's sound takes to fade out at least, even on a cut, so it never clicks. */
+export const LEAVE_AUDIO_MS = 150
+
 /**
  * Video (and audio-only) playback.
  *
@@ -144,7 +147,7 @@ export function VideoView({ p, leaving, onReady }: Props) {
     v.muted = false
     if (ramp.current) cancelAnimationFrame(ramp.current)
     const from = gain.current
-    const duration = leaving ? Math.max(150, transitionMs) : 220
+    const duration = leaving ? Math.max(LEAVE_AUDIO_MS, transitionMs) : 220
     const start = performance.now()
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / duration)

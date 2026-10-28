@@ -27,7 +27,12 @@ const isWin = process.platform === 'win32'
  * window is on. If the TV disappears, the output goes dark instead of jumping
  * onto the operator's screen.
  */
-export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback: PlaybackStatus | null }> {
+export class OutputManager extends Emitter<{
+  changed: DisplaysSnapshot
+  playback: PlaybackStatus | null
+  /** The audience window has (re)loaded and has the current state. */
+  ready: null
+}> {
   private win: BrowserWindow | null = null
   private winKind: 'fullscreen' | 'window' | null = null
   private status: OutputStatus = {
@@ -44,7 +49,9 @@ export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback
   private ready = false
   private sleepBlocker: number | null = null
   private identifyTimer: ReturnType<typeof setTimeout> | null = null
+  private identifyWindows: BrowserWindow[] = []
   private control: BrowserWindow | null = null
+  private disposed = false
   private reapply = debounce(() => this.apply(), 400)
 
   constructor(private settings: SettingsStore) {
@@ -54,6 +61,7 @@ export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback
       if (event.sender !== this.win?.webContents) return
       this.ready = true
       this.push()
+      this.emit('ready', null)
     })
     ipcMain.on('output:playback', (event, status: PlaybackStatus | null) => {
       if (event.sender === this.win?.webContents) this.emit('playback', status)
@@ -77,7 +85,9 @@ export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback
 
   attachControl(win: BrowserWindow): void {
     this.control = win
-    win.on('moved', () => this.reapply())
+    // "moved" (after a drag) only exists on macOS and Windows; "move" fires everywhere and is debounced.
+    if (process.platform === 'linux') win.on('move', () => this.reapply())
+    else win.on('moved', () => this.reapply())
   }
 
   setShowState(state: ShowState): void {
@@ -95,7 +105,8 @@ export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback
     if (opts.displayId !== undefined) {
       patch.displayId = opts.displayId
       const d = screen.getAllDisplays().find((x) => x.id === opts.displayId)
-      patch.displayKey = d ? displayKey(d) : undefined
+      // An empty key (not undefined, which a settings merge would skip) clears the remembered display.
+      patch.displayKey = d ? displayKey(d) : ''
       // Choosing a display implies you want it used.
       if (!opts.mode && d && this.settings.data.output.mode === 'off') patch.mode = 'auto'
     }
@@ -106,6 +117,8 @@ export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback
 
   /** Place, create or remove the audience window according to settings and connected displays. */
   apply(): void {
+    // Quitting: a late display or window-move event must not bring the window back.
+    if (this.disposed) return
     const out = this.settings.data.output
     // Tests have no second screen: there, CUE_OUTPUT_MODE stands in for "auto".
     const mode: OutputMode =
@@ -166,8 +179,11 @@ export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback
   }
 
   identify(): void {
+    // Pressed again while the numbers are up: replace them rather than stacking more.
+    this.closeIdentify()
     const displays = screen.getAllDisplays()
     const windows: BrowserWindow[] = []
+    this.identifyWindows = windows
     displays.forEach((d, i) => {
       const isOutput = this.status.displayId === d.id
       const info: OutputIdentify = {
@@ -181,14 +197,20 @@ export class OutputManager extends Emitter<{ changed: DisplaysSnapshot; playback
       }
       windows.push(identifyWindow(d, info))
     })
+    this.identifyTimer = setTimeout(() => this.closeIdentify(), 3500)
+  }
+
+  private closeIdentify(): void {
     if (this.identifyTimer) clearTimeout(this.identifyTimer)
-    this.identifyTimer = setTimeout(() => {
-      for (const w of windows) if (!w.isDestroyed()) w.destroy()
-      this.win?.webContents.send('output:identify', null)
-    }, 3500)
+    this.identifyTimer = null
+    for (const w of this.identifyWindows) if (!w.isDestroyed()) w.destroy()
+    this.identifyWindows = []
+    if (this.win && !this.win.isDestroyed()) this.win.webContents.send('output:identify', null)
   }
 
   destroy(): void {
+    this.disposed = true
+    this.closeIdentify()
     this.destroyWindow()
   }
 
