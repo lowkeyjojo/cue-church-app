@@ -9,6 +9,7 @@
  * its own low-res thumbnail and then swapping in the original image.
  */
 import { ipcRenderer } from 'electron'
+import { isGoogleHost as isGoogleSite } from '@shared/google'
 
 interface GuestPick {
   url: string
@@ -30,11 +31,7 @@ let scanTimer: ReturnType<typeof setTimeout> | null = null
 let lastScan = 0
 
 function isGoogleHost(host: string): boolean {
-  return (
-    /(^|\.)google\.[a-z.]+$/.test(host) ||
-    host.endsWith('gstatic.com') ||
-    host.endsWith('googleusercontent.com')
-  )
+  return isGoogleSite(host) || host.endsWith('.gstatic.com') || host.endsWith('.googleusercontent.com')
 }
 
 function isThumb(url: string): boolean {
@@ -47,7 +44,7 @@ function isThumb(url: string): boolean {
 }
 
 function onGoogle(): boolean {
-  return /(^|\.)google\.[a-z.]+$/.test(location.hostname) || location.hostname === '127.0.0.1'
+  return isGoogleSite(location.hostname) || location.hostname === '127.0.0.1'
 }
 
 function visibleArea(r: DOMRect): number {

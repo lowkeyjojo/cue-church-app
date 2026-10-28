@@ -2,6 +2,11 @@
 
 export const GOOGLE_IMAGES_BASE = 'https://www.google.com/search'
 
+/** google.com, google.de, google.co.uk, google.com.au… but not google.com.example.org. */
+export function isGoogleHost(host: string): boolean {
+  return /(^|\.)google\.(com?\.)?[a-z]{2,3}$/.test(host)
+}
+
 export interface GoogleQueryOptions {
   safeSearch: boolean
   licensedOnly?: boolean
@@ -26,7 +31,7 @@ export function googleImagesUrl(query: string, opts: GoogleQueryOptions, base = 
 export function queryFromGoogleUrl(url: string): string | null {
   try {
     const u = new URL(url)
-    if (!/(^|\.)google\.[a-z.]+$/.test(u.hostname) && !u.hostname.startsWith('127.0.0.1')) return null
+    if (!isGoogleHost(u.hostname) && u.hostname !== '127.0.0.1') return null
     return u.searchParams.get('q')
   } catch {
     return null
@@ -41,7 +46,7 @@ export function parseGoogleLink(link: string | undefined): { imageUrl?: string; 
   if (!link) return {}
   try {
     const u = new URL(link)
-    if (!/(^|\.)google\.[a-z.]+$/.test(u.hostname)) return {}
+    if (!isGoogleHost(u.hostname)) return {}
     if (u.pathname === '/imgres') {
       return {
         imageUrl: u.searchParams.get('imgurl') ?? undefined,
@@ -64,11 +69,7 @@ export function isGoogleThumbnail(url: string | undefined): boolean {
   if (url.startsWith('data:')) return true
   try {
     const host = new URL(url).hostname
-    return (
-      host.endsWith('gstatic.com') ||
-      host.endsWith('googleusercontent.com') ||
-      /(^|\.)google\.[a-z.]+$/.test(host)
-    )
+    return host.endsWith('.gstatic.com') || host.endsWith('.googleusercontent.com') || isGoogleHost(host)
   } catch {
     return false
   }

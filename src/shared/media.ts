@@ -138,6 +138,8 @@ export function parseRange(
   return { start, end }
 }
 
+const HEIF_BRANDS = new Set(['heic', 'heix', 'heim', 'heis', 'hevc', 'hevx', 'mif1', 'msf1'])
+
 /** Identify common image/video/pdf formats from their first bytes. */
 export function sniffMime(bytes: Uint8Array): string | null {
   const b = bytes
@@ -156,11 +158,14 @@ export function sniffMime(bytes: Uint8Array): string | null {
   if (ascii(0, 4) === 'fLaC') return 'audio/flac'
   if (b[0] === 0 && b[1] === 0 && b[2] === 1 && b[3] === 0) return 'image/x-icon'
   if (ascii(4, 4) === 'ftyp') {
-    const brand = ascii(8, 4)
-    if (brand === 'avif' || brand === 'avis') return 'image/avif'
-    if (brand === 'heic' || brand === 'heix' || brand === 'mif1' || brand === 'heim') return 'image/heic'
-    if (brand === 'qt  ') return 'video/quicktime'
-    if (brand.startsWith('M4A')) return 'audio/mp4'
+    // The major brand, then the compatible brands: AVIF files may lead with the generic "mif1".
+    const end = Math.min(b.length, new DataView(b.buffer, b.byteOffset, b.byteLength).getUint32(0))
+    const brands = [ascii(8, 4)]
+    for (let i = 16; i + 4 <= end; i += 4) brands.push(ascii(i, 4))
+    if (brands.some((x) => x === 'avif' || x === 'avis')) return 'image/avif'
+    if (brands.some((x) => HEIF_BRANDS.has(x))) return 'image/heic'
+    if (brands[0] === 'qt  ') return 'video/quicktime'
+    if (brands[0].startsWith('M4A')) return 'audio/mp4'
     return 'video/mp4'
   }
   const head = new TextDecoder()
@@ -172,44 +177,71 @@ export function sniffMime(bytes: Uint8Array): string | null {
   return null
 }
 
-/** Does this GIF / PNG / WebP contain more than one frame? */
+/** Does this GIF / PNG / WebP contain more than one frame? Reads the file's structure, not just its bytes. */
 export function isAnimated(bytes: Uint8Array, mime: string): boolean {
-  if (mime === 'image/gif') {
-    // Count Graphic Control Extensions (0x21 0xF9 0x04); two or more means animation.
-    let count = 0
-    for (let i = 0; i < bytes.length - 3; i++) {
-      if (bytes[i] === 0x21 && bytes[i + 1] === 0xf9 && bytes[i + 2] === 0x04) {
-        if (++count > 1) return true
-        i += 7
-      }
+  if (mime === 'image/gif') return gifFrames(bytes, 2) > 1
+  if (mime === 'image/png' || mime === 'image/apng') return pngHasChunk(bytes, 'acTL')
+  if (mime === 'image/webp') return webpHasChunk(bytes, 'ANIM')
+  return false
+}
+
+/** Count a GIF's image frames, stopping at `limit`. */
+function gifFrames(b: Uint8Array, limit: number): number {
+  if (b.length < 13) return 0
+  const colorTable = (flags: number) => (flags & 0x80 ? 3 * (1 << ((flags & 7) + 1)) : 0)
+  const skipSubBlocks = (i: number) => {
+    while (i < b.length && b[i] !== 0) i += b[i] + 1
+    return i + 1
+  }
+  let i = 13 + colorTable(b[10])
+  let frames = 0
+  while (i < b.length) {
+    if (b[i] === 0x21) {
+      // Extension: introducer, label, then data sub-blocks.
+      i = skipSubBlocks(i + 2)
+    } else if (b[i] === 0x2c) {
+      if (++frames >= limit) break
+      // Image descriptor, optional local colour table, LZW code size, then image data sub-blocks.
+      i = skipSubBlocks(i + 10 + colorTable(b[i + 9]) + 1)
+    } else {
+      break // trailer (0x3b) or a damaged file
     }
-    return false
   }
-  if (mime === 'image/png' || mime === 'image/apng') {
-    return indexOfAscii(bytes, 'acTL', 8, 4096) !== -1
-  }
-  if (mime === 'image/webp') {
-    return indexOfAscii(bytes, 'ANIM', 12, 4096) !== -1
+  return frames
+}
+
+function pngHasChunk(b: Uint8Array, type: string): boolean {
+  const view = new DataView(b.buffer, b.byteOffset, b.byteLength)
+  for (let i = 8; i + 8 <= b.length;) {
+    const name = String.fromCharCode(b[i + 4], b[i + 5], b[i + 6], b[i + 7])
+    if (name === type) return true
+    // The animation control chunk must come before the image data.
+    if (name === 'IDAT' || name === 'IEND') return false
+    i += 12 + view.getUint32(i)
   }
   return false
 }
 
-function indexOfAscii(bytes: Uint8Array, needle: string, from: number, limit: number): number {
-  const end = Math.min(bytes.length - needle.length, from + limit)
-  outer: for (let i = from; i <= end; i++) {
-    for (let j = 0; j < needle.length; j++) if (bytes[i + j] !== needle.charCodeAt(j)) continue outer
-    return i
+function webpHasChunk(b: Uint8Array, type: string): boolean {
+  const view = new DataView(b.buffer, b.byteOffset, b.byteLength)
+  for (let i = 12; i + 8 <= b.length;) {
+    if (String.fromCharCode(b[i], b[i + 1], b[i + 2], b[i + 3]) === type) return true
+    const size = view.getUint32(i + 4, true)
+    i += 8 + size + (size % 2)
   }
-  return -1
+  return false
 }
 
-/** A filesystem-safe version of a file name. */
+/** A filesystem-safe version of a file name, on every platform. */
 export function safeFileName(name: string, fallback = 'file'): string {
-  const cleaned = name
+  let cleaned = name
     .normalize('NFKD')
     .replace(/[^\w.\- ()]+/g, '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(-120)
-  return cleaned && cleaned !== '.' && cleaned !== '..' ? cleaned : fallback
+    .replace(/[. ]+$/, '')
+  // Windows reserves device names, with or without an extension.
+  if (/^(con|prn|aux|nul|com\d|lpt\d)(\.|$)/i.test(cleaned)) cleaned = `_${cleaned}`
+  return cleaned && !/^\.+$/.test(cleaned) ? cleaned : fallback
 }

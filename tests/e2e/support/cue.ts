@@ -32,6 +32,20 @@ declare global {
 }
 
 export const repoRoot = resolve(import.meta.dirname, '../../..')
+/** Containers run as root without a GPU: Chromium needs these on Linux CI. */
+export const platformArgs =
+  process.platform === 'linux'
+    ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+    : []
+/** Environment for a Cue under test using `dataDir`. */
+export const testEnv = (dataDir: string): Record<string, string> => ({
+  ...(process.env as Record<string, string>),
+  NODE_OPTIONS: '',
+  CUE_E2E: '1',
+  CUE_USER_DATA: dataDir,
+  // A plain window stands in for the TV, whatever displays the machine has.
+  CUE_OUTPUT_MODE: 'window'
+})
 export const fixture = (name: string) => join(repoRoot, 'tests/e2e/fixtures', name)
 
 export interface LaunchOptions {
@@ -71,24 +85,10 @@ export class Cue {
         : { ...opts.settings, ui: { firstRunDone: true, ...opts.settings?.ui } }
       await writeFile(join(dataDir, 'settings.json'), JSON.stringify(seed))
     }
-    // Containers run as root without a GPU: Chromium needs these on Linux CI.
-    const linux = process.platform === 'linux'
     const app = await electron.launch({
-      args: [
-        repoRoot,
-        ...(linux ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : []),
-        ...(opts.args ?? [])
-      ],
+      args: [repoRoot, ...platformArgs, ...(opts.args ?? [])],
       cwd: repoRoot,
-      env: {
-        ...(process.env as Record<string, string>),
-        NODE_OPTIONS: '',
-        CUE_E2E: '1',
-        CUE_USER_DATA: dataDir,
-        // A plain window stands in for the TV, whatever displays the machine has.
-        CUE_OUTPUT_MODE: 'window',
-        ...opts.env
-      },
+      env: { ...testEnv(dataDir), ...opts.env },
       timeout: 60_000
     })
     const logs: string[] = []
@@ -97,7 +97,13 @@ export class Cue {
         for (const line of String(chunk).split('\n')) if (/\[(INFO|WARN|ERROR)\]/.test(line)) logs.push(line)
       })
     }
-    const control = await windowByUrl(app, 'control.html')
+    let control: Page
+    try {
+      control = await windowByUrl(app, 'control.html')
+    } catch (err) {
+      await app.close().catch(() => undefined)
+      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${logs.join('\n')}`)
+    }
     const cue = new Cue(app, control, dataDir, logs)
     control.on('pageerror', (err) => cue.pageErrors.push(`${err.name}: ${err.message}`))
     await control.waitForLoadState('domcontentloaded')

@@ -1,6 +1,6 @@
 import { app, BrowserWindow, dialog, nativeTheme } from 'electron'
 import { randomUUID } from 'node:crypto'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import type { UiCommand } from '@shared/ipc'
 import { parseGoogleLink } from '@shared/google'
 import type { ShowCommand, WebPick } from '@shared/types'
@@ -13,7 +13,7 @@ import { WebIngest } from './media/webIngest'
 import { MediaWorker } from './media/worker'
 import { buildMenu } from './menu'
 import { OutputManager } from './output/output'
-import { initPaths, isE2E } from './paths'
+import { dataPath, initPaths, isE2E } from './paths'
 import { importPlanBundle } from './plans/bundle'
 import { handleAppProtocol, handleMediaProtocol, registerSchemes } from './protocol'
 import { ShowController } from './show/controller'
@@ -40,26 +40,34 @@ app.on('open-file', (event, file) => {
   else planFiles.push(file)
 })
 
-// A second launch hands its files to the running Cue and quits. Each launch
-// carries an id, so the running Cue acts on it once even if asked again.
+// A second launch hands its files to the running Cue, which confirms by
+// leaving a note in launches/. Each launch has an id, so it's handled once.
 const launchId = randomUUID()
 const handledLaunches = new Set<string>()
+const launchNote = (id: string) => dataPath('launches', `${id}.ack`)
 const lock = () => app.requestSingleInstanceLock({ launchId })
 
 if (lock()) void start()
 else void waitForLock()
 
 /**
- * Windows can keep the lock of a Cue that has just crashed for a moment, so a
- * quick relaunch keeps trying briefly instead of silently quitting.
+ * Either another Cue is running (it confirms the hand-off and this launch
+ * quits), or one has just crashed and Windows still holds its lock for a
+ * moment: then keep trying, so a quick relaunch isn't silently ignored.
  */
 async function waitForLock(): Promise<void> {
-  if (process.platform === 'win32') {
-    for (let attempt = 0; attempt < 12; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, 250))
-      if (lock()) return start()
+  for (let waited = 200; waited <= 15_000; waited += 200) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (existsSync(launchNote(launchId))) {
+      rmSync(launchNote(launchId), { force: true })
+      return app.quit()
+    }
+    if (lock()) {
+      log.info(`Started after waiting ${waited} ms for the previous Cue to close`)
+      return start()
     }
   }
+  log.warn('Another Cue is running but did not respond')
   app.quit()
 }
 
@@ -67,6 +75,7 @@ process.on('uncaughtException', (err) => log.error('Uncaught exception:', err))
 process.on('unhandledRejection', (err) => log.error('Unhandled rejection:', err))
 
 async function start(): Promise<void> {
+  rmSync(dataPath('launches'), { recursive: true, force: true })
   await app.whenReady()
   nativeTheme.themeSource = 'dark'
   log.info(
@@ -247,6 +256,12 @@ async function start(): Promise<void> {
     if (id) {
       if (handledLaunches.has(id)) return
       handledLaunches.add(id)
+      try {
+        mkdirSync(dataPath('launches'), { recursive: true })
+        writeFileSync(launchNote(id), '')
+      } catch {
+        /* the other launch gives up on its own after a while */
+      }
     }
     if (control) {
       if (control.isMinimized()) control.restore()

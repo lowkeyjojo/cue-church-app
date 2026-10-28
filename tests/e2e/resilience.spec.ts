@@ -1,7 +1,12 @@
 import { expect, test } from '@playwright/test'
-import { readFile } from 'node:fs/promises'
+import { spawn } from 'node:child_process'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { brightness, Cue, type Rgb } from './support/cue'
+import { brightness, Cue, platformArgs, repoRoot, testEnv, type Rgb } from './support/cue'
+
+const electronBinary = createRequire(import.meta.url)('electron') as string
 
 // Live services can't wait: Cue has to come back exactly where it was after
 // a crash or power cut, and the operator controls the output window.
@@ -54,5 +59,44 @@ test('the output window can be turned off and back on, and shows a test pattern 
     expect(cue.errors()).toEqual([])
   } finally {
     await cue.close()
+  }
+})
+
+test('opening Cue again hands its files to the running Cue and quits', async () => {
+  const cue = await Cue.launch()
+  const dir = await mkdtemp(join(tmpdir(), 'cue-handoff-'))
+  try {
+    const plan = await cue.invoke('plans:create', 'Harvest festival', '2026-10-04')
+    const file = join(dir, 'harvest.cueplan')
+    await cue.app.evaluate(({ dialog }, path) => {
+      dialog.showSaveDialog = (async () => ({
+        canceled: false,
+        filePath: path
+      })) as typeof dialog.showSaveDialog
+    }, file)
+    await cue.invoke('plans:export', plan.id)
+
+    // Like double-clicking the file while Cue is open: a second process starts…
+    const second = spawn(electronBinary, [repoRoot, ...platformArgs, file], { env: testEnv(cue.dataDir) })
+    const exitCode = await new Promise<number | null>((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error('The second launch did not hand over and quit')),
+        20_000
+      )
+      second.once('exit', (code) => {
+        clearTimeout(timer)
+        resolve(code)
+      })
+    })
+    // …hands the file to the running Cue and quits.
+    expect(exitCode).toBe(0)
+    await expect
+      .poll(async () => (await cue.plans()).filter((p) => p.name === 'Harvest festival').length)
+      .toBe(2)
+    await expect(cue.control.getByText('Plan imported')).toBeVisible()
+    expect(cue.errors()).toEqual([])
+  } finally {
+    await cue.close()
+    await rm(dir, { recursive: true, force: true })
   }
 })
