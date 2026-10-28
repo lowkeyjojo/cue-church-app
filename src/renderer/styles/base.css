@@ -98,6 +98,18 @@
     border: 0;
   }
 
+  /* In a narrow tab bar, buttons marked collapsible drop to their icons (keeping their names). */
+  @container tabbar (max-width: 640px) {
+    .collapsible [data-label] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+  }
+
   kbd {
     display: inline-flex;
     align-items: center;

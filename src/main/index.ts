@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, nativeTheme } from 'electron'
+import { existsSync } from 'node:fs'
 import type { UiCommand } from '@shared/ipc'
 import { parseGoogleLink } from '@shared/google'
 import type { ShowCommand, WebPick } from '@shared/types'
@@ -12,6 +13,7 @@ import { MediaWorker } from './media/worker'
 import { buildMenu } from './menu'
 import { OutputManager } from './output/output'
 import { initPaths, isE2E } from './paths'
+import { importPlanBundle } from './plans/bundle'
 import { handleAppProtocol, handleMediaProtocol, registerSchemes } from './protocol'
 import { ShowController } from './show/controller'
 import { ensureStarterContent } from './starter'
@@ -19,11 +21,23 @@ import { HistoryStore } from './store/history'
 import { LibraryStore } from './store/library'
 import { PlansStore } from './store/plans'
 import { SettingsStore } from './store/settings'
-import { configureWebSession, createControlWindow } from './windows/control'
+import { configureAppSession, configureWebSession, createControlWindow } from './windows/control'
 
 initPaths()
 registerSchemes()
 app.setName('Cue')
+
+// .cueplan files opened from Finder or Explorer (or dropped on the Dock icon)
+// can arrive before Cue is ready to import them.
+const isPlanFile = (arg: string) => arg.toLowerCase().endsWith('.cueplan') && existsSync(arg)
+const planFiles: string[] = process.argv.slice(1).filter(isPlanFile)
+let openPlanFile: ((file: string) => void) | null = null
+app.on('open-file', (event, file) => {
+  if (!file.toLowerCase().endsWith('.cueplan')) return
+  event.preventDefault()
+  if (openPlanFile) openPlanFile(file)
+  else planFiles.push(file)
+})
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -43,6 +57,7 @@ async function start(): Promise<void> {
 
   handleAppProtocol()
   handleMediaProtocol()
+  configureAppSession()
   configureWebSession()
 
   const settings = new SettingsStore()
@@ -146,6 +161,23 @@ async function start(): Promise<void> {
   output.attachControl(control)
   output.apply()
 
+  /** Import a .cueplan opened from the file manager and bring it up in the plan panel. */
+  const importPlanFile = async (file: string) => {
+    try {
+      const plan = await importPlanBundle(file, library, plans)
+      settings.update({ ui: { planId: plan.id } })
+      broadcast('plans:open', plan.id)
+      broadcast('toast', { kind: 'success', title: 'Plan imported', message: `“${plan.name}” is ready.` })
+    } catch (err) {
+      log.warn(`Couldn't open ${file}:`, errorMessage(err))
+      broadcast('toast', { kind: 'error', title: "Couldn't open that plan", message: errorMessage(err) })
+    }
+  }
+  control.webContents.once('did-finish-load', () => {
+    openPlanFile = (file) => void importPlanFile(file)
+    for (const file of planFiles.splice(0)) openPlanFile(file)
+  })
+
   function rebuildMenu() {
     buildMenu({
       ui,
@@ -192,10 +224,14 @@ async function start(): Promise<void> {
     app.quit()
   })
 
-  app.on('second-instance', () => {
+  app.on('second-instance', (_event, argv) => {
     if (control) {
       if (control.isMinimized()) control.restore()
       control.focus()
+    }
+    for (const file of argv.slice(1).filter(isPlanFile)) {
+      if (openPlanFile) openPlanFile(file)
+      else planFiles.push(file)
     }
   })
 

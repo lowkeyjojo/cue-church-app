@@ -13,6 +13,7 @@ import type {
 } from '@shared/types'
 import { bridge, call } from './api'
 import { useToasts } from './toasts'
+import { useUI } from './ui'
 
 /** Mirror of the main process's state. Main is the single source of truth. */
 export interface AppState {
@@ -65,6 +66,10 @@ export async function bootstrap(): Promise<void> {
   })
   bridge.on('library:collections', (collections) => set({ collections }))
   bridge.on('plans:changed', (plans) => set({ plans }))
+  bridge.on('plans:open', (planId) => {
+    useUI.getState().setPlan(planId)
+    useUI.getState().setTab('show')
+  })
   bridge.on('history:changed', (history) => set({ history }))
   bridge.on('settings:changed', (settings) => set({ settings }))
   bridge.on('displays:changed', (displays) => set({ displays }))

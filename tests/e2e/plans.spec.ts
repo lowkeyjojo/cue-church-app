@@ -127,6 +127,20 @@ test('a plan exports with its media and imports on another computer', async () =
   }
 })
 
+test('opening a .cueplan file (double-click) imports it and brings it up', async () => {
+  const other = await Cue.launch({ args: [join(dir, 'easter.cueplan')] })
+  try {
+    await expect(other.control.getByRole('button', { name: 'Switch service plan' })).toContainText(
+      'Easter Sunday'
+    )
+    await expect(other.control.getByText('Plan imported')).toBeVisible()
+    await expect(other.control.getByTestId('plan-entry')).toHaveCount(3)
+    expect(other.errors()).toEqual([])
+  } finally {
+    await other.close()
+  }
+})
+
 test('nothing went wrong behind the scenes', async () => {
   expect(cue.pageErrors).toEqual([])
   expect(cue.errors()).toEqual([])

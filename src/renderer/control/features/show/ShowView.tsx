@@ -104,7 +104,7 @@ function ShowToolbar({ target }: { target: Target }) {
   const preview = () => (entry && plan ? previewEntry(plan.id, entry) : item && previewMedia(item.id))
   const showNow = () => (entry && plan ? showEntry(plan.id, entry) : item && showMedia(item.id))
   return (
-    <div className={s.toolbar}>
+    <div className={clsx(s.toolbar, 'collapsible')}>
       <Button size="sm" variant="quiet" icon={<Eye />} onClick={preview}>
         Preview
       </Button>

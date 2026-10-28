@@ -134,14 +134,16 @@ export interface CueEvents {
   toast: Toast
   progress: ProgressInfo
   'ui:command': UiCommand
+  /** A plan was opened from a .cueplan file; bring it up. */
+  'plans:open': Id
 }
 
 export type CueEvent = keyof CueEvents
 
-/** The bridge exposed on `window.cue` in the control window. */
 /** How main answers `cue:invoke`: failures come back as values rather than rejections. */
 export type InvokeReply = { ok: true; value: unknown } | { ok: false; error: string }
 
+/** The bridge exposed on `window.cue` in the control window. */
 export interface CueBridge {
   invoke<M extends CueMethod>(method: M, ...args: CueArgs<M>): Promise<CueResult<M>>
   on<E extends CueEvent>(event: E, listener: (payload: CueEvents[E]) => void): () => void

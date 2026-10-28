@@ -36,7 +36,7 @@ export function Workspace() {
   return (
     <main className={s.workspace}>
       <div className={s.tabbar}>
-        <div className={s.tabs} role="tablist" aria-label="Workspace">
+        <div className={clsx(s.tabs, 'collapsible')} role="tablist" aria-label="Workspace">
           {TABS.map((t) => (
             <Tooltip key={t.id} label={t.label} shortcut={`${modKey} ${t.key}`} side="bottom">
               <button
@@ -46,7 +46,7 @@ export function Workspace() {
                 onClick={() => setTab(t.id)}
               >
                 {t.icon}
-                <span>{t.label}</span>
+                <span data-label>{t.label}</span>
               </button>
             </Tooltip>
           ))}

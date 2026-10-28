@@ -41,6 +41,8 @@ export interface LaunchOptions {
   env?: Record<string, string>
   /** Reuse a data folder from an earlier launch (to relaunch after a crash or quit). */
   dataDir?: string
+  /** Extra command-line arguments, e.g. a file to open. */
+  args?: string[]
 }
 
 export interface Rgb {
@@ -74,7 +76,8 @@ export class Cue {
     const app = await electron.launch({
       args: [
         repoRoot,
-        ...(linux ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : [])
+        ...(linux ? ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : []),
+        ...(opts.args ?? [])
       ],
       cwd: repoRoot,
       env: {

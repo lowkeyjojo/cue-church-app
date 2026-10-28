@@ -114,6 +114,7 @@ export function LibraryView({ active }: { active: boolean }) {
 
   const [toolbarRef, toolbarSize] = useElementSize<HTMLDivElement>()
   const compact = toolbarSize.width > 0 && toolbarSize.width < 600
+  const tight = toolbarSize.width > 0 && toolbarSize.width < 340
 
   const newSlides = async () => {
     const deck = await attempt(
@@ -136,16 +137,18 @@ export function LibraryView({ active }: { active: boolean }) {
             onChange={(e) => setFilter({ query: e.target.value })}
             aria-label="Filter library"
           />
-          <Select
-            className={s.sort}
-            value={filter.sort}
-            onChange={(e) => setFilter({ sort: e.target.value as typeof filter.sort })}
-            aria-label="Sort"
-          >
-            <option value="recent">Newest</option>
-            <option value="name">Name</option>
-            <option value="used">Most used</option>
-          </Select>
+          {!tight && (
+            <Select
+              className={s.sort}
+              value={filter.sort}
+              onChange={(e) => setFilter({ sort: e.target.value as typeof filter.sort })}
+              aria-label="Sort"
+            >
+              <option value="recent">Newest</option>
+              <option value="name">Name</option>
+              <option value="used">Most used</option>
+            </Select>
+          )}
           {!compact && (
             <Slider
               className={s.size}

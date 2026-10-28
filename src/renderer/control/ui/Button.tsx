@@ -38,7 +38,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...rest}
     >
       {icon && <span className={s.icon}>{icon}</span>}
-      {children !== undefined && <span className={s.label}>{children}</span>}
+      {children !== undefined && (
+        <span className={s.label} data-label>
+          {children}
+        </span>
+      )}
       {trailing && <span className={s.trailing}>{trailing}</span>}
     </button>
   )

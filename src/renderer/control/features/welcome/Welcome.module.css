@@ -1,3 +1,8 @@
+/* Every step is the same height, so the buttons stay put as you click through. */
+.hero,
+.stepBody {
+  min-height: 214px;
+}
 .hero {
   position: relative;
   padding: 6px 0 4px;
@@ -46,6 +51,7 @@
 .stepBody {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 16px;
   align-items: flex-start;
 }

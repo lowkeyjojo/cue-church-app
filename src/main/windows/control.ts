@@ -177,9 +177,22 @@ export function configureWebSession(): void {
   const ua = ses.getUserAgent().replace(/\s(Electron|cue|Cue)\/\S+/g, '')
   ses.setUserAgent(ua)
   // The embedded browser never needs camera, mic, notifications, etc.
-  ses.setPermissionRequestHandler((_wc, permission, callback) =>
-    callback(permission === 'fullscreen' || permission === 'clipboard-sanitized-write')
+  const allowed = new Set(['fullscreen', 'clipboard-sanitized-write'])
+  ses.setPermissionRequestHandler((_wc, permission, callback) => callback(allowed.has(permission)))
+  ses.setPermissionCheckHandler((_wc, permission) => allowed.has(permission))
+}
+
+/**
+ * Cue's own windows only load its bundled pages. They may list and choose
+ * audio outputs (which needs the media permission for device names) and go
+ * fullscreen; anything else is refused.
+ */
+export function configureAppSession(): void {
+  const allowed = new Set(['media', 'speaker-selection', 'fullscreen', 'clipboard-sanitized-write'])
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) =>
+    callback(allowed.has(permission))
   )
+  session.defaultSession.setPermissionCheckHandler((_wc, permission) => allowed.has(permission))
 }
 
 function intersects(

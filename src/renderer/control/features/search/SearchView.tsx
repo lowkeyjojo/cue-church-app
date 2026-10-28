@@ -161,7 +161,13 @@ export function SearchView({ active }: { active: boolean }) {
               icon={<Search />}
               value={search.query}
               onChange={(e) => setSearch({ query: e.target.value })}
-              placeholder={onGoogle ? 'Search Google Images — e.g. “Ephesus library ruins”' : 'Search images'}
+              placeholder={
+                !onGoogle
+                  ? 'Search images'
+                  : compact
+                    ? 'Search Google Images'
+                    : 'Search Google Images — e.g. “Ephesus library ruins”'
+              }
               aria-label="Search images"
               data-testid="search-input"
               trailing={compact ? undefined : <kbd>{modKey} L</kbd>}

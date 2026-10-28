@@ -9,8 +9,10 @@
   flex-direction: column;
   gap: 14px;
 }
+/* Six layouts as an even 3 × 2 grid rather than a ragged wrap. */
 .layouts {
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
 }
 .preview {
   aspect-ratio: 16 / 9;

@@ -175,3 +175,15 @@
     max-width: 200px;
   }
 }
+@media (max-width: 1240px) {
+  .bar {
+    gap: 12px;
+  }
+  /* The shortcuts stay in the tooltips. */
+  .big kbd {
+    display: none;
+  }
+  .volume {
+    width: 84px;
+  }
+}

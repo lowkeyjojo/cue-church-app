@@ -6,7 +6,7 @@ import {
   Monitor,
   MousePointer2,
   Search,
-  SlidersHorizontal,
+  ScrollText,
   Speaker,
   Type,
   Volume2
@@ -41,19 +41,32 @@ export function SettingsDialog({ tab: initial }: { tab: string }) {
   return (
     <Dialog open onClose={() => close('settings')} width={860} title="Settings" bodyClassName={s.body}>
       <div className={s.layout}>
-        <nav className={s.nav}>
-          {TABS.map((t) => (
+        <div className={s.nav} role="tablist" aria-orientation="vertical" aria-label="Settings sections">
+          {TABS.map((t, i) => (
             <button
               key={t.id}
+              id={`settings-tab-${t.id}`}
+              role="tab"
+              aria-selected={tab === t.id}
+              aria-controls="settings-panel"
+              tabIndex={tab === t.id ? 0 : -1}
               className={clsx(s.navItem, tab === t.id && s.navOn)}
               onClick={() => setTab(t.id)}
+              onKeyDown={(e) => {
+                const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
+                if (!step) return
+                e.preventDefault()
+                const next = TABS[(i + step + TABS.length) % TABS.length]
+                setTab(next.id)
+                document.getElementById(`settings-tab-${next.id}`)?.focus()
+              }}
             >
               {t.icon}
               {t.label}
             </button>
           ))}
-        </nav>
-        <div className={s.panel}>
+        </div>
+        <div className={s.panel} role="tabpanel" id="settings-panel" aria-labelledby={`settings-tab-${tab}`}>
           {tab === 'output' && <OutputSettings settings={settings} />}
           {tab === 'audio' && <AudioSettings settings={settings} />}
           {tab === 'presenter' && <PresenterSettings settings={settings} />}
@@ -502,7 +515,7 @@ function LibrarySettings() {
       </Group>
       <Group title="Help">
         <Field label="Log files" hint="Useful if something goes wrong on a Sunday" inline>
-          <Button size="sm" icon={<SlidersHorizontal />} onClick={() => attempt('system:revealLogs')}>
+          <Button size="sm" icon={<ScrollText />} onClick={() => attempt('system:revealLogs')}>
             Show logs
           </Button>
         </Field>

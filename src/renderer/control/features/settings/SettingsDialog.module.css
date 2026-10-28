@@ -4,8 +4,8 @@
 .layout {
   display: grid;
   grid-template-columns: 180px 1fr;
-  min-height: 460px;
-  max-height: 68vh;
+  /* A fixed height, so the dialog doesn't jump as you switch sections. */
+  height: min(610px, 74vh);
 }
 .nav {
   display: flex;
