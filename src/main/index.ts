@@ -1,4 +1,5 @@
 import { app, BrowserWindow, dialog, nativeTheme } from 'electron'
+import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import type { UiCommand } from '@shared/ipc'
 import { parseGoogleLink } from '@shared/google'
@@ -39,10 +40,27 @@ app.on('open-file', (event, file) => {
   else planFiles.push(file)
 })
 
-if (!app.requestSingleInstanceLock()) {
+// A second launch hands its files to the running Cue and quits. Each launch
+// carries an id, so the running Cue acts on it once even if asked again.
+const launchId = randomUUID()
+const handledLaunches = new Set<string>()
+const lock = () => app.requestSingleInstanceLock({ launchId })
+
+if (lock()) void start()
+else void waitForLock()
+
+/**
+ * Windows can keep the lock of a Cue that has just crashed for a moment, so a
+ * quick relaunch keeps trying briefly instead of silently quitting.
+ */
+async function waitForLock(): Promise<void> {
+  if (process.platform === 'win32') {
+    for (let attempt = 0; attempt < 12; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 250))
+      if (lock()) return start()
+    }
+  }
   app.quit()
-} else {
-  void start()
 }
 
 process.on('uncaughtException', (err) => log.error('Uncaught exception:', err))
@@ -224,7 +242,12 @@ async function start(): Promise<void> {
     app.quit()
   })
 
-  app.on('second-instance', (_event, argv) => {
+  app.on('second-instance', (_event, argv, _cwd, data) => {
+    const id = (data as { launchId?: string } | null)?.launchId
+    if (id) {
+      if (handledLaunches.has(id)) return
+      handledLaunches.add(id)
+    }
     if (control) {
       if (control.isMinimized()) control.restore()
       control.focus()

@@ -78,8 +78,8 @@ test('Space takes the standby; Back returns to the slides at the same page', asy
   await cue.control.getByTestId('back').click()
   await expect.poll(async () => (await cue.state()).live?.title).toBe('Sermon — The Light of the World')
   expect((await cue.state()).live?.page).toBe(1)
-  const output = await cue.output()
-  await expect(output.getByText('Then spake Jesus again unto them', { exact: false })).toBeVisible()
+  const screen = await cue.screen()
+  await expect(screen.getByText('Then spake Jesus again unto them', { exact: false })).toBeVisible()
 })
 
 test('ambient covers the screen for a break and the next key brings the content back', async () => {

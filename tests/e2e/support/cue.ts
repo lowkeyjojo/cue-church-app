@@ -3,7 +3,7 @@
  * isolated data folder, and gives tests a view of both sides: the control
  * window as a Playwright page, and the main process's show state.
  */
-import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test'
+import { _electron as electron, type ElectronApplication, type Locator, type Page } from '@playwright/test'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -112,6 +112,11 @@ export class Cue {
   /** The audience output window. */
   output(): Promise<Page> {
     return windowByUrl(this.app, 'audience.html')
+  }
+
+  /** What the audience sees now: the incoming content, not anything still fading out. */
+  async screen(): Promise<Locator> {
+    return (await this.output()).locator('.stage-slot:is([data-phase="in"], [data-phase="shown"])')
   }
 
   /** Call the main process exactly as the control UI does. */
