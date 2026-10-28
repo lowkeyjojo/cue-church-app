@@ -96,6 +96,15 @@ export function printLogsOnFailure(): void {
   })
 }
 
+function isRunning(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function logFile(dataDir: string): Promise<string> {
   const text = await readFile(join(dataDir, 'logs', 'cue.log'), 'utf8').catch(() => '(no log file)')
   return text.slice(-6000)
@@ -265,10 +274,14 @@ export class Cue {
 
   /** End the app abruptly, like a crash or a power cut, keeping its data. */
   async kill(): Promise<void> {
-    const proc = this.app.process()
-    const exited = new Promise((resolve) => proc.once('exit', resolve))
-    proc.kill('SIGKILL')
+    // On Windows Playwright starts Electron through a shell, so the process it tracks isn't Cue's
+    // main process: killing that would leave Cue running. End Cue's own process instead.
+    const pid = await this.app.evaluate(() => process.pid)
+    const tracked = this.app.process()
+    const exited = new Promise((resolve) => tracked.once('exit', resolve))
+    process.kill(pid, 'SIGKILL')
     await exited
+    for (let i = 0; i < 100 && isRunning(pid); i++) await new Promise((r) => setTimeout(r, 100))
     this.markClosed()
   }
 

@@ -28,5 +28,6 @@ Cue is an Electron + React + TypeScript church presentation app. Read `docs/ARCH
 - Electron 44's clipboard API is asynchronous and `ClipboardItem`-based.
 - `webContents.copyImageAt` on a `<webview>` takes coordinates in the host window, not the page.
 - On Linux CI, Electron needs `--no-sandbox`, and `--use-angle=swiftshader --enable-unsafe-swiftshader` for WebGL and `capturePage` (the E2E helper adds these).
-- On Windows, a Cue that was just killed can hold the single-instance lock briefly; startup retries for up to 3 seconds.
+- On Windows, a Cue that was just killed can hold the single-instance lock briefly. A second launch waits up to 15 seconds: it quits as soon as a running Cue acknowledges the hand-off (a note in `launches/`), or starts once the lock is free.
+- On Windows, Playwright starts Electron through a shell, so `app.process()` is `cmd.exe`, not Cue. To kill Cue, end its own pid (`Cue.kill()` does).
 - Run the app for tests with `CUE_E2E=1 CUE_USER_DATA=<tmp> CUE_OUTPUT_MODE=window`. `CUE_GOOGLE_BASE` points the Google pane at a stand-in.
