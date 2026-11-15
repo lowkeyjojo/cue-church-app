@@ -77,7 +77,14 @@ jobs:
             echo "The version must look like v1.0.0, not '$VERSION'" >&2
             exit 1
           fi
-          gh release create "$VERSION" dist/* \
+          # The artifacts keep their release/<version>/ folders: attach the files inside.
+          shopt -s globstar nullglob
+          files=(dist/**/*.dmg dist/**/*.zip dist/**/*.exe)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No installers were built" >&2
+            exit 1
+          fi
+          gh release create "$VERSION" "${files[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "Cue $VERSION" \
