@@ -145,20 +145,30 @@ export class Cue {
       })
     }
     const logs: string[] = []
+    // Everything the process printed, Chromium's own messages included: all there is to go on
+    // when a launch never gets as far as Cue's log.
+    const output: string[] = []
     for (const stream of [app.process().stdout, app.process().stderr]) {
       stream?.on('data', (chunk: Buffer) => {
-        for (const line of String(chunk).split('\n')) if (/\[(INFO|WARN|ERROR)\]/.test(line)) logs.push(line)
+        for (const line of String(chunk).split('\n')) {
+          if (/\[(INFO|WARN|ERROR)\]/.test(line)) logs.push(line)
+          if (line.trim()) output.push(line)
+        }
       })
     }
     let control: Page
     try {
       control = await windowByUrl(app, 'control.html', opts.dataDir ? 30_000 : 15_000)
     } catch (err) {
+      const { exitCode, signalCode } = app.process()
+      const state =
+        exitCode === null && signalCode === null ? 'still running' : `exited (${exitCode ?? signalCode})`
       await app.close().catch(() => undefined)
       // Cue's own log file, in case its console output wasn't captured.
-      throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${await logFile(dataDir)}`, {
-        cause: err
-      })
+      throw new Error(
+        `${(err as Error).message}\nThe process was ${state}.\n--- Its output ---\n${output.slice(-40).join('\n')}\n--- Cue's log ---\n${await logFile(dataDir)}`,
+        { cause: err }
+      )
     }
     const cue = new Cue(app, control, dataDir, logs)
     launched.push({ cue })

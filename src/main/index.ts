@@ -50,6 +50,8 @@ const handledLaunches = new Set<string>()
 const launchNote = (id: string) => dataPath('launches', `${id}.ack`)
 const lock = () => app.requestSingleInstanceLock({ launchId })
 
+// In the log before anything can go wrong, so "Cue didn't open" always leaves a trace.
+log.info(`Cue launched (pid ${process.pid})`)
 if (lock()) start().catch(fatal)
 else waitForLock().catch(fatal)
 
@@ -98,6 +100,7 @@ async function start(): Promise<void> {
   rmSync(dataPath('launches'), { recursive: true, force: true })
   let control: BrowserWindow | null = null
   let windowOpened = false
+  let steppingAside = false
   await app.whenReady()
   nativeTheme.themeSource = 'dark'
   log.info(
@@ -109,8 +112,15 @@ async function start(): Promise<void> {
     // A Cue left running without its window can't help anyone: step aside and let the
     // new launch start instead (it gets the lock as soon as this one is gone).
     if (windowOpened && (!control || control.isDestroyed())) {
+      if (steppingAside) return
+      steppingAside = true
       log.warn('A second launch found this Cue without a window: quitting so it can start')
-      return app.exit(0)
+      // Not from inside this handler: the new launch is still waiting for its answer, and
+      // gets it when the handler returns. It then finds the lock free on its next try.
+      setTimeout(() => app.exit(0), 50)
+      // A Cue that is stuck may not manage to exit either.
+      setTimeout(() => process.kill(process.pid, 'SIGKILL'), 3000).unref()
+      return
     }
     const id = (data as { launchId?: string } | null)?.launchId
     if (id) {
