@@ -130,6 +130,41 @@
     letter-spacing: 0.01em;
   }
 
+  /* A highlight that slides between options (see ui/useSlidingThumb.ts). */
+  .thumbHost {
+    position: relative;
+  }
+  .thumbHost > * {
+    position: relative;
+    z-index: 1;
+  }
+  .thumbHost::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    left: 0;
+    top: 0;
+    width: var(--thumb-w, 0);
+    height: var(--thumb-h, 0);
+    transform: translate(var(--thumb-x, 0), var(--thumb-y, 0));
+    border-radius: var(--thumb-r, 6px);
+    background: var(--thumb-bg, var(--bg-5));
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .thumbHost[data-thumb]::before {
+    opacity: 1;
+  }
+  .thumbHost[data-thumb='ready']::before {
+    transition:
+      transform 280ms var(--ease-spring),
+      width 280ms var(--ease-spring),
+      height 280ms var(--ease-spring);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

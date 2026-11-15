@@ -121,13 +121,21 @@ function PreviewBlock({ width, height, measure }: { width: number; height: numbe
           )}
         </div>
       </header>
-      <div className={s.slot}>{width > 0 && <Monitor role="preview" width={width} height={height} />}</div>
+      <div className={s.slot}>
+        {width > 0 && (
+          <div className={s.frame}>
+            <Monitor role="preview" width={width} height={height} />
+            {/* A soft amber ring each time something new is staged. */}
+            {p && <span key={p.id} className={clsx(s.pulse, s.stagedPulse)} aria-hidden />}
+          </div>
+        )}
+      </div>
       <div className={clsx(s.controls, s.previewControls)} ref={measure}>
         {p && <PresentationControls p={p} where="preview" />}
         <Button
           variant="primary"
           size="lg"
-          className={s.take}
+          className={clsx(s.take, p && s.armed)}
           icon={<Tv />}
           disabled={!p}
           onClick={() => dispatch({ type: 'take' })}
@@ -179,7 +187,15 @@ function LiveBlock({ width, height, measure }: { width: number; height: number; 
           </div>
         )}
       </div>
-      <div className={s.slot}>{width > 0 && <Monitor role="live" width={width} height={height} />}</div>
+      <div className={s.slot}>
+        {width > 0 && (
+          <div className={s.frame}>
+            <Monitor role="live" width={width} height={height} />
+            {/* The moment something goes on air: a red ring leaves the monitor. */}
+            {p && onAir && <span key={p.id} className={clsx(s.pulse, s.onAirPulse)} aria-hidden />}
+          </div>
+        )}
+      </div>
       <div className={clsx(s.controls, s.liveControls)} ref={measure}>
         {p ? (
           <PresentationControls p={p} where="live" />
@@ -283,7 +299,10 @@ function PageStepper({
           </Button>
         </Tooltip>
         <span className={s.pageCount}>
-          <strong>{page}</strong> / {count}
+          <strong key={page} className={s.flip}>
+            {page}
+          </strong>{' '}
+          / {count}
         </span>
         <Tooltip label="Next" shortcut="→">
           <Button className={s.stepBtn} onClick={() => go(1)} trailing={<ChevronRight size={16} />}>

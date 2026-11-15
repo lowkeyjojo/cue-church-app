@@ -6,12 +6,14 @@ import {
   forwardRef,
   isValidElement,
   useId,
+  useRef,
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes
 } from 'react'
 import { Tooltip } from './Tooltip'
+import { useSlidingThumb } from './useSlidingThumb'
 import s from './Controls.module.css'
 
 export interface SegmentOption<T extends string> {
@@ -37,8 +39,15 @@ export function Segmented<T extends string>({
   className?: string
   ariaLabel?: string
 }) {
+  const group = useRef<HTMLDivElement>(null)
+  useSlidingThumb(group, '[aria-checked="true"]', `${value}|${options.length}`)
   return (
-    <div className={clsx(s.segmented, s[`seg_${size}`], className)} role="radiogroup" aria-label={ariaLabel}>
+    <div
+      ref={group}
+      className={clsx(s.segmented, s[`seg_${size}`], 'thumbHost', className)}
+      role="radiogroup"
+      aria-label={ariaLabel}
+    >
       {options.map((o) => (
         <Tooltip key={o.value} label={o.tooltip} shortcut={o.shortcut}>
           <button

@@ -1,12 +1,15 @@
-// Packaging for macOS (Apple Silicon and Intel), Windows (installer and
-// portable) and Linux (AppImage). `npm run dist:mac` / `dist:win` build on
-// their own platform; CI builds both on every tag.
+// Packaging: one download per platform, so nobody can pick the wrong one.
+//   macOS    Cue-<version>-mac.dmg            universal (Apple Silicon and Intel)
+//   Windows  Cue-<version>-windows-setup.exe  installs for the current user and opens Cue
+// `npm run dist:mac` / `dist:win` build on their own platform; the Release
+// workflow builds both, installs each and checks that Cue opens.
 //
 // Signing is optional. With a Developer ID certificate (CSC_LINK or CSC_NAME)
 // the Mac app is signed, and notarized when Apple credentials are present
 // (APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD + APPLE_TEAM_ID, or an API key).
 // Without one it is ad-hoc signed so it still launches on Apple Silicon;
-// macOS then asks once to confirm opening it (see README).
+// macOS then asks once to confirm opening it (see README). Windows signs with
+// WIN_CSC_LINK when it is set; without it SmartScreen asks once.
 
 // CI passes secrets that aren't set as empty strings, and electron-builder
 // reads an empty CSC_LINK as a certificate path. Unset means unset.
@@ -50,10 +53,8 @@ export default {
 
   mac: {
     category: 'public.app-category.productivity',
-    target: [
-      { target: 'dmg', arch: ['arm64', 'x64'] },
-      { target: 'zip', arch: ['arm64', 'x64'] }
-    ],
+    target: [{ target: 'dmg', arch: ['universal'] }],
+    artifactName: '${productName}-${version}-mac.${ext}',
     icon: 'build/icon.icns',
     identity: macIdentity ? undefined : '-',
     hardenedRuntime: true,
@@ -64,32 +65,35 @@ export default {
   },
   dmg: {
     title: 'Cue ${version}',
+    // Drawn by scripts/make-installer-art.mjs (with an @2x copy for Retina screens).
+    background: 'build/dmg-background.png',
+    iconSize: 96,
     contents: [
-      { x: 150, y: 190 },
-      { x: 390, y: 190, type: 'link', path: '/Applications' }
+      { x: 170, y: 208 },
+      { x: 470, y: 208, type: 'link', path: '/Applications' }
     ],
-    window: { width: 540, height: 380 }
+    window: { width: 640, height: 400 }
   },
 
   win: {
-    target: [
-      { target: 'nsis', arch: ['x64', 'arm64'] },
-      { target: 'portable', arch: ['x64'] }
-    ],
+    // x64 also runs on Windows 11 on ARM, so one installer covers every PC.
+    target: [{ target: 'nsis', arch: ['x64'] }],
     icon: 'build/icon.ico'
   },
+  // One click: no questions, installs for the current user (no administrator
+  // prompt), adds the shortcuts and opens Cue, whose welcome screen takes over.
   nsis: {
-    oneClick: false,
+    oneClick: true,
     perMachine: false,
-    allowToChangeInstallationDirectory: true,
-    buildUniversalInstaller: false,
+    runAfterFinish: true,
+    deleteAppDataOnUninstall: false,
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
     shortcutName: 'Cue',
-    artifactName: '${productName}-${version}-windows-setup-${arch}.${ext}'
-  },
-  portable: {
-    artifactName: '${productName}-${version}-windows-portable.${ext}'
+    installerIcon: 'build/icon.ico',
+    uninstallerIcon: 'build/icon.ico',
+    uninstallDisplayName: 'Cue',
+    artifactName: '${productName}-${version}-windows-setup.${ext}'
   },
 
   linux: {

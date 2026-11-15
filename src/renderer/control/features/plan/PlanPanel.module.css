@@ -87,6 +87,14 @@
 }
 .slot {
   position: relative;
+  /* Rows arrive one after another. Opacity only: their positions never move, so drags stay exact. */
+  animation: rowIn 320ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+@keyframes rowIn {
+  from {
+    opacity: 0;
+  }
 }
 .dropLine {
   position: absolute;

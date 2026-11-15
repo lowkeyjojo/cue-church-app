@@ -1,55 +1,76 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { Dialog as D } from 'radix-ui'
 import clsx from 'clsx'
 import { Globe, Keyboard, MonitorSpeaker, Moon, ScanSearch, Sparkles, Tv } from 'lucide-react'
+import { GenerativeBackground } from '../../../stage/GenerativeBackground'
 import { attempt, modKey } from '../../lib/api'
 import { useApp, useSettings } from '../../lib/store'
 import { useUI } from '../../lib/ui'
 import { Button } from '../../ui/Button'
-import { Dialog } from '../../ui/Dialog'
 import { TextField } from '../../ui/Controls'
 import s from './Welcome.module.css'
 
-/** First-run walkthrough: what Cue is, connecting the screen, and the three keys that matter. */
+/**
+ * First run: what Cue is, connecting the screen, and the three keys that
+ * matter. It is the first thing anyone sees after installing, so it carries
+ * the brand: Cue's own ambient light plays behind the mark.
+ */
 export function WelcomeDialog() {
   const close = useUI((st) => st.close)
   const settings = useSettings()!
   const displays = useApp((st) => st.displays)
   const [step, setStep] = useState(0)
+  const [forward, setForward] = useState(true)
   const [name, setName] = useState(settings.output.name)
+  const content = useRef<HTMLDivElement>(null)
   const finish = () => {
     void attempt('settings:update', { ui: { firstRunDone: true }, output: { name: name.trim() || 'TV' } })
     close('welcome')
+  }
+  const go = (to: number) => {
+    setForward(to > step)
+    setStep(to)
   }
   const external = displays?.displays.filter((d) => !d.hasControl) ?? []
   const steps = [
     {
       title: 'Welcome to Cue',
+      lead: 'Everything you show on Sunday, from one calm screen.',
       body: (
-        <div className={s.hero}>
-          <div className={s.heroGlow} />
-          <p className={s.lead}>Find visuals privately. Show them to the room intentionally.</p>
-          <div className={s.features}>
+        <ul className={s.features}>
+          <li>
+            <span className={s.featureIcon}>
+              <Globe size={17} />
+            </span>
             <div>
-              <Globe size={18} />
               <strong>Search the web</strong>
-              <span>Click any image in Google — it lands in Preview, ready to show.</span>
+              <span>Click any image in Google and it lands in Preview, ready to show.</span>
             </div>
+          </li>
+          <li>
+            <span className={s.featureIcon}>
+              <Tv size={17} />
+            </span>
             <div>
-              <Tv size={18} />
               <strong>Preview, then show</strong>
               <span>Nothing reaches the screen until you press Show.</span>
             </div>
+          </li>
+          <li>
+            <span className={s.featureIcon}>
+              <Sparkles size={17} />
+            </span>
             <div>
-              <Sparkles size={18} />
               <strong>Breaks & countdowns</strong>
               <span>Gentle ambient scenes with a welcome, clock or countdown.</span>
             </div>
-          </div>
-        </div>
+          </li>
+        </ul>
       )
     },
     {
       title: 'Your audience screen',
+      lead: 'The TV or projector the room looks at.',
       body: (
         <div className={s.stepBody}>
           <div className={s.statusCard}>
@@ -63,7 +84,7 @@ export function WelcomeDialog() {
               <span>
                 {external.length
                   ? `Cue will show your content fullscreen on ${external[0].label}.`
-                  : 'Plug one in any time — Cue switches to it automatically. Until then, the Live monitor shows exactly what the room would see.'}
+                  : 'Plug one in any time and Cue switches to it automatically. Until then, the Live monitor shows exactly what the room would see.'}
               </span>
             </div>
           </div>
@@ -82,6 +103,7 @@ export function WelcomeDialog() {
     },
     {
       title: 'Three keys to remember',
+      lead: 'These run a whole service.',
       body: (
         <div className={s.stepBody}>
           <div className={s.bigKeys}>
@@ -109,38 +131,73 @@ export function WelcomeDialog() {
     }
   ]
   const current = steps[step]
+  const last = step === steps.length - 1
   return (
-    <Dialog
-      open
-      onClose={finish}
-      width={600}
-      initialFocus={false}
-      title={current.title}
-      footer={
-        <>
-          <div className={s.dots}>
-            {steps.map((_, i) => (
-              <span key={i} className={clsx(s.dot, i === step && s.dotOn)} />
-            ))}
+    <D.Root open onOpenChange={(open) => !open && finish()}>
+      <D.Portal>
+        <D.Overlay className={s.overlay} />
+        <D.Content
+          ref={content}
+          className={s.welcome}
+          aria-describedby={undefined}
+          tabIndex={-1}
+          onOpenAutoFocus={(e) => {
+            e.preventDefault()
+            content.current?.focus()
+          }}
+        >
+          <div className={s.hero} aria-hidden>
+            <GenerativeBackground theme="ember" resolution={0.4} />
+            <div className={s.heroShade} />
+            <div className={s.brand}>
+              <span className={s.mark}>
+                <span />
+              </span>
+              <span className={s.word}>Cue</span>
+            </div>
+            <p className={s.tagline}>
+              Find it privately.
+              <br />
+              Show it on purpose.
+            </p>
           </div>
-          {step > 0 && (
-            <Button variant="ghost" onClick={() => setStep(step - 1)}>
-              Back
-            </Button>
-          )}
-          {step < steps.length - 1 ? (
-            <Button variant="primary" onClick={() => setStep(step + 1)}>
-              Continue
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={finish}>
-              Start using Cue
-            </Button>
-          )}
-        </>
-      }
-    >
-      {current.body}
-    </Dialog>
+
+          <div className={s.side}>
+            <div className={s.progress}>
+              {steps.map((_, i) => (
+                <span key={i} className={clsx(s.bar, i <= step && s.barOn)} />
+              ))}
+            </div>
+            {/* Keyed, so each step slides in from the side it came from. */}
+            <div key={step} className={clsx(s.step, forward ? s.fromRight : s.fromLeft)}>
+              <D.Title className={s.title}>{current.title}</D.Title>
+              <p className={s.lead}>{current.lead}</p>
+              {current.body}
+            </div>
+            <footer className={s.footer}>
+              {step > 0 ? (
+                <Button variant="ghost" onClick={() => go(step - 1)}>
+                  Back
+                </Button>
+              ) : (
+                <Button variant="ghost" onClick={finish}>
+                  Skip
+                </Button>
+              )}
+              <div className={s.grow} />
+              {last ? (
+                <Button variant="primary" size="lg" onClick={finish}>
+                  Start using Cue
+                </Button>
+              ) : (
+                <Button variant="primary" size="lg" onClick={() => go(step + 1)}>
+                  Continue
+                </Button>
+              )}
+            </footer>
+          </div>
+        </D.Content>
+      </D.Portal>
+    </D.Root>
   )
 }

@@ -1,0 +1,127 @@
+<!doctype html>
+<!-- The Finder window shown when Cue's disk image is opened (640 × 400).
+     Finder draws the two icons and their names itself: the app at (170, 208)
+     and the Applications folder at (470, 208). Their names are black in Light
+     Mode and white in Dark Mode, so they sit on a mid-tone tray that suits both. -->
+<meta charset="utf-8" />
+<style>
+  @font-face {
+    font-family: 'Inter';
+    src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+      format('woff2');
+    font-weight: 100 900;
+  }
+  html,
+  body {
+    margin: 0;
+    width: 640px;
+    height: 400px;
+    overflow: hidden;
+  }
+  body {
+    position: relative;
+    font-family: 'Inter', sans-serif;
+    background:
+      radial-gradient(420px 260px at 26% 8%, rgba(242, 163, 58, 0.16), transparent 70%),
+      linear-gradient(180deg, #17181c 0%, #0b0c0e 100%);
+    color: #ededf0;
+  }
+  .title {
+    position: absolute;
+    top: 38px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 21px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+  .title b {
+    color: #f6b14d;
+    font-weight: 650;
+  }
+  .sub {
+    position: absolute;
+    top: 70px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12.5px;
+    color: #a4a6ae;
+  }
+  /* The tray the two icons and their Finder labels rest on. */
+  .tray {
+    position: absolute;
+    left: 64px;
+    right: 64px;
+    top: 122px;
+    height: 180px;
+    border-radius: 22px;
+    background: linear-gradient(180deg, #7d7f87 0%, #6c6e76 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+      0 18px 40px rgba(0, 0, 0, 0.5);
+  }
+  .arrow {
+    position: absolute;
+    left: 50%;
+    top: 208px;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 5px;
+  }
+  .arrow svg:nth-child(1) {
+    opacity: 0.35;
+  }
+  .arrow svg:nth-child(2) {
+    opacity: 0.65;
+  }
+  .foot {
+    position: absolute;
+    bottom: 34px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11.5px;
+    color: #8b8d95;
+  }
+</style>
+<div class="title">Drag <b>Cue</b> into Applications</div>
+<div class="sub">Then open it from Applications or Launchpad.</div>
+<div class="tray"></div>
+<div class="arrow">
+  <svg width="16" height="26" viewBox="0 0 16 26">
+    <path
+      d="M3 3l10 10L3 23"
+      fill="none"
+      stroke="#1b1c20"
+      stroke-width="3.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+  <svg width="16" height="26" viewBox="0 0 16 26">
+    <path
+      d="M3 3l10 10L3 23"
+      fill="none"
+      stroke="#1b1c20"
+      stroke-width="3.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+  <svg width="16" height="26" viewBox="0 0 16 26">
+    <path
+      d="M3 3l10 10L3 23"
+      fill="none"
+      stroke="#1b1c20"
+      stroke-width="3.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+</div>
+<div class="foot">
+  The first time, macOS asks you to confirm: System Settings → Privacy &amp; Security → Open Anyway.
+</div>

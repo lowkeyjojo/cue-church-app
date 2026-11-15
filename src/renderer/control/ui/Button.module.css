@@ -21,7 +21,8 @@
       filter var(--t-fast) var(--ease);
   }
   .button:active:not(:disabled) {
-    transform: translateY(0.5px);
+    transform: scale(0.975);
+    transition-duration: 60ms;
   }
   .button:disabled {
     opacity: 0.4;

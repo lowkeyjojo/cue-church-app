@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, nativeTheme } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import type { UiCommand } from '@shared/ipc'
 import { parseGoogleLink } from '@shared/google'
 import type { ShowCommand, WebPick } from '@shared/types'
@@ -14,7 +15,7 @@ import { WebIngest } from './media/webIngest'
 import { MediaWorker } from './media/worker'
 import { buildMenu } from './menu'
 import { OutputManager } from './output/output'
-import { dataPath, initPaths, isE2E, resourcePath } from './paths'
+import { dataPath, initPaths, isE2E, logsDir, resourcePath } from './paths'
 import { clearImportLeftovers, importPlanBundle } from './plans/bundle'
 import { handleAppProtocol, handleMediaProtocol, registerSchemes } from './protocol'
 import { Bible } from './scripture/bible'
@@ -49,8 +50,20 @@ const handledLaunches = new Set<string>()
 const launchNote = (id: string) => dataPath('launches', `${id}.ack`)
 const lock = () => app.requestSingleInstanceLock({ launchId })
 
-if (lock()) void start()
-else void waitForLock()
+if (lock()) start().catch(fatal)
+else waitForLock().catch(fatal)
+
+/** Starting never fails silently: say what happened and where the details are. */
+function fatal(err: unknown): void {
+  log.error('Cue could not start:', err)
+  if (!isE2E) {
+    dialog.showErrorBox(
+      "Cue couldn't start",
+      `${errorMessage(err)}\n\nInstalling Cue again usually fixes this; your library and plans are kept.\nDetails: ${join(logsDir(), 'cue.log')}`
+    )
+  }
+  app.exit(1)
+}
 
 /**
  * Either another Cue is running (it confirms the hand-off and this launch
@@ -83,11 +96,43 @@ process.on('exit', (code) => log.info(`Cue exited (code ${code})`))
 
 async function start(): Promise<void> {
   rmSync(dataPath('launches'), { recursive: true, force: true })
+  let control: BrowserWindow | null = null
+  let windowOpened = false
   await app.whenReady()
   nativeTheme.themeSource = 'dark'
   log.info(
     `Cue ${app.getVersion()} starting (Electron ${process.versions.electron}, ${process.platform}/${process.arch})`
   )
+
+  // Registered before anything slow, so a second launch during startup is answered too.
+  app.on('second-instance', (_event, argv, _cwd, data) => {
+    // A Cue left running without its window can't help anyone: step aside and let the
+    // new launch start instead (it gets the lock as soon as this one is gone).
+    if (windowOpened && (!control || control.isDestroyed())) {
+      log.warn('A second launch found this Cue without a window: quitting so it can start')
+      return app.exit(0)
+    }
+    const id = (data as { launchId?: string } | null)?.launchId
+    if (id) {
+      if (handledLaunches.has(id)) return
+      handledLaunches.add(id)
+      try {
+        mkdirSync(dataPath('launches'), { recursive: true })
+        writeFileSync(launchNote(id), '')
+      } catch {
+        /* the other launch gives up on its own after a while */
+      }
+    }
+    if (control && !control.isDestroyed()) {
+      if (control.isMinimized()) control.restore()
+      if (!control.isVisible()) control.show()
+      control.focus()
+    }
+    for (const file of argv.slice(1).filter(isPlanFile)) {
+      if (openPlanFile) openPlanFile(file)
+      else planFiles.push(file)
+    }
+  })
 
   handleAppProtocol()
   handleMediaProtocol()
@@ -106,7 +151,6 @@ async function start(): Promise<void> {
   const web = new WebIngest(importer, library)
   const show = new ShowController(library, plans, settings, history)
   const output = new OutputManager(settings)
-  let control: BrowserWindow | null = null
 
   // --- wiring: stores -> renderers ---
   show.on('state', (state) => {
@@ -193,6 +237,7 @@ async function start(): Promise<void> {
   installIpc()
 
   control = createControlWindow(settings, { dispatch, ui, webImage: (a, i) => void webImage(a, i) })
+  windowOpened = true
   addControl(control.webContents)
   output.attachControl(control)
   output.apply()
@@ -261,28 +306,6 @@ async function start(): Promise<void> {
   control.on('closed', () => {
     control = null
     app.quit()
-  })
-
-  app.on('second-instance', (_event, argv, _cwd, data) => {
-    const id = (data as { launchId?: string } | null)?.launchId
-    if (id) {
-      if (handledLaunches.has(id)) return
-      handledLaunches.add(id)
-      try {
-        mkdirSync(dataPath('launches'), { recursive: true })
-        writeFileSync(launchNote(id), '')
-      } catch {
-        /* the other launch gives up on its own after a while */
-      }
-    }
-    if (control) {
-      if (control.isMinimized()) control.restore()
-      control.focus()
-    }
-    for (const file of argv.slice(1).filter(isPlanFile)) {
-      if (openPlanFile) openPlanFile(file)
-      else planFiles.push(file)
-    }
   })
 
   app.on('before-quit', () => {

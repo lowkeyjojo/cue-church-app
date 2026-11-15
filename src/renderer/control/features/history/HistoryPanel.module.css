@@ -67,6 +67,15 @@
   height: 40px;
   padding: 0 6px;
   border-radius: var(--r-8);
+  transition: background-color var(--t-fast) var(--ease);
+  /* What was just shown drops in at the top. */
+  animation: shown 300ms var(--ease-out);
+}
+@keyframes shown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
 }
 .row:hover {
   background: var(--bg-3);

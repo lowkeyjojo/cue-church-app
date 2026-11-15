@@ -63,6 +63,30 @@ test('the output window can be turned off and back on, and shows a test pattern 
   }
 })
 
+test('a Cue left running without its window steps aside for a new launch', async () => {
+  const stuck = await Cue.launch()
+  const { dataDir } = stuck
+  // The control window is gone, but the process lives on behind its audience window:
+  // from the outside, Cue "won't open any more".
+  await stuck.app.evaluate(({ BrowserWindow }) => {
+    const control = BrowserWindow.getAllWindows().find((w) =>
+      w.webContents.getURL().includes('control.html')
+    )!
+    control.removeAllListeners('closed')
+    control.destroy()
+  })
+
+  // Opening Cue again must give a working window, not hand over to the stuck one and quit.
+  const fresh = await Cue.launch({ dataDir })
+  try {
+    await expect(fresh.control.getByTestId('take')).toBeVisible()
+    expect(fresh.errors()).toEqual([])
+  } finally {
+    await fresh.close()
+    await stuck.close()
+  }
+})
+
 test('opening Cue again hands its files to the running Cue and quits', async () => {
   const cue = await Cue.launch()
   const dir = await mkdtemp(join(tmpdir(), 'cue-handoff-'))
