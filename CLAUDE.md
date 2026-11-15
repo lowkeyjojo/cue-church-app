@@ -7,6 +7,8 @@ Cue is an Electron + React + TypeScript church presentation app. Read `docs/ARCH
 - `npm ci`, then `npm run dev` (hot reload) or `npm run build` + `npm start`
 - `npm run check`: typecheck (both tsconfigs), ESLint, unit tests. Run it before every commit, plus `npx prettier --check .`
 - `npm run test:e2e`: builds, then runs Playwright against `out/`. On a headless Linux box it re-runs itself under `xvfb-run`; `--no-build` skips the build, and extra arguments go to Playwright
+- `node scripts/smoke-installed.mjs "<path to the installed Cue>"`: checks that a packaged Cue opens, draws, loads its resources and quits. The Release workflow runs it on the installers it builds
+- `npm run art`: redraws the Mac disk image's window (`build/dmg-background*.png`). Set `CHROMIUM_PATH` if Playwright's own browser isn't installed
 - After changing main-process imports, run `node --check out/main/index.js` once the build is done: a bad bundle makes the app exit silently at startup
 
 ## Conventions
@@ -23,6 +25,9 @@ Cue is an Electron + React + TypeScript church presentation app. Read `docs/ARCH
 
 ## Gotchas
 
+- Ship one installer per platform (`electron-builder.config.mjs`). Extra variants on the Releases page get downloaded by mistake.
+- The control window must always become visible: keep the reveal fallback in `windows/control.ts`.
+- Entrance animations may change opacity and transform only. Animating layout breaks drag-and-drop geometry and E2E clicks.
 - Preloads run sandboxed, so each must build to a single CommonJS file (`isolatedEntries` in `electron.vite.config.ts`).
 - In the main process import `fflate/browser`; fflate's Node build collides with the bundler's `require` shim.
 - Electron 44's clipboard API is asynchronous and `ClipboardItem`-based.

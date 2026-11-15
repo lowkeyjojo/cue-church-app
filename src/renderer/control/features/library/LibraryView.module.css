@@ -139,6 +139,12 @@
   padding: 5px 5px 6px;
   outline: none;
   transition: background-color var(--t-fast) var(--ease);
+  animation: tileIn 240ms var(--ease-out);
+}
+@keyframes tileIn {
+  from {
+    opacity: 0;
+  }
 }
 .tile:hover {
   background: var(--bg-3);
@@ -156,6 +162,12 @@
 .tileImg {
   width: 100%;
   border-radius: 7px;
+  transition:
+    transform var(--t-slow) var(--ease-out),
+    box-shadow var(--t-med) var(--ease);
+}
+.tile:hover .tileImg {
+  transform: scale(1.018);
 }
 .tileLive .tileImg {
   box-shadow: 0 0 0 2px var(--live-500);

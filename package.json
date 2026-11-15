@@ -1,7 +1,7 @@
 {
   "name": "cue",
   "productName": "Cue",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Cue — a modern church presentation app. Find visuals privately, show them to the room intentionally.",
   "author": {
     "name": "Cue"
@@ -27,6 +27,7 @@
     "check": "npm run typecheck && npm run lint && npm run test",
     "icons": "node scripts/make-icons.mjs",
     "bible": "node scripts/build-bible.mjs",
+    "art": "node scripts/make-installer-art.mjs",
     "dist": "electron-vite build && electron-builder --config electron-builder.config.mjs --publish never",
     "dist:mac": "electron-vite build && electron-builder --config electron-builder.config.mjs --mac --publish never",
     "dist:win": "electron-vite build && electron-builder --config electron-builder.config.mjs --win --publish never",

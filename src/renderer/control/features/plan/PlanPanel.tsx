@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import clsx from 'clsx'
 import {
   CalendarDays,
@@ -148,7 +148,12 @@ export function PlanPanel() {
           </EmptyState>
         )}
         {plan.entries.map((entry, i) => (
-          <div key={entry.id} data-entry-index={i} className={s.slot}>
+          <div
+            key={entry.id}
+            data-entry-index={i}
+            className={s.slot}
+            style={{ '--i': Math.min(i, 14) } as CSSProperties}
+          >
             {dropIndex === i && <div className={s.dropLine} />}
             {entry.type === 'section' ? (
               <SectionRow plan={plan} entry={entry} />

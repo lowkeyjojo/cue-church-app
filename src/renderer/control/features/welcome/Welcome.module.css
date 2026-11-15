@@ -1,57 +1,252 @@
-/* Every step is the same height, so the buttons stay put as you click through. */
-.hero,
-.stepBody {
-  min-height: 214px;
+/* First run. A two-panel setup screen: the brand over Cue's ambient light, and the steps. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  background: rgba(4, 4, 6, 0.72);
+  backdrop-filter: blur(10px) saturate(0.8);
+  animation: fade 420ms var(--ease-out);
 }
+.welcome {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 801;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  width: min(900px, calc(100vw - 48px));
+  height: min(540px, calc(100vh - 64px));
+  transform: translate(-50%, -50%);
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--bg-2);
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.7),
+    0 0 0 1px var(--line-3);
+  outline: none;
+  animation: arrive 640ms var(--ease-out);
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 22px)) scale(0.955);
+  }
+}
+
 .hero {
   position: relative;
-  padding: 6px 0 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 30px 30px 32px;
+  background: #0b0807;
+  overflow: hidden;
 }
-.heroGlow {
+.heroShade {
   position: absolute;
-  top: -60px;
-  right: -40px;
-  width: 260px;
-  height: 200px;
-  background: radial-gradient(closest-side, var(--amber-a24), transparent);
-  pointer-events: none;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 6, 5, 0.25), rgba(8, 6, 5, 0.05) 40%, rgba(8, 6, 5, 0.7)),
+    linear-gradient(90deg, transparent 70%, rgba(0, 0, 0, 0.35));
+}
+.brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: linear-gradient(160deg, #2a2b31, #131417);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 30px rgba(0, 0, 0, 0.55);
+  animation: markIn 700ms var(--ease-out) 150ms backwards;
+}
+.mark span {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffd596, #f2a33a 60%, #c9761b);
+  /* The cue light comes on, then settles into a slow glow. */
+  animation:
+    ignite 900ms var(--ease-out) 450ms backwards,
+    glow 3.2s ease-in-out 1350ms infinite;
+  box-shadow: 0 0 22px rgba(242, 163, 58, 0.75);
+}
+.word {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  animation: wordIn 600ms var(--ease-out) 380ms backwards;
+}
+.tagline {
+  position: relative;
+  margin: 0;
+  font-size: 25px;
+  font-weight: 650;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+  animation: wordIn 700ms var(--ease-out) 560ms backwards;
+}
+@keyframes markIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-8deg);
+  }
+}
+@keyframes ignite {
+  0% {
+    opacity: 0.15;
+    transform: scale(0.5);
+    box-shadow: 0 0 0 rgba(242, 163, 58, 0);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.18);
+    box-shadow: 0 0 46px rgba(242, 163, 58, 1);
+  }
+}
+@keyframes glow {
+  50% {
+    box-shadow: 0 0 34px rgba(242, 163, 58, 0.95);
+  }
+}
+@keyframes wordIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 26px 30px 22px 32px;
+}
+.progress {
+  display: flex;
+  gap: 6px;
+}
+.bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--bg-5);
+  overflow: hidden;
+}
+.bar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--amber-500), var(--amber-300));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 520ms var(--ease-out);
+}
+.barOn::after {
+  transform: scaleX(1);
+}
+.step {
+  flex: 1;
+  min-height: 0;
+  padding-top: 26px;
+}
+.fromRight {
+  animation: fromRight 460ms var(--ease-out);
+}
+.fromLeft {
+  animation: fromLeft 460ms var(--ease-out);
+}
+@keyframes fromRight {
+  from {
+    opacity: 0;
+    transform: translateX(26px);
+  }
+}
+@keyframes fromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-26px);
+  }
+}
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 .lead {
-  position: relative;
-  margin: 0 0 18px;
-  color: var(--text-1);
-  font-size: 16px;
-  font-weight: 500;
+  margin: 6px 0 22px;
+  color: var(--text-2);
+  font-size: 14px;
   line-height: 1.45;
 }
 .features {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.features > div {
+.features li {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
   border-radius: var(--r-12);
   background: var(--bg-3);
   box-shadow: inset 0 0 0 1px var(--line-1);
-  color: var(--text-2);
-  font-size: 12px;
-  line-height: 1.45;
+  animation: wordIn 520ms var(--ease-out) backwards;
 }
-.features svg {
-  color: var(--amber-400);
+.features li:nth-child(1) {
+  animation-delay: 120ms;
+}
+.features li:nth-child(2) {
+  animation-delay: 190ms;
+}
+.features li:nth-child(3) {
+  animation-delay: 260ms;
+}
+.featureIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--amber-a14);
+  color: var(--amber-300);
+}
+.features div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 .features strong {
-  color: var(--text-1);
-  font-size: 13px;
+  font-size: 13.5px;
+}
+.features div span {
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.4;
 }
 .stepBody {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 16px;
   align-items: flex-start;
 }
@@ -101,8 +296,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 18px 10px;
+  gap: 12px;
+  padding: 22px 10px 18px;
   border-radius: var(--r-12);
   background: var(--bg-3);
   box-shadow: inset 0 0 0 1px var(--line-1);
@@ -116,12 +311,34 @@
   gap: 5px;
 }
 .bigKbd {
-  min-width: 52px;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 9px;
-  font-size: 15px;
+  min-width: 56px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 16px;
   color: var(--text-1);
+  /* Each key is pressed in turn, like a hint. */
+  animation: press 3.6s var(--ease-io) infinite;
+}
+.bigKeys > div:nth-child(2) .bigKbd {
+  animation-delay: 1.2s;
+}
+.bigKeys > div:nth-child(3) .bigKbd {
+  animation-delay: 2.4s;
+}
+@keyframes press {
+  0%,
+  16%,
+  100% {
+    transform: none;
+    background: var(--bg-5);
+    color: var(--text-1);
+  }
+  6% {
+    transform: translateY(2px) scale(0.96);
+    background: var(--amber-500);
+    color: var(--amber-ink);
+  }
 }
 .note {
   display: flex;
@@ -135,19 +352,14 @@
   flex: none;
   margin-top: 2px;
 }
-.dots {
+.footer {
   display: flex;
-  gap: 6px;
-  margin-right: auto;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
 }
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--bg-6);
-}
-.dotOn {
-  background: var(--amber-400);
+.grow {
+  flex: 1;
 }
 
 .shortcuts {

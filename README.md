@@ -23,15 +23,19 @@ Cue is a cross-platform church presentation application for macOS and Windows. I
 
 ## Install
 
-Download the latest version from the [Releases page](https://github.com/lowkeyjojo/cue-church-app/releases/latest):
+Download the latest version from the [Releases page](https://github.com/lowkeyjojo/cue-church-app/releases/latest). There is one file per platform:
 
-- **macOS** (12 Monterey or later): `Cue-<version>-mac-arm64.dmg` for Apple Silicon, `…-mac-x64.dmg` for Intel Macs.
-- **Windows** (10 or 11): `Cue-<version>-windows-setup-x64.exe` (installer; `…-arm64.exe` for Windows on ARM), or `Cue-<version>-windows-portable.exe`, which runs without installing.
+- **macOS** (12 Monterey or later, Apple Silicon and Intel): `Cue-<version>-mac.dmg`. Open it and drag Cue into Applications.
+- **Windows** (10 or 11): `Cue-<version>-windows-setup.exe`. Run it: Cue installs for your user account, with no questions and no administrator prompt, and opens when it's done.
 
-Until the builds are signed with a developer certificate, the systems ask once before opening them:
+The first time Cue opens, a short welcome sets up your screen.
 
-- **macOS:** open the app, then go to **System Settings → Privacy & Security** and click **Open Anyway**.
-- **Windows:** in the SmartScreen prompt, click **More info → Run anyway**.
+**"Can't be verified" warnings.** Cue's builds aren't signed with a paid developer certificate yet, so each system asks once before it runs them. That's the only reason for the warning; you don't need to turn off any protection.
+
+- **macOS:** open Cue once (macOS refuses), then go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+- **Windows:** in the blue "Windows protected your PC" box, click **More info**, then **Run anyway**. Leave SmartScreen and Defender switched on.
+
+To remove the warnings for everyone, the builds need signing: an Apple Developer ID (Apple Developer Program) for macOS and a code-signing certificate for Windows. The release workflow signs automatically once those are added as repository secrets (see Development).
 
 ## Your first Sunday
 
@@ -98,15 +102,16 @@ npm run dev
 | `npm test`          | Unit tests (Vitest): the show reducer, scripture, layout and utilities       |
 | `npm run test:e2e`  | Build, then drive the real app with Playwright (uses Xvfb on headless Linux) |
 | `npm run check`     | Typecheck, lint and unit tests together                                      |
-| `npm run dist:mac`  | Package for macOS (on a Mac): `release/<version>/*.dmg` and `.zip`           |
-| `npm run dist:win`  | Package for Windows (on Windows): installer and portable `.exe`              |
+| `npm run dist:mac`  | Package for macOS (on a Mac): `release/<version>/Cue-<version>-mac.dmg`      |
+| `npm run dist:win`  | Package for Windows (on Windows): `Cue-<version>-windows-setup.exe`          |
 | `npm run dist:dir`  | Unpacked app for the current platform, for a quick smoke test                |
 | `npm run icons`     | Redraw the app icons in `build/` and `resources/`                            |
+| `npm run art`       | Redraw the Mac disk image's background from `build/installer/`               |
 | `npm run bible`     | Download the bundled Bible translations again into `resources/bible/`        |
 
 The end-to-end suite launches Cue with a throwaway data folder and a local stand-in for Google Images, so it needs no network. Pass Playwright arguments through, for example `npm run test:e2e -- tests/e2e/google.spec.ts`, and add `--no-build` to reuse the current `out/`.
 
-**Packaging and signing.** `electron-builder.config.mjs` builds DMG + zip (Apple Silicon and Intel), a Windows installer (x64 and arm64) and a portable `.exe`. Signing is optional and configured through environment variables: `CSC_LINK` and `CSC_KEY_PASSWORD` (Developer ID certificate), plus `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` for notarization; `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` for Windows. Without them the Mac app is ad-hoc signed so it still runs on Apple Silicon. The **Release** workflow builds both platforms. To publish a GitHub release, push a tag like `v1.0.0`, or run the workflow from the Actions tab with that version (it creates the tag). The same variables can be added as repository secrets.
+**Packaging and signing.** `electron-builder.config.mjs` builds one universal DMG for macOS (Apple Silicon and Intel) and one one-click installer for Windows (x64, which also runs on Windows 11 on ARM). Signing is optional and configured through environment variables: `CSC_LINK` and `CSC_KEY_PASSWORD` (Developer ID certificate), plus `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` for notarization; `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` for Windows. Without them the Mac app is ad-hoc signed so it still runs on Apple Silicon. The **Release** workflow builds both platforms, then installs each build on a clean machine and checks that Cue opens (`scripts/smoke-installed.mjs`) before anything is published. To publish a GitHub release, push a tag like `v1.0.0`, or run the workflow from the Actions tab with that version (it creates the tag). The same variables can be added as repository secrets.
 
 **CI.** Every push runs typecheck, lint, formatting and unit tests, then the end-to-end suite on Linux, macOS and Windows.
 

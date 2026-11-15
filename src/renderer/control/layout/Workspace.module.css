@@ -56,6 +56,18 @@
 .tabOn svg {
   color: var(--amber-400);
 }
+.tab svg {
+  transition: color var(--t-med) var(--ease);
+}
+/* Once measured, one highlight slides between the tabs instead. */
+.tabs {
+  --thumb-bg: var(--bg-4);
+  --thumb-r: 7px;
+}
+.tabs[data-thumb] .tabOn {
+  background: transparent;
+  box-shadow: none;
+}
 .toolbar {
   flex: 1;
   min-width: 0;
@@ -81,4 +93,11 @@
 .active {
   visibility: visible;
   pointer-events: auto;
+  animation: viewIn 220ms var(--ease-out);
+}
+@keyframes viewIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
 }

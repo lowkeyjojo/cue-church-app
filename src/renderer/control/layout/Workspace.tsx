@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import { Library, Presentation, Search } from 'lucide-react'
@@ -8,6 +8,7 @@ import { LibraryView } from '../features/library/LibraryView'
 import { SearchView } from '../features/search/SearchView'
 import { ShowView } from '../features/show/ShowView'
 import { Tooltip } from '../ui/Tooltip'
+import { useSlidingThumb } from '../ui/useSlidingThumb'
 import s from './Workspace.module.css'
 
 const TABS: { id: Tab; label: string; icon: ReactNode; key: string }[] = [
@@ -28,6 +29,8 @@ export function Workspace() {
   const tab = useUI((st) => st.tab)
   const setTab = useUI((st) => st.setTab)
   const [slot, setSlot] = useState<HTMLElement | null>(null)
+  const tabs = useRef<HTMLDivElement>(null)
+  useSlidingThumb(tabs, '[aria-selected="true"]', tab)
 
   useEffect(() => {
     void attempt('settings:update', { ui: { tab } })
@@ -36,7 +39,12 @@ export function Workspace() {
   return (
     <main className={s.workspace}>
       <div className={s.tabbar}>
-        <div className={clsx(s.tabs, 'collapsible')} role="tablist" aria-label="Workspace">
+        <div
+          ref={tabs}
+          className={clsx(s.tabs, 'collapsible', 'thumbHost')}
+          role="tablist"
+          aria-label="Workspace"
+        >
           {TABS.map((t) => (
             <Tooltip key={t.id} label={t.label} shortcut={`${modKey} ${t.key}`} side="bottom">
               <button

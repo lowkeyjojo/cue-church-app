@@ -77,6 +77,10 @@
   /* Motion */
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Long, soft landing for things arriving on screen. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* A slight overshoot, for highlights that slide between options. */
+  --ease-spring: cubic-bezier(0.3, 1.35, 0.5, 1);
   --t-fast: 110ms;
   --t-med: 180ms;
   --t-slow: 280ms;

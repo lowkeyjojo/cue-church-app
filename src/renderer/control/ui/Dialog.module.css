@@ -6,7 +6,7 @@
     background: rgba(4, 4, 6, 0.62);
     backdrop-filter: blur(3px);
     z-index: 800;
-    animation: fade 160ms var(--ease);
+    animation: fade 220ms var(--ease-out);
   }
   .content {
     position: fixed;
@@ -21,7 +21,7 @@
     background: var(--bg-2);
     box-shadow: var(--shadow-dialog);
     z-index: 801;
-    animation: rise 200ms var(--ease);
+    animation: rise 320ms var(--ease-out);
     outline: none;
   }
   .header {
@@ -88,6 +88,6 @@
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 6px)) scale(0.985);
+    transform: translate(-50%, calc(-50% + 14px)) scale(0.965);
   }
 }

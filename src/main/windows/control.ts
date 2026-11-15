@@ -1,9 +1,11 @@
-import { BrowserWindow, Menu, screen, session, shell, type WebContents } from 'electron'
+import { BrowserWindow, dialog, Menu, screen, session, shell, type WebContents } from 'electron'
+import { join } from 'node:path'
 import type { UiCommand } from '@shared/ipc'
 import type { ShowCommand } from '@shared/types'
 import { debounce, isHttpUrl } from '@shared/util'
+import { log } from '../log'
 import { WEB_PARTITION } from '../media/webIngest'
-import { isDev, isE2E, preloadPath, rendererUrl, resourcePath } from '../paths'
+import { isDev, isE2E, logsDir, preloadPath, rendererUrl, resourcePath } from '../paths'
 import type { SettingsStore } from '../store/settings'
 import { matchGlobalShortcut } from '../shortcuts'
 
@@ -47,11 +49,20 @@ export function createControlWindow(settings: SettingsStore, hooks: ControlHooks
     }
   })
 
-  win.once('ready-to-show', () => {
+  let revealed = false
+  const reveal = () => {
+    if (revealed || win.isDestroyed()) return
+    revealed = true
     if (settings.data.ui.maximized && !isE2E) win.maximize()
     if (!isE2E || process.env.CUE_E2E_SHOW === '1') win.show()
     else win.showInactive()
-  })
+    log.info("Cue's window is showing")
+  }
+  win.once('ready-to-show', reveal)
+  // Never stay invisible: a Cue that is running without a window looks like it didn't open,
+  // and it would swallow every later launch.
+  const revealAnyway = setTimeout(reveal, 4000)
+  win.once('closed', () => clearTimeout(revealAnyway))
 
   const saveBounds = debounce(() => {
     if (win.isDestroyed() || win.isMinimized()) return
@@ -96,9 +107,43 @@ export function createControlWindow(settings: SettingsStore, hooks: ControlHooks
   })
   contents.on('did-attach-webview', (_event, guest) => configureGuest(guest, hooks))
 
+  // The show itself lives in the main process, so the window can be reloaded without losing it.
+  let reloads = 0
+  contents.on('render-process-gone', (_event, details) => {
+    if (details.reason === 'clean-exit' || win.isDestroyed()) return
+    log.error('The control window crashed:', details.reason)
+    if (reloads++ < 3) contents.reload()
+    else void loadFailed(win, `The window crashed (${details.reason}).`)
+  })
+  contents.on('did-fail-load', (_event, code, description, url, isMainFrame) => {
+    // -3 is a load that was replaced by another one, not a failure.
+    if (!isMainFrame || code === -3) return
+    log.error(`The control window couldn't load ${url}: ${description} (${code})`)
+    reveal()
+    void loadFailed(win, `${description || 'The interface could not be loaded'} (${code}).`)
+  })
+  contents.on('unresponsive', () => log.warn('The control window is not responding'))
+
   void win.loadURL(rendererUrl('control'))
   if (isDev && process.env.CUE_DEVTOOLS === '1') contents.openDevTools({ mode: 'detach' })
   return win
+}
+
+/** Tell the operator instead of leaving an empty window, and offer the two things that can help. */
+async function loadFailed(win: BrowserWindow, detail: string): Promise<void> {
+  if (isE2E || win.isDestroyed()) return
+  const { response } = await dialog.showMessageBox(win, {
+    type: 'error',
+    buttons: ['Try Again', 'Show Log File', 'Quit Cue'],
+    defaultId: 0,
+    cancelId: 2,
+    message: "Cue's window couldn't load",
+    detail: `${detail}\n\nIf this keeps happening, install Cue again. Your library and plans are kept.`
+  })
+  if (win.isDestroyed()) return
+  if (response === 0) win.webContents.reload()
+  else if (response === 1) shell.showItemInFolder(join(logsDir(), 'cue.log'))
+  else win.close()
 }
 
 function configureGuest(guest: WebContents, hooks: ControlHooks): void {
