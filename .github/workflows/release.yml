@@ -48,6 +48,39 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
+      # Install what was just built, the way a user would, and make sure Cue
+      # opens. An installer that doesn't work is never uploaded or published.
+      - name: Install and start Cue (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem release/*/*.exe | Where-Object { $_.Name -match 'setup' -and $_.Name -notmatch 'arm64' } | Select-Object -First 1
+          if (-not $installer) { throw 'No Windows installer was built' }
+          Write-Host "Installing $($installer.Name)"
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+          $exe = $null
+          foreach ($i in 1..60) {
+            $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter Cue.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($exe) { break }
+            Start-Sleep -Seconds 1
+          }
+          if (-not $exe) { throw 'The installer finished but Cue.exe was not installed' }
+          Write-Host "Installed to $($exe.FullName)"
+          node scripts/smoke-installed.mjs $exe.FullName
+      - name: Install and start Cue (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          dmg=$(ls release/*/*.dmg | grep -v x64 | head -1)
+          echo "Opening $dmg"
+          hdiutil attach "$dmg" -nobrowse -readonly -mountpoint "$RUNNER_TEMP/cue-dmg"
+          mkdir -p "$RUNNER_TEMP/Applications"
+          cp -R "$RUNNER_TEMP/cue-dmg/Cue.app" "$RUNNER_TEMP/Applications/"
+          hdiutil detach "$RUNNER_TEMP/cue-dmg"
+          # A broken signature makes macOS call the app "damaged" and refuse to open it.
+          codesign --verify --deep --strict --verbose=2 "$RUNNER_TEMP/Applications/Cue.app"
+          node scripts/smoke-installed.mjs "$RUNNER_TEMP/Applications/Cue.app/Contents/MacOS/Cue"
+
       - uses: actions/upload-artifact@v4
         with:
           name: cue-${{ matrix.name }}
