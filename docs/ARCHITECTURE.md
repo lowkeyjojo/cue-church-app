@@ -46,7 +46,8 @@ flowchart LR
 ## Processes and windows
 
 - **Main process** (`src/main/index.ts`) creates the stores and services, wires their events to the windows, and answers the control window's calls. Nothing else holds state that matters: renderers can reload or crash and pick up where they were.
-- **One Cue at a time.** A second launch (say, double-clicking a `.cueplan` file) hands its files to the running Cue, which confirms by writing a note to `launches/` in the data folder, and then quits. If nobody answers, because a Cue has just crashed and Windows still holds its lock, the launch keeps trying for up to 15 seconds and then starts normally.
+- **One Cue at a time.** A second launch (say, double-clicking a `.cueplan` file) hands its files to the running Cue, which confirms by writing a note to `launches/` in the data folder, and then quits. If nobody answers, because a Cue has just crashed and Windows still holds its lock, the launch keeps trying for up to 15 seconds and then starts normally. A Cue that is still running but has lost its window doesn't answer: it quits, so the new launch starts instead of vanishing into it.
+- **Starting is never silent.** The control window is shown when its first frame is ready, or after four seconds regardless, so a slow or broken page can't leave Cue running with nothing on screen. If the page fails to load or its process keeps crashing, a dialog offers to try again, show the log or quit; an error during startup shows the reason and where the log is (`src/main/index.ts`, `src/main/windows/control.ts`).
 - **Control window** loads `control.html`. Its preload exposes `window.cue` with `invoke(method, ...args)` and `on(event, listener)`. A zustand store (`lib/store.ts`) mirrors main's state from events; a second store (`lib/ui.ts`) holds UI-only state such as the current tab, dialogs and selection.
 - **Audience window** loads `audience.html` and renders `<Stage role="output">` from the `ShowState` main sends it. It reports video and audio playback back to main, which re-broadcasts it so the Live monitor stays in sync.
 - **Media worker** is a hidden window with Chromium's decoders and pdf.js. Main sends it tasks (image and video thumbnails, media probing, PDF pages) and enforces a timeout on each, so a bad file can never hang an import. If the worker crashes or a task times out, the worker is restarted; the other files it was working on are retried once, so one corrupt file doesn't fail its neighbours. On quit, the worker and the audience window are shut down for good: a late event can't open a window that would keep Cue running.
@@ -133,6 +134,10 @@ All data lives in the user data folder (see the README). Each store is a `JsonSt
 - Permissions are allowlisted per session: Cue's windows may enumerate audio outputs, choose a speaker and go fullscreen; the browser pane may only go fullscreen and write to the clipboard.
 - IPC handlers only answer the control window.
 
+## Motion
+
+Motion shows what changed, and it's kept short. The easing curves are tokens (`--ease-out` for things arriving, `--ease-spring` for a highlight that travels), and a global rule in `base.css` turns animation off for people who ask for reduced motion. Tabs and segmented controls share one highlight that slides between options (`ui/useSlidingThumb.ts` measures the selected option and the `.thumbHost` class draws it). Going live sends a ring out of the Live monitor, and staging does the same in amber: they're keyed on the presentation, so they play once per change. Entrance animations change opacity or transform only, never layout, so drag-and-drop geometry and E2E clicks aren't affected.
+
 ## Tests
 
 - **Unit** (`npm test`): the show reducer's workflow rules, scripture references and lookups, file-format detection, the justified image grid and utilities.
@@ -141,3 +146,7 @@ All data lives in the user data folder (see the README). Each store is a `JsonSt
 ## Build
 
 `electron.vite.config.ts` builds three targets: the main process (ESM), the preloads (each a single, self-contained CommonJS file, since sandboxed preloads can't load chunks), and the renderer pages. It also copies pdf.js's character maps, fonts and wasm decoders next to the renderer, so PDFs render offline, and injects each page's CSP. `electron-builder.config.mjs` packages `out/` into installers.
+
+There is one download per platform, so nobody can pick the wrong one: a universal Mac disk image (Apple silicon and Intel) and a one-click Windows installer for x64, which also runs on ARM PCs. The disk image's window is drawn by `scripts/make-installer-art.mjs` (`npm run art`) from `build/installer/dmg-background.html`.
+
+The Release workflow (`.github/workflows/release.yml`) builds both, then installs each the way a person would (the Windows installer silently, the Mac app out of its disk image) and runs `scripts/smoke-installed.mjs` against the installed app with no test flags: it has to show its window, draw the interface, read a verse from the bundled Bible, quit, and do it all a second time. Nothing is published unless that passes. Run it with a `version` (say `v1.0.0`) to tag and publish a release; without one it only builds and tests.
