@@ -75,6 +75,19 @@ test('the output window can be turned off and back on, and shows a test pattern 
 test('a Cue left running without its window restarts when Cue is opened again', async () => {
   const stuck = await Cue.launch()
   const { dataDir } = stuck
+  const shown = (log: string) => log.match(/Cue's window is showing/g)?.length ?? 0
+  const launched = (log: string) => [...log.matchAll(/Cue launched \(pid (\d+)\)/g)].map((m) => Number(m[1]))
+  const alive = (pid: number) => {
+    try {
+      process.kill(pid, 0)
+      return true
+    } catch {
+      return false
+    }
+  }
+  await expect.poll(async () => shown(await logFile(dataDir))).toBe(1)
+  const [stuckPid] = launched(await logFile(dataDir))
+
   // The control window is gone, but the process lives on behind its audience window:
   // from the outside, Cue "won't open any more".
   await stuck.app.evaluate(({ BrowserWindow }) => {
@@ -85,31 +98,31 @@ test('a Cue left running without its window restarts when Cue is opened again', 
     control.destroy()
   })
 
+  // Opening Cue again, as a person would (no test harness attached to the new process)…
+  const second = spawn(electronBinary, [repoRoot, ...platformArgs], { env: testEnv(dataDir) })
   try {
-    // Opening Cue again, as a person would (no test harness attached to the new process)…
-    const second = spawn(electronBinary, [repoRoot, ...platformArgs], { env: testEnv(dataDir) })
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('The second launch did not quit')), 20_000)
-      second.once('exit', () => {
-        clearTimeout(timer)
-        resolve()
-      })
-    })
-    // …makes the stuck one start a fresh Cue in its place, and that one shows its window.
+    // …ends with the stuck Cue gone and a fresh one showing its window. Which process that is
+    // (the stuck Cue's own restart, or the new launch) is up to timing; the operator only
+    // needs Cue on screen.
+    await expect.poll(async () => shown(await logFile(dataDir)), { timeout: 30_000 }).toBe(2)
+    await expect.poll(() => alive(stuckPid), { timeout: 10_000 }).toBe(false)
+    // And only one: any other launch has handed over and quit.
     await expect
-      .poll(async () => (await logFile(dataDir)).split('This Cue has no window: restarting')[1] ?? '', {
-        timeout: 30_000
-      })
-      .toMatch(/Cue launched[^]*Cue's window is showing/)
+      .poll(async () => launched(await logFile(dataDir)).filter(alive).length, { timeout: 20_000 })
+      .toBe(1)
+    expect(await logFile(dataDir)).not.toContain('[ERROR]')
+  } catch (err) {
+    throw new Error(`${(err as Error).message}\n--- Cue's log ---\n${await logFile(dataDir)}`, { cause: err })
   } finally {
-    // The fresh Cue wasn't started by the test, so it has to be ended by pid.
-    for (const [, pid] of (await logFile(dataDir)).matchAll(/Cue launched \(pid (\d+)\)/g)) {
+    // The fresh Cue wasn't started by the harness, so it has to be ended by pid.
+    for (const pid of launched(await logFile(dataDir))) {
       try {
-        process.kill(Number(pid))
+        process.kill(pid)
       } catch {
         /* already gone */
       }
     }
+    second.kill()
     await stuck.close()
   }
 })
