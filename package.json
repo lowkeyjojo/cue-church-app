@@ -4,8 +4,7 @@
   "version": "0.9.0",
   "description": "Cue — a modern church presentation app. Find visuals privately, show them to the room intentionally.",
   "author": {
-    "name": "Cue",
-    "email": "chileanyway17@gmail.com"
+    "name": "Cue"
   },
   "license": "UNLICENSED",
   "private": true,
