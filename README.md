@@ -23,10 +23,10 @@ Cue is a cross-platform church presentation application for macOS and Windows. I
 
 ## Install
 
-Download the latest build from the repository's **Releases** page (or the artifacts of the _Release_ workflow):
+Download the latest version from the [Releases page](https://github.com/lowkeyjojo/cue-church-app/releases/latest):
 
 - **macOS** (12 Monterey or later): `Cue-<version>-mac-arm64.dmg` for Apple Silicon, `…-mac-x64.dmg` for Intel Macs.
-- **Windows** (10 or 11): `Cue-<version>-windows-setup-x64.exe` (installer), or the portable `.exe` that runs without installing.
+- **Windows** (10 or 11): `Cue-<version>-windows-setup-x64.exe` (installer; `…-arm64.exe` for Windows on ARM), or `Cue-<version>-windows-portable.exe`, which runs without installing.
 
 Until the builds are signed with a developer certificate, the systems ask once before opening them:
 
