@@ -1,0 +1,33 @@
+/* Primitive styles live in a cascade layer so feature styles can always override them. */
+@layer ui {
+  .tooltip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 280px;
+    padding: 5px 8px;
+    border-radius: 7px;
+    background: #26272d;
+    box-shadow:
+      0 6px 20px rgba(0, 0, 0, 0.45),
+      0 0 0 1px var(--line-3);
+    color: var(--text-1);
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    z-index: 1000;
+    user-select: none;
+    animation: in 120ms var(--ease);
+  }
+  .keys {
+    display: inline-flex;
+    gap: 3px;
+  }
+}
+
+@keyframes in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}

@@ -1,0 +1,55 @@
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* Six layouts as an even 3 × 2 grid rather than a ragged wrap. */
+.layouts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.lookup {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+.lookupError {
+  color: var(--live-300);
+}
+.passageNote {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.preview {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-10);
+  overflow: hidden;
+  position: relative;
+  background: #000;
+  box-shadow:
+    0 0 0 1px var(--line-3),
+    0 12px 32px rgba(0, 0, 0, 0.45);
+}

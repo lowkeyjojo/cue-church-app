@@ -1,0 +1,93 @@
+/* Primitive styles live in a cascade layer so feature styles can always override them. */
+@layer ui {
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 4, 6, 0.62);
+    backdrop-filter: blur(3px);
+    z-index: 800;
+    animation: fade 160ms var(--ease);
+  }
+  .content {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--r-14);
+    background: var(--bg-2);
+    box-shadow: var(--shadow-dialog);
+    z-index: 801;
+    animation: rise 200ms var(--ease);
+    outline: none;
+  }
+  .header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 18px 10px 22px;
+  }
+  .headings {
+    flex: 1;
+    min-width: 0;
+  }
+  .title {
+    margin: 0;
+    font-size: 15.5px;
+    font-weight: 650;
+    letter-spacing: -0.005em;
+  }
+  .description {
+    margin: 4px 0 0;
+    color: var(--text-2);
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-3);
+  }
+  .close:hover {
+    background: var(--bg-5);
+    color: var(--text-1);
+  }
+  .body {
+    padding: 8px 22px 18px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 18px;
+    border-top: 1px solid var(--line-1);
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 0 0 var(--r-14) var(--r-14);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 6px)) scale(0.985);
+  }
+}

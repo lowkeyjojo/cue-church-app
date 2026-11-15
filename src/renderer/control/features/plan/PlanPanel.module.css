@@ -1,0 +1,307 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 10px 8px 12px;
+}
+.planButton {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 5px 8px;
+  margin-left: -4px;
+  border: none;
+  border-radius: var(--r-8);
+  background: transparent;
+  text-align: left;
+  transition: background-color var(--t-fast) var(--ease);
+}
+.planButton:hover,
+.planButton[data-state='open'] {
+  background: var(--bg-3);
+}
+.planName {
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.planDate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+.editName,
+.editDate,
+.inlineInput {
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--amber-a60);
+  border-radius: 7px;
+  background: var(--bg-1);
+  color: var(--text-1);
+  font-size: 13px;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--amber-a14);
+}
+.editDate {
+  height: 26px;
+  font-size: 12px;
+  color-scheme: dark;
+}
+.inlineInput {
+  height: 24px;
+  font-size: 12.5px;
+}
+
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px 8px 12px;
+}
+.slot {
+  position: relative;
+}
+.dropLine {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: -2px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--amber-400);
+  box-shadow: 0 0 10px var(--amber-a60);
+  z-index: 2;
+}
+.list > .dropLine {
+  position: relative;
+  top: 0;
+  margin: 2px 6px;
+}
+
+.section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  margin-top: 8px;
+  padding: 0 8px;
+  color: var(--amber-300);
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.section::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--amber-a24), transparent);
+}
+.section span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  padding: 0 8px 0 6px;
+  margin: 2px 0;
+  border-radius: var(--r-10);
+  outline: none;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease);
+}
+.row:hover {
+  background: var(--bg-3);
+}
+.row:focus-visible {
+  box-shadow: inset 0 0 0 1.5px var(--amber-a60);
+}
+.focused {
+  background: var(--bg-3);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+}
+.standby {
+  background: var(--amber-a08);
+  box-shadow: inset 0 0 0 1px var(--amber-a24);
+}
+.standby::before,
+.live::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 3px;
+}
+.standby::before {
+  background: var(--amber-400);
+}
+.live {
+  background: var(--live-a10);
+  box-shadow: inset 0 0 0 1px var(--live-a35);
+}
+.live::before {
+  background: var(--live-500);
+  box-shadow: 0 0 10px rgba(229, 72, 77, 0.6);
+}
+.missing .title {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+
+.num {
+  width: 16px;
+  flex: none;
+  color: var(--text-3);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.live .num {
+  color: var(--live-300);
+}
+.standby .num {
+  color: var(--amber-300);
+}
+.thumbWrap {
+  flex: none;
+  width: 68px;
+}
+.thumb {
+  width: 68px;
+  border-radius: 6px;
+}
+.thumbMissing {
+  display: grid;
+  place-items: center;
+  color: var(--text-4);
+  background: var(--bg-3);
+}
+.text {
+  flex: 1;
+  min-width: 0;
+}
+.title {
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sub {
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.side {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.chip {
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.chipLive {
+  background: var(--live-500);
+  color: #fff;
+}
+.chipNext {
+  background: var(--amber-a24);
+  color: var(--amber-200);
+}
+.noteIcon {
+  color: var(--text-3);
+}
+.quickShow {
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease);
+}
+.row:hover .quickShow,
+.row:focus-within .quickShow {
+  opacity: 1;
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  height: 36px;
+  margin-top: 8px;
+  border: 1px dashed var(--line-3);
+  border-radius: var(--r-10);
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease);
+}
+.addButton:hover,
+.addButton[data-state='open'] {
+  border-color: var(--amber-a40);
+  background: var(--amber-a08);
+  color: var(--amber-200);
+}
+
+.linkButton {
+  border: none;
+  background: transparent;
+  color: var(--amber-300);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.linkButton:hover {
+  background: var(--amber-a08);
+}

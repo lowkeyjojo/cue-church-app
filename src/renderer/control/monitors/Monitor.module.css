@@ -1,0 +1,114 @@
+.monitor {
+  position: relative;
+  flex: none;
+  border-radius: var(--r-10);
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    0 0 0 1px var(--line-3),
+    0 10px 30px rgba(0, 0, 0, 0.45);
+  transition: box-shadow var(--t-slow) var(--ease);
+  contain: layout paint;
+}
+.preview {
+  box-shadow:
+    0 0 0 1px var(--amber-a24),
+    0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.live.onAir {
+  box-shadow:
+    0 0 0 1.5px var(--live-500),
+    0 0 26px rgba(229, 72, 77, 0.22),
+    0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.pannable {
+  cursor: grab;
+}
+.pannable:active {
+  cursor: grabbing;
+}
+.dropping {
+  box-shadow:
+    0 0 0 2px var(--amber-400),
+    0 0 30px var(--amber-a40);
+}
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 500;
+  pointer-events: none;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.012) 0 10px, transparent 10px 20px);
+}
+.state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.stateBadge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.stateBehind {
+  max-width: 80%;
+  color: var(--text-3);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.corner {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.cornerAmbient {
+  background: rgba(242, 163, 58, 0.92);
+  color: var(--amber-ink);
+}
+.zoomBadge {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.drop {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(242, 163, 58, 0.12);
+  color: var(--amber-100);
+  font-size: 13px;
+  font-weight: 650;
+  pointer-events: none;
+}

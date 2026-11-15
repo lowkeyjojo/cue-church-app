@@ -1,0 +1,67 @@
+.app {
+  display: grid;
+  grid-template-rows: var(--topbar-h) minmax(0, 1fr) var(--livebar-h);
+  height: 100vh;
+  background: var(--bg-0);
+}
+
+.main {
+  display: grid;
+  /* Side panels keep their chosen widths, but yield on small windows so nothing is cut off. */
+  grid-template-columns:
+    clamp(220px, var(--left-w), 26vw) 0 minmax(360px, 1fr) 0
+    clamp(320px, var(--right-w), 38vw);
+  min-height: 0;
+  border-top: 1px solid var(--line-1);
+  border-bottom: 1px solid var(--line-1);
+}
+
+.splash {
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg-0);
+}
+.splashMark {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--amber-500);
+  box-shadow: 0 0 40px var(--amber-a60);
+  animation: breathe 1.4s ease-in-out infinite;
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.dropOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  display: grid;
+  place-items: center;
+  background: rgba(10, 10, 12, 0.55);
+  pointer-events: none;
+  animation: fade 120ms var(--ease);
+}
+.dropCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 26px;
+  border-radius: 16px;
+  border: 1.5px dashed var(--amber-a60);
+  background: rgba(28, 29, 34, 0.94);
+  color: var(--amber-200);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--shadow-pop);
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

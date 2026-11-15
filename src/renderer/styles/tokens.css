@@ -1,0 +1,87 @@
+/*
+ * Cue design tokens.
+ * Graphite surfaces, warm amber for interaction, broadcast red reserved for "on air".
+ */
+:root {
+  color-scheme: dark;
+
+  /* Graphite surfaces, darkest to lightest */
+  --bg-0: #09090b;
+  --bg-1: #0f1013;
+  --bg-2: #151619;
+  --bg-3: #1b1c20;
+  --bg-4: #232429;
+  --bg-5: #2c2d33;
+  --bg-6: #36373e;
+
+  --line-1: rgba(255, 255, 255, 0.05);
+  --line-2: rgba(255, 255, 255, 0.085);
+  --line-3: rgba(255, 255, 255, 0.13);
+  --line-4: rgba(255, 255, 255, 0.2);
+
+  --text-1: #ededf0;
+  --text-2: #a4a6ae;
+  --text-3: #70727b;
+  --text-4: #4d4f57;
+
+  /* Warm amber */
+  --amber-100: #ffe9c7;
+  --amber-200: #ffd596;
+  --amber-300: #f9c066;
+  --amber-400: #f6b14d;
+  --amber-500: #f2a33a;
+  --amber-600: #db8c25;
+  --amber-700: #b06d16;
+  --amber-ink: #1f1405;
+  --amber-a08: rgba(242, 163, 58, 0.08);
+  --amber-a14: rgba(242, 163, 58, 0.14);
+  --amber-a24: rgba(242, 163, 58, 0.24);
+  --amber-a40: rgba(242, 163, 58, 0.4);
+  --amber-a60: rgba(242, 163, 58, 0.6);
+
+  /* On-air red (live tally) */
+  --live-300: #ff8a8e;
+  --live-400: #ff6369;
+  --live-500: #e5484d;
+  --live-600: #c63a40;
+  --live-a10: rgba(229, 72, 77, 0.1);
+  --live-a18: rgba(229, 72, 77, 0.18);
+  --live-a35: rgba(229, 72, 77, 0.35);
+
+  --ok-400: #4ce39b;
+  --ok-500: #34c785;
+  --ok-a14: rgba(52, 199, 133, 0.14);
+  --info-400: #7bb8ff;
+  --info-a14: rgba(123, 184, 255, 0.14);
+
+  /* Type */
+  --font-ui: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  /* Radii */
+  --r-4: 4px;
+  --r-6: 6px;
+  --r-8: 8px;
+  --r-10: 10px;
+  --r-12: 12px;
+  --r-14: 14px;
+  --r-18: 18px;
+
+  /* Elevation */
+  --hi: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-pop: 0 14px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--line-3);
+  --shadow-dialog: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--line-3);
+  --focus-ring: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--amber-a60);
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 110ms;
+  --t-med: 180ms;
+  --t-slow: 280ms;
+
+  /* Layout */
+  --topbar-h: 46px;
+  --livebar-h: 68px;
+}

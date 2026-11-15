@@ -1,0 +1,221 @@
+.dialog {
+  height: min(86vh, 900px);
+}
+.body {
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.name {
+  width: 100%;
+  max-width: 520px;
+  margin: -4px 0 -4px -6px;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-1);
+  font-size: 15.5px;
+  font-weight: 650;
+  outline: none;
+}
+.name:hover {
+  border-color: var(--line-2);
+}
+.name:focus {
+  border-color: var(--amber-a60);
+  background: var(--bg-1);
+}
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) 320px;
+  border-top: 1px solid var(--line-1);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 12px 20px;
+  overflow-y: auto;
+  border-right: 1px solid var(--line-1);
+}
+.thumbButton {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  align-items: flex-start;
+}
+.thumbNum {
+  width: 14px;
+  padding-top: 2px;
+  color: var(--text-3);
+  font-size: 10.5px;
+  font-weight: 650;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.thumb {
+  flex: 1;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--line-2);
+}
+.thumbOn .thumb {
+  box-shadow:
+    0 0 0 2px var(--amber-400),
+    0 0 14px var(--amber-a24);
+}
+.thumbOn .thumbNum {
+  color: var(--amber-300);
+}
+.add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  margin-left: 20px;
+  border: 1px dashed var(--line-3);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.add:hover {
+  border-color: var(--amber-a40);
+  color: var(--amber-200);
+}
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  min-width: 0;
+  background: radial-gradient(circle at 50% 40%, #16171b, #0c0d0f);
+}
+.canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    0 0 0 1px var(--line-3),
+    0 24px 60px rgba(0, 0, 0, 0.55);
+}
+.inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 14px 16px 24px;
+  overflow-y: auto;
+  border-left: 1px solid var(--line-1);
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sectionTitle {
+  color: var(--text-3);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.colors {
+  display: flex;
+  gap: 8px;
+}
+.colors input {
+  width: 44px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line-3);
+  border-radius: 7px;
+  background: transparent;
+}
+.bg {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mediaPick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 10px 0 4px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  background: var(--bg-1);
+  color: var(--text-2);
+  font-size: 12.5px;
+  text-align: left;
+}
+.mediaPick img {
+  width: 60px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.mediaPick span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mediaGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+.mediaItem {
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--bg-4);
+}
+.mediaItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mediaOn {
+  box-shadow: 0 0 0 2px var(--amber-400);
+}
+.hint {
+  grid-column: 1 / -1;
+  color: var(--text-3);
+  font-size: 12px;
+  padding: 6px;
+}
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.count {
+  min-width: 52px;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}

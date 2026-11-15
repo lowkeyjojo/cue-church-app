@@ -1,0 +1,264 @@
+.view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.search {
+  flex: 1;
+  min-width: 110px;
+  max-width: 260px;
+}
+.sort {
+  width: 112px;
+  flex: none;
+}
+.size {
+  width: 84px;
+  flex: none;
+}
+.spacer {
+  flex: 1;
+}
+.body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 188px minmax(0, 1fr);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 10px 8px;
+  border-right: 1px solid var(--line-1);
+  overflow-y: auto;
+}
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 30px;
+  padding: 0 9px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: left;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease);
+}
+.navItem span:first-of-type {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.navItem:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+}
+.navOn {
+  background: var(--bg-4);
+  color: var(--text-1);
+}
+.navOn svg {
+  color: var(--amber-400);
+}
+.navDrop {
+  background: var(--amber-a14);
+  box-shadow: inset 0 0 0 1px var(--amber-a40);
+}
+.navCount {
+  color: var(--text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.navLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 0 4px;
+  padding: 0 4px 0 9px;
+  color: var(--text-3);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.navHint {
+  padding: 4px 9px;
+  color: var(--text-4);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.navInput {
+  height: 28px;
+  margin: 1px 0;
+  padding: 0 9px;
+  border: 1px solid var(--amber-a60);
+  border-radius: 7px;
+  background: var(--bg-1);
+  color: var(--text-1);
+  font-size: 12.5px;
+  outline: none;
+}
+
+.grid {
+  position: relative;
+  overflow-y: auto;
+  padding: 16px;
+  min-height: 0;
+}
+.gridDrop {
+  background: var(--amber-a08);
+  box-shadow: inset 0 0 0 2px var(--amber-a40);
+}
+.gridRow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+}
+
+.tile {
+  min-width: 0;
+  border-radius: var(--r-10);
+  padding: 5px 5px 6px;
+  outline: none;
+  transition: background-color var(--t-fast) var(--ease);
+}
+.tile:hover {
+  background: var(--bg-3);
+}
+.tile:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.selected {
+  background: var(--amber-a08);
+  box-shadow: inset 0 0 0 1.5px var(--amber-a60);
+}
+.tileThumb {
+  position: relative;
+}
+.tileImg {
+  width: 100%;
+  border-radius: 7px;
+}
+.tileLive .tileImg {
+  box-shadow: 0 0 0 2px var(--live-500);
+}
+.tilePreview .tileImg {
+  box-shadow: 0 0 0 2px var(--amber-400);
+}
+.tileError .tileImg {
+  opacity: 0.4;
+}
+.badge {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.processing {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.tag {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tagLive {
+  background: var(--live-500);
+  color: #fff;
+}
+.fav {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease);
+}
+.tile:hover .fav,
+.favOn {
+  opacity: 1;
+}
+.favOn {
+  color: var(--amber-300);
+}
+.favOn svg {
+  fill: currentColor;
+}
+.tileText {
+  padding: 7px 3px 0;
+  min-width: 0;
+}
+.tileName {
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tileMeta {
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tileInput {
+  width: 100%;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--amber-a60);
+  border-radius: 6px;
+  background: var(--bg-1);
+  color: var(--text-1);
+  font-size: 12px;
+  outline: none;
+}

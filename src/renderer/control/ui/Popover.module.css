@@ -1,0 +1,21 @@
+/* Primitive styles live in a cascade layer so feature styles can always override them. */
+@layer ui {
+  .content {
+    max-width: calc(100vw - 20px);
+    padding: 12px;
+    border-radius: var(--r-12);
+    background: #1c1d22;
+    box-shadow: var(--shadow-pop);
+    z-index: 850;
+    outline: none;
+    animation: pop 140ms var(--ease);
+    transform-origin: var(--radix-popover-content-transform-origin);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}

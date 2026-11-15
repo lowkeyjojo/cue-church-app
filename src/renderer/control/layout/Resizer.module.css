@@ -1,0 +1,26 @@
+.track {
+  position: relative;
+  z-index: 5;
+}
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -4px;
+  width: 8px;
+  cursor: col-resize;
+}
+.handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3.5px;
+  width: 1px;
+  background: var(--line-2);
+  transition: background-color var(--t-med) var(--ease);
+}
+.handle:hover::after,
+.handle:active::after {
+  background: var(--amber-a60);
+}
