@@ -88,6 +88,12 @@ async function waitForLock(): Promise<void> {
     if (waited % 2000 === 0) log.info(`Still waiting for the previous Cue (${waited} ms)`)
   }
   log.warn('Another Cue is running but did not respond')
+  if (!isE2E) {
+    dialog.showErrorBox(
+      "Cue is already running, but it isn't responding",
+      `Close it first (${process.platform === 'darwin' ? 'Force Quit, ⌘⌥Esc' : 'Task Manager, Ctrl+Shift+Esc'}), then open Cue again.`
+    )
+  }
   app.quit()
 }
 
@@ -100,28 +106,29 @@ async function start(): Promise<void> {
   rmSync(dataPath('launches'), { recursive: true, force: true })
   let control: BrowserWindow | null = null
   let windowOpened = false
-  let steppingAside = false
+  let restarting = false
   await app.whenReady()
   nativeTheme.themeSource = 'dark'
   log.info(
     `Cue ${app.getVersion()} starting (Electron ${process.versions.electron}, ${process.platform}/${process.arch})`
   )
 
+  // A Cue left running without its window can't help anyone, and it would answer every
+  // later launch so that nothing ever appears. It starts a fresh Cue in its place instead.
+  const windowLost = () => windowOpened && (!control || control.isDestroyed())
+  const restart = (files: string[] = []) => {
+    if (restarting) return
+    restarting = true
+    log.warn('This Cue has no window: restarting')
+    app.relaunch({ args: [...process.argv.slice(1).filter((arg) => !isPlanFile(arg)), ...files] })
+    // A moment later, so a second launch gets its answer first.
+    setTimeout(() => app.exit(0), 50)
+    // A Cue that is stuck may not manage to exit either; the new one starts once this is gone.
+    setTimeout(() => process.kill(process.pid, 'SIGKILL'), 3000).unref()
+  }
+
   // Registered before anything slow, so a second launch during startup is answered too.
   app.on('second-instance', (_event, argv, _cwd, data) => {
-    // A Cue left running without its window can't help anyone: step aside and let the
-    // new launch start instead (it gets the lock as soon as this one is gone).
-    if (windowOpened && (!control || control.isDestroyed())) {
-      if (steppingAside) return
-      steppingAside = true
-      log.warn('A second launch found this Cue without a window: quitting so it can start')
-      // Not from inside this handler: the new launch is still waiting for its answer, and
-      // gets it when the handler returns. It then finds the lock free on its next try.
-      setTimeout(() => app.exit(0), 50)
-      // A Cue that is stuck may not manage to exit either.
-      setTimeout(() => process.kill(process.pid, 'SIGKILL'), 3000).unref()
-      return
-    }
     const id = (data as { launchId?: string } | null)?.launchId
     if (id) {
       if (handledLaunches.has(id)) return
@@ -133,6 +140,7 @@ async function start(): Promise<void> {
         /* the other launch gives up on its own after a while */
       }
     }
+    if (windowLost()) return restart(argv.slice(1).filter(isPlanFile))
     if (control && !control.isDestroyed()) {
       if (control.isMinimized()) control.restore()
       if (!control.isVisible()) control.show()
@@ -142,6 +150,12 @@ async function start(): Promise<void> {
       if (openPlanFile) openPlanFile(file)
       else planFiles.push(file)
     }
+  })
+
+  // On a Mac, opening Cue again doesn't start a second process: the Dock asks this one.
+  app.on('activate', () => {
+    if (windowLost()) return restart()
+    if (control && !control.isDestroyed() && !control.isVisible()) control.show()
   })
 
   handleAppProtocol()

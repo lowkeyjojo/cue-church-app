@@ -105,7 +105,7 @@ function isRunning(pid: number): boolean {
   }
 }
 
-async function logFile(dataDir: string): Promise<string> {
+export async function logFile(dataDir: string): Promise<string> {
   const text = await readFile(join(dataDir, 'logs', 'cue.log'), 'utf8').catch(() => '(no log file)')
   return text.slice(-6000)
 }

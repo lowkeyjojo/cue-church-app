@@ -56,6 +56,7 @@ export function createControlWindow(settings: SettingsStore, hooks: ControlHooks
     if (settings.data.ui.maximized && !isE2E) win.maximize()
     if (!isE2E || process.env.CUE_E2E_SHOW === '1') win.show()
     else win.showInactive()
+    log.info("Cue's window is showing")
   }
   win.once('ready-to-show', reveal)
   // Never stay invisible: a Cue that is running without a window looks like it didn't open,

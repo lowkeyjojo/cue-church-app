@@ -4,7 +4,16 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { brightness, Cue, platformArgs, printLogsOnFailure, repoRoot, testEnv, type Rgb } from './support/cue'
+import {
+  brightness,
+  Cue,
+  logFile,
+  platformArgs,
+  printLogsOnFailure,
+  repoRoot,
+  testEnv,
+  type Rgb
+} from './support/cue'
 
 const electronBinary = createRequire(import.meta.url)('electron') as string
 
@@ -63,7 +72,7 @@ test('the output window can be turned off and back on, and shows a test pattern 
   }
 })
 
-test('a Cue left running without its window steps aside for a new launch', async () => {
+test('a Cue left running without its window restarts when Cue is opened again', async () => {
   const stuck = await Cue.launch()
   const { dataDir } = stuck
   // The control window is gone, but the process lives on behind its audience window:
@@ -76,13 +85,31 @@ test('a Cue left running without its window steps aside for a new launch', async
     control.destroy()
   })
 
-  // Opening Cue again must give a working window, not hand over to the stuck one and quit.
-  const fresh = await Cue.launch({ dataDir })
   try {
-    await expect(fresh.control.getByTestId('take')).toBeVisible()
-    expect(fresh.errors()).toEqual([])
+    // Opening Cue again, as a person would (no test harness attached to the new process)…
+    const second = spawn(electronBinary, [repoRoot, ...platformArgs], { env: testEnv(dataDir) })
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('The second launch did not quit')), 20_000)
+      second.once('exit', () => {
+        clearTimeout(timer)
+        resolve()
+      })
+    })
+    // …makes the stuck one start a fresh Cue in its place, and that one shows its window.
+    await expect
+      .poll(async () => (await logFile(dataDir)).split('This Cue has no window: restarting')[1] ?? '', {
+        timeout: 30_000
+      })
+      .toMatch(/Cue launched[^]*Cue's window is showing/)
   } finally {
-    await fresh.close()
+    // The fresh Cue wasn't started by the test, so it has to be ended by pid.
+    for (const [, pid] of (await logFile(dataDir)).matchAll(/Cue launched \(pid (\d+)\)/g)) {
+      try {
+        process.kill(Number(pid))
+      } catch {
+        /* already gone */
+      }
+    }
     await stuck.close()
   }
 })
