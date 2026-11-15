@@ -27,10 +27,10 @@
     "check": "npm run typecheck && npm run lint && npm run test",
     "icons": "node scripts/make-icons.mjs",
     "bible": "node scripts/build-bible.mjs",
-    "dist": "electron-vite build && electron-builder --config electron-builder.config.mjs",
-    "dist:mac": "electron-vite build && electron-builder --config electron-builder.config.mjs --mac",
-    "dist:win": "electron-vite build && electron-builder --config electron-builder.config.mjs --win",
-    "dist:dir": "electron-vite build && electron-builder --config electron-builder.config.mjs --dir"
+    "dist": "electron-vite build && electron-builder --config electron-builder.config.mjs --publish never",
+    "dist:mac": "electron-vite build && electron-builder --config electron-builder.config.mjs --mac --publish never",
+    "dist:win": "electron-vite build && electron-builder --config electron-builder.config.mjs --win --publish never",
+    "dist:dir": "electron-vite build && electron-builder --config electron-builder.config.mjs --dir --publish never"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
