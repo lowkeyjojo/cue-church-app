@@ -32,10 +32,10 @@ export function createControlWindow(settings: SettingsStore, hooks: ControlHooks
     minHeight: 680,
     show: false,
     title: 'Cue',
-    backgroundColor: '#0B0C0E',
+    backgroundColor: '#0A0908',
     titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
-    trafficLightPosition: { x: 16, y: 15 },
-    titleBarOverlay: isMac ? undefined : { color: '#0B0C0E', symbolColor: '#A7A8AE', height: 44 },
+    trafficLightPosition: { x: 18, y: 17 },
+    titleBarOverlay: isMac ? undefined : { color: '#0A0908', symbolColor: '#BDB5A6', height: 48 },
     icon: isMac ? undefined : resourcePath('icon.png'),
     webPreferences: {
       preload: preloadPath('control'),
