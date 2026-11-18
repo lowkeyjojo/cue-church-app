@@ -66,8 +66,8 @@ test('Ctrl/⌘+Enter shows it even while the Google page has focus', async () =>
     guest.sendInputEvent({ type: 'keyUp', keyCode: 'Enter', modifiers })
   })
   await expect.poll(async () => (await cue.state()).live?.title).toBe('Library of Celsus, Ephesus')
-  const output = await cue.output()
-  await expect(output.locator('.stage-slot[data-kind="image"][data-phase="in"]')).toBeVisible()
+  // Fading in or already there: the fade lasts half a second and a slow machine can miss it.
+  await expect((await cue.screen()).and((await cue.output()).locator('[data-kind="image"]'))).toBeVisible()
   await expect.poll(async () => brightness(await cue.outputColor())).toBeGreaterThan(30)
 })
 
