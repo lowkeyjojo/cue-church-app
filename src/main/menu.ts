@@ -121,7 +121,7 @@ export function buildMenu(hooks: MenuHooks): void {
         show('Blackout', { type: 'blackout' }, 'B'),
         show('Ambient', { type: 'ambient' }, 'A'),
         show('Back to Previous', { type: 'back' }, 'R'),
-        show('Clear Screen', { type: 'clear' }),
+        show('Clear Screen', { type: 'clear' }, 'Esc'),
         { type: 'separator' },
         { label: 'Identify Displays', click: () => hooks.identify() },
         show('Test Pattern', { type: 'test-pattern' }),

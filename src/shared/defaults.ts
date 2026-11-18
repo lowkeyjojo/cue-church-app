@@ -13,7 +13,7 @@ export const DEFAULT_TRANSITION: TransitionSettings = { kind: 'fade', duration: 
 
 export const DEFAULT_AMBIENT: AmbientConfig = {
   source: 'theme',
-  theme: 'ember',
+  theme: 'sage',
   mediaIds: [],
   interval: 12,
   kenBurns: true,
@@ -33,7 +33,7 @@ export const DEFAULT_SLIDE_THEME: SlideTheme = {
   font: 'inter',
   titleFont: 'montserrat',
   textColor: '#FFFFFF',
-  accentColor: '#F2A33A',
+  accentColor: '#D6B86C',
   align: 'center',
   vAlign: 'middle',
   scale: 1,

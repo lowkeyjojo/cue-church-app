@@ -2,13 +2,14 @@
 @layer ui {
   .content {
     max-width: calc(100vw - 20px);
-    padding: 12px;
-    border-radius: var(--r-12);
-    background: var(--bg-3);
+    padding: 14px;
+    border-radius: var(--r-14);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
     box-shadow: var(--shadow-pop);
     z-index: 850;
     outline: none;
-    animation: pop 100ms var(--ease);
+    animation: pop 240ms var(--ease-spring);
     transform-origin: var(--radix-popover-content-transform-origin);
   }
 }
@@ -16,6 +17,6 @@
 @keyframes pop {
   from {
     opacity: 0;
-    transform: translateY(-3px);
+    transform: scale(0.94);
   }
 }

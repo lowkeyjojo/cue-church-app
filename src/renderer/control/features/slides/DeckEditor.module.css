@@ -13,7 +13,7 @@
   margin: -4px 0 -4px -6px;
   padding: 3px 6px;
   border: 1px solid transparent;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: transparent;
   color: var(--text-1);
   font-size: 15.5px;
@@ -24,7 +24,7 @@
   border-color: var(--line-2);
 }
 .name:focus {
-  border-color: var(--amber-a60);
+  border-color: var(--accent-a60);
   background: var(--bg-1);
 }
 .layout {
@@ -62,14 +62,14 @@
 }
 .thumb {
   flex: 1;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   box-shadow: 0 0 0 1px var(--line-2);
 }
 .thumbOn .thumb {
-  box-shadow: 0 0 0 2px var(--amber-400);
+  box-shadow: 0 0 0 2px var(--accent-400);
 }
 .thumbOn .thumbNum {
-  color: var(--amber-300);
+  color: var(--accent-300);
 }
 .add {
   display: flex;
@@ -79,15 +79,15 @@
   height: 34px;
   margin-left: 20px;
   border: 1px dashed var(--line-3);
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: transparent;
   color: var(--text-2);
   font-size: 12px;
   font-weight: 600;
 }
 .add:hover {
-  border-color: var(--amber-a40);
-  color: var(--amber-200);
+  border-color: var(--accent-a40);
+  color: var(--accent-200);
 }
 .stage {
   display: flex;
@@ -102,7 +102,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   max-height: 100%;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   overflow: hidden;
   background: #000;
   box-shadow: 0 0 0 1px var(--line-3);
@@ -124,9 +124,6 @@
   color: var(--text-3);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  font-stretch: 78%;
-  text-transform: uppercase;
 }
 .pair {
   display: grid;
@@ -142,7 +139,7 @@
   height: 28px;
   padding: 0;
   border: 1px solid var(--line-3);
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: transparent;
 }
 .bg {
@@ -157,7 +154,7 @@
   height: 44px;
   padding: 0 10px 0 4px;
   border: 1px solid var(--line-2);
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: var(--bg-1);
   color: var(--text-2);
   font-size: 12.5px;
@@ -167,7 +164,7 @@
   width: 60px;
   height: 34px;
   object-fit: cover;
-  border-radius: 2px;
+  border-radius: var(--r-8);
 }
 .mediaPick span {
   overflow: hidden;
@@ -186,7 +183,7 @@
   aspect-ratio: 16 / 9;
   padding: 0;
   border: none;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   overflow: hidden;
   background: var(--bg-4);
 }
@@ -196,7 +193,7 @@
   object-fit: cover;
 }
 .mediaOn {
-  box-shadow: 0 0 0 2px var(--amber-400);
+  box-shadow: 0 0 0 2px var(--accent-400);
 }
 .hint {
   grid-column: 1 / -1;

@@ -25,9 +25,18 @@ export interface GuestPick {
   title?: string
   width?: number
   height?: number
+  /** Natural size of Google's thumbnail of this image, once the page has loaded it. */
+  thumbWidth?: number
+  thumbHeight?: number
   x: number
   y: number
 }
+
+/**
+ * How a pick's image came in: the original (downloaded, or copied out of the
+ * page), the source page's own preview image, or Google's thumbnail.
+ */
+export type PickVia = 'original' | 'page' | 'thumbnail'
 
 export interface SearchState {
   provider: SearchProviderId
@@ -37,6 +46,8 @@ export interface SearchState {
   pick: GuestPick | null
   /** Media id of the item the current pick was ingested as. */
   pickedMediaId: Id | null
+  /** How that item came in, or 'failed' when nothing could be brought in. */
+  pickedVia: PickVia | 'failed' | null
   busy: boolean
 }
 
@@ -93,6 +104,7 @@ export const useUI = create<UIState>((set, get) => ({
     filters: { licensedOnly: false, size: 'any', type: 'any', media: 'image' },
     pick: null,
     pickedMediaId: null,
+    pickedVia: null,
     busy: false
   },
   dialogs: closedDialogs,

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Dialog as D } from 'radix-ui'
 import clsx from 'clsx'
-import { Moon, ScanSearch } from 'lucide-react'
+import { Globe, Moon, ScanSearch, SunMedium, Tv } from 'lucide-react'
 import { attempt, modKey } from '../../lib/api'
 import { useApp, useSettings } from '../../lib/store'
 import { useUI } from '../../lib/ui'
@@ -11,8 +11,8 @@ import s from './Welcome.module.css'
 
 /**
  * First run: what Cue is, connecting the screen, and the three keys that
- * matter. It is the first thing anyone sees after installing, so it carries
- * the brand: the name in black on the amber of "standing by".
+ * matter. It is the first thing anyone sees after installing: Cue's mark, a
+ * warm welcome, and three short steps.
  */
 export function WelcomeDialog() {
   const close = useUI((st) => st.close)
@@ -36,29 +36,35 @@ export function WelcomeDialog() {
       title: 'Welcome to Cue',
       lead: 'Everything you show on Sunday, from one calm screen.',
       body: (
-        <ol className={s.features}>
+        <ul className={s.features}>
           <li>
-            <span className={s.no}>01</span>
+            <span className={clsx(s.featureIcon, s.sage)}>
+              <Globe size={19} />
+            </span>
             <div>
               <strong>Search the web</strong>
               <span>Click any image in Google and it lands in Preview, ready to show.</span>
             </div>
           </li>
           <li>
-            <span className={s.no}>02</span>
+            <span className={clsx(s.featureIcon, s.gold)}>
+              <Tv size={19} />
+            </span>
             <div>
               <strong>Preview, then show</strong>
               <span>Nothing reaches the screen until you press Show.</span>
             </div>
           </li>
           <li>
-            <span className={s.no}>03</span>
+            <span className={clsx(s.featureIcon, s.sand)}>
+              <SunMedium size={19} />
+            </span>
             <div>
               <strong>Breaks and countdowns</strong>
               <span>Quiet ambient scenes with a welcome, a clock or a countdown.</span>
             </div>
           </li>
-        </ol>
+        </ul>
       )
     },
     {
@@ -138,25 +144,8 @@ export function WelcomeDialog() {
             content.current?.focus()
           }}
         >
-          <div className={s.hero} aria-hidden>
-            <span className={s.heroLabel}>Standing by</span>
-            <span className={s.word}>Cue</span>
-            <p className={s.tagline}>
-              Find it privately.
-              <br />
-              Show it on purpose.
-            </p>
-          </div>
-
+          <div className={s.mark} aria-hidden />
           <div className={s.side}>
-            <div className={s.progress}>
-              <span className={s.count}>
-                <strong>{step + 1}</strong> / {steps.length}
-              </span>
-              {steps.map((_, i) => (
-                <span key={i} className={clsx(s.bar, i <= step && s.barOn)} />
-              ))}
-            </div>
             {/* Keyed, so each step slides in from the side it came from. */}
             <div key={step} className={clsx(s.step, forward ? s.fromRight : s.fromLeft)}>
               <D.Title className={s.title}>{current.title}</D.Title>
@@ -173,7 +162,11 @@ export function WelcomeDialog() {
                   Skip
                 </Button>
               )}
-              <div className={s.grow} />
+              <div className={s.dots} aria-hidden>
+                {steps.map((_, i) => (
+                  <span key={i} className={clsx(s.dot, i === step && s.dotOn)} />
+                ))}
+              </div>
               {last ? (
                 <Button variant="primary" size="lg" onClick={finish}>
                   Start using Cue

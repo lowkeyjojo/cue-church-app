@@ -5,14 +5,11 @@
   flex: 1;
 }
 
-/* The head of the sheet: which service this is. */
 .header {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-height: 56px;
-  padding: 8px 8px 8px 12px;
-  border-bottom: 1px solid var(--line-2);
+  padding: 12px 10px 8px 14px;
 }
 .planButton {
   flex: 1;
@@ -20,9 +17,9 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  padding: 4px 8px;
-  margin-left: -8px;
+  gap: 1px;
+  padding: 5px 9px;
+  margin-left: -9px;
   border: none;
   border-radius: var(--r-8);
   background: transparent;
@@ -36,8 +33,8 @@
 .planName {
   max-width: 100%;
   font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 650;
+  letter-spacing: -0.015em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -47,11 +44,8 @@
   align-items: center;
   gap: 4px;
   color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
 }
 
 .editor {
@@ -65,37 +59,37 @@
 .editDate,
 .inlineInput {
   width: 100%;
-  height: 28px;
-  padding: 0 8px;
-  border: 1px solid var(--amber-400);
-  border-radius: var(--r-8);
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--accent-a60);
+  border-radius: var(--r-6);
   background: var(--bg-0);
   color: var(--text-1);
   font-size: 13px;
   outline: none;
+  box-shadow: 0 0 0 3.5px var(--accent-a24);
 }
 .editDate {
-  height: 26px;
-  font-size: 12px;
+  height: 28px;
+  font-size: 12.5px;
   color-scheme: dark;
 }
 .inlineInput {
   height: 24px;
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
-/* The sheet: ruled rows, edge to edge. */
 .list {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 0 12px;
+  padding: 0 8px 12px;
 }
 .slot {
   position: relative;
   /* Rows arrive one after another. Opacity only: their positions never move, so drags stay exact. */
-  animation: rowIn 240ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 20ms);
+  animation: rowIn 420ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 32ms);
 }
 @keyframes rowIn {
   from {
@@ -104,31 +98,30 @@
 }
 .dropLine {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: -1px;
-  height: 2px;
-  background: var(--amber-400);
+  left: 8px;
+  right: 8px;
+  top: -2px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--accent-400);
   z-index: 2;
 }
 .list > .dropLine {
   position: relative;
   top: 0;
+  margin: 2px 8px;
 }
 
 .section {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
-  height: 34px;
-  padding: 0 12px 6px;
-  border-bottom: 1px solid var(--line-3);
-  color: var(--text-2);
-  font-size: 11px;
-  font-stretch: 78%;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  height: 30px;
+  margin-top: 8px;
+  padding: 0 8px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 600;
 }
 .section span {
   white-space: nowrap;
@@ -136,82 +129,69 @@
   text-overflow: ellipsis;
 }
 
+/* Each item is a soft row. What's next wears gold, what's on wears red. */
 .row {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 52px;
-  padding: 0 8px 0 0;
-  border-bottom: 1px solid var(--line-1);
+  gap: 11px;
+  height: 56px;
+  padding: 0 8px 0 6px;
+  margin: 2px 0;
+  border-radius: var(--r-10);
   outline: none;
-  transition: background-color var(--t-fast) var(--ease);
+  transition:
+    background-color var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease);
 }
 .row:hover {
-  background: var(--bg-2);
+  background: var(--bg-3);
 }
 .row:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--amber-400);
+  box-shadow: inset 0 0 0 2px var(--accent-a60);
 }
 .focused {
   background: var(--bg-3);
 }
-/* A lamp down the left edge: amber for what's next, red for what's on. */
-.standby::before,
-.live::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: -1px;
-  width: 3px;
-}
 .standby {
-  background: var(--amber-a08);
+  background: var(--gold-a14);
 }
-.standby::before {
-  background: var(--amber-500);
+.standby:hover {
+  background: var(--gold-a24);
 }
 .live {
-  background: var(--live-a10);
+  background: var(--live-a18);
 }
-.live::before {
-  background: var(--live-500);
+.live:hover {
+  background: var(--live-a18);
 }
 .missing .title {
   color: var(--text-3);
   text-decoration: line-through;
 }
 
-/* The cue number, typed in the margin. */
 .num {
-  width: 34px;
+  width: 16px;
   flex: none;
-  padding-right: 2px;
   color: var(--text-4);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 11.5px;
+  font-weight: 600;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.row:hover .num,
-.focused .num {
-  color: var(--text-2);
-}
 .live .num {
-  color: var(--live-400);
+  color: var(--live-300);
 }
 .standby .num {
-  color: var(--amber-400);
+  color: var(--gold-300);
 }
 .thumbWrap {
   flex: none;
-  width: 60px;
+  width: 68px;
 }
 .thumb {
-  width: 60px;
-  border-radius: 1px;
+  width: 68px;
+  border-radius: var(--r-6);
 }
 .thumbMissing {
   display: grid;
@@ -224,8 +204,9 @@
   min-width: 0;
 }
 .title {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
+  letter-spacing: -0.005em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -233,7 +214,7 @@
 .sub {
   margin-top: 2px;
   color: var(--text-3);
-  font-size: 11.5px;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -245,21 +226,27 @@
   flex: none;
 }
 .chip {
-  padding: 2px 5px;
-  border-radius: 1px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   font-variant-numeric: tabular-nums;
+  animation: chipIn 360ms var(--ease-spring);
+}
+@keyframes chipIn {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
 }
 .chipLive {
   background: var(--live-500);
   color: #fff;
 }
 .chipNext {
-  background: var(--amber-500);
-  color: var(--amber-ink);
+  background: var(--gold-500);
+  color: var(--gold-ink);
 }
 .noteIcon {
   color: var(--text-3);
@@ -276,39 +263,40 @@
 .addButton {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   width: 100%;
-  height: 40px;
-  padding: 0 12px 0 44px;
+  height: 38px;
+  margin-top: 8px;
   border: none;
-  background: transparent;
-  color: var(--text-3);
-  font-size: 12.5px;
+  border-radius: var(--r-10);
+  background: var(--bg-2);
+  color: var(--text-2);
+  font-size: 13px;
   font-weight: 600;
-  text-align: left;
   transition:
     background-color var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease);
+    color var(--t-fast) var(--ease),
+    transform var(--t-med) var(--ease-spring);
 }
 .addButton:hover,
 .addButton[data-state='open'] {
-  background: var(--bg-2);
-  color: var(--text-1);
+  background: var(--accent-a14);
+  color: var(--accent-200);
+}
+.addButton:active {
+  transform: scale(0.98);
 }
 
 .linkButton {
   border: none;
   background: transparent;
-  color: var(--amber-300);
-  font-size: 12.5px;
-  font-weight: 650;
-  padding: 4px 6px;
-  border-radius: var(--r-8);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: var(--amber-700);
+  color: var(--accent-300);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: var(--r-6);
 }
 .linkButton:hover {
-  color: var(--amber-200);
-  text-decoration-color: currentColor;
+  background: var(--accent-a14);
 }

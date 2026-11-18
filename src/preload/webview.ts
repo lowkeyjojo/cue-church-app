@@ -19,13 +19,24 @@ interface GuestPick {
   title?: string
   width?: number
   height?: number
+  /** Natural size of Google's thumbnail of this image, once the page has loaded it. */
+  thumbWidth?: number
+  thumbHeight?: number
   x: number
   y: number
 }
 
+interface Thumb {
+  url: string
+  width?: number
+  height?: number
+}
+
 const MIN_WIDTH = 220
 const MIN_HEIGHT = 140
-const thumbFor = new WeakMap<HTMLImageElement, string>()
+const thumbFor = new WeakMap<HTMLImageElement, Thumb>()
+/** The thumbnail last reported as a pick, for layouts that show the original in an element of its own. */
+let lastThumb: (Thumb & { alt: string; pageUrl?: string }) | null = null
 let lastKey = ''
 let scanTimer: ReturnType<typeof setTimeout> | null = null
 let lastScan = 0
@@ -125,7 +136,8 @@ function scan(): void {
     if (prominent) pick = describe(top.img, top.rect)
   }
 
-  const key = pick ? `${pick.url}|${pick.full}` : ''
+  // The thumbnail's size is part of the key so that it is sent on once the thumbnail has loaded.
+  const key = pick ? `${pick.url}|${pick.full}|${pick.thumbWidth ?? 0}` : ''
   if (key === lastKey) return
   lastKey = key
   ipcRenderer.sendToHost('cue:pick', pick)
@@ -134,24 +146,33 @@ function scan(): void {
 function describe(img: HTMLImageElement, rect: DOMRect): GuestPick {
   const src = img.currentSrc || img.src
   const linked = originalFromLinks(img)
+  const page = sourcePage(img)
+  const loaded = img.complete && img.naturalWidth > 0
   let url = src
-  let thumbUrl: string | undefined
+  let thumb: Thumb | undefined
   let full = !isThumb(src)
   if (!full) {
-    thumbFor.set(img, src)
+    thumb = {
+      url: src,
+      width: loaded ? img.naturalWidth : undefined,
+      height: loaded ? img.naturalHeight : undefined
+    }
+    thumbFor.set(img, thumb)
+    lastThumb = { ...thumb, alt: img.alt, pageUrl: page.url }
     if (linked) {
       url = linked
-      thumbUrl = src
       full = true
     }
   } else {
-    thumbUrl = thumbFor.get(img)
+    // The element that showed the thumbnail, or the one Google shows the original in beside it.
+    const sameResult = !!lastThumb?.pageUrl && lastThumb.pageUrl === page.url && lastThumb.alt === img.alt
+    thumb = thumbFor.get(img) ?? (sameResult ? lastThumb! : undefined)
   }
-  const page = sourcePage(img)
-  const loaded = img.complete && img.naturalWidth > 0
   return {
     url,
-    thumbUrl,
+    thumbUrl: full ? thumb?.url : undefined,
+    thumbWidth: thumb?.width,
+    thumbHeight: thumb?.height,
     full,
     pageUrl: page.url,
     title:
@@ -179,6 +200,8 @@ function start(): void {
     },
     true
   )
+  // A thumbnail's size is known once it has loaded (load events don't bubble, hence capture).
+  document.addEventListener('load', (e) => e.target instanceof HTMLImageElement && schedule(), true)
   document.addEventListener('keyup', () => schedule(250), true)
   addEventListener('resize', () => schedule(300))
   addEventListener('popstate', () => schedule(300))

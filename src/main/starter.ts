@@ -49,7 +49,7 @@ export function ensureStarterContent(
       title: 'Countdown',
       ambient: {
         ...DEFAULT_AMBIENT,
-        theme: 'ember',
+        theme: 'sage',
         overlay: {
           kind: 'countdown',
           text: 'Welcome',
@@ -69,7 +69,7 @@ export function ensureStarterContent(
       title: 'Thank you',
       ambient: {
         ...DEFAULT_AMBIENT,
-        theme: 'dawn',
+        theme: 'walnut',
         overlay: {
           kind: 'text',
           text: 'Thank you for joining us',

@@ -154,7 +154,7 @@ export interface Deck {
 // Ambient
 // ---------------------------------------------------------------------------
 
-export type AmbientThemeId = 'ember' | 'dawn' | 'ocean' | 'aurora' | 'graphite'
+export type AmbientThemeId = 'sage' | 'walnut' | 'ember' | 'dawn' | 'ocean' | 'aurora' | 'graphite'
 
 export interface AmbientOverlay {
   kind: 'none' | 'text' | 'clock' | 'countdown'
@@ -402,6 +402,9 @@ export interface WebPick {
   title?: string
   width?: number
   height?: number
+  /** Natural size of the thumbnail the operator saw, to tell whether another copy is the same picture. */
+  thumbWidth?: number
+  thumbHeight?: number
   provider?: SearchProviderId
   query?: string
   author?: string

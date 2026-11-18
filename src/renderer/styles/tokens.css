@@ -1,101 +1,124 @@
 /*
  * Cue design tokens.
  *
- * The control window is drawn like a stage manager's desk: a ruled cue sheet
- * and lamps. Surfaces are flat and separated by hairlines, corners are nearly
- * square, and colour is a signal, never decoration. Amber means "standing by"
- * (staged, selected, about to happen). Red means "on the screen right now".
- * Everything else is ink on warm black.
+ * A quiet, rounded desk in the church's own colours: black and dark walnut
+ * for the room, warm beige for the words, sage green for anything you can
+ * act on, and gold for what is standing by. Red is kept for one thing only:
+ * what is on the screen right now.
  */
 :root {
   color-scheme: dark;
 
-  /* Warm blacks, darkest to lightest. No blue in them. */
-  --bg-0: #0a0a09;
-  --bg-1: #10100f;
-  --bg-2: #161615;
-  --bg-3: #1d1d1b;
-  --bg-4: #262624;
-  --bg-5: #31312e;
-  --bg-6: #403f3b;
+  /* Black into dark walnut, darkest to lightest */
+  --bg-0: #0a0908;
+  --bg-1: #151311;
+  --bg-2: #1c1916;
+  --bg-3: #25211d;
+  --bg-4: #302b25;
+  --bg-5: #3c362f;
+  --bg-6: #4c453c;
 
-  /* Rules. Solid, so two that cross don't add up. */
-  --line-1: #1c1c1a;
-  --line-2: #272725;
-  --line-3: #383835;
-  --line-4: #55534e;
+  /* Hairlines: a little beige light, so they sit on any surface */
+  --line-1: rgba(240, 228, 205, 0.055);
+  --line-2: rgba(240, 228, 205, 0.085);
+  --line-3: rgba(240, 228, 205, 0.13);
+  --line-4: rgba(240, 228, 205, 0.2);
 
-  /* Ink */
-  --text-1: #f3f0e9;
-  --text-2: #b5b1a7;
-  --text-3: #807d75;
-  --text-4: #57554f;
+  /* Beige ink */
+  --text-1: #f4eee2;
+  --text-2: #bdb5a6;
+  --text-3: #8b8375;
+  --text-4: #625c51;
 
-  /* Amber: standing by */
-  --amber-100: #fff0cf;
-  --amber-200: #ffdf9c;
-  --amber-300: #ffcc66;
-  --amber-400: #ffbb38;
-  --amber-500: #f7a81b;
-  --amber-600: #d98d0a;
-  --amber-700: #a86a05;
-  --amber-ink: #170f00;
-  --amber-a08: rgba(247, 168, 27, 0.08);
-  --amber-a14: rgba(247, 168, 27, 0.14);
-  --amber-a24: rgba(247, 168, 27, 0.24);
-  --amber-a40: rgba(247, 168, 27, 0.4);
-  --amber-a60: rgba(247, 168, 27, 0.6);
+  /* Sage green: everything you can act on, and what is selected */
+  --accent-100: #e3ecda;
+  --accent-200: #cfdcc2;
+  --accent-300: #bbcdaa;
+  --accent-400: #a7bc93;
+  --accent-500: #93aa7e;
+  --accent-600: #7a9265;
+  --accent-700: #5f754c;
+  --accent-ink: #10160b;
+  --accent-a08: rgba(147, 170, 126, 0.08);
+  --accent-a14: rgba(147, 170, 126, 0.14);
+  --accent-a24: rgba(147, 170, 126, 0.24);
+  --accent-a40: rgba(147, 170, 126, 0.4);
+  --accent-a60: rgba(147, 170, 126, 0.6);
 
-  /* Red: on the screen */
-  --live-300: #ff8f85;
-  --live-400: #ff6658;
-  --live-500: #f0412f;
-  --live-600: #c93322;
-  --live-a10: rgba(240, 65, 47, 0.1);
-  --live-a18: rgba(240, 65, 47, 0.18);
-  --live-a35: rgba(240, 65, 47, 0.35);
+  /* Gold: standing by (in Preview, next in the plan) */
+  --gold-100: #f6ecd0;
+  --gold-200: #ecdcab;
+  --gold-300: #e1c988;
+  --gold-400: #d6b86c;
+  --gold-500: #c9a655;
+  --gold-600: #a88842;
+  --gold-700: #806630;
+  --gold-ink: #1a1404;
+  --gold-a08: rgba(201, 166, 85, 0.08);
+  --gold-a14: rgba(201, 166, 85, 0.14);
+  --gold-a24: rgba(201, 166, 85, 0.24);
+  --gold-a40: rgba(201, 166, 85, 0.4);
+  --gold-a60: rgba(201, 166, 85, 0.6);
 
-  --ok-400: #5fd68a;
-  --ok-500: #3fbf70;
-  --ok-a14: rgba(63, 191, 112, 0.14);
-  --info-400: #8fbcf0;
-  --info-a14: rgba(143, 188, 240, 0.14);
+  /* Red: on the screen right now, and nothing else */
+  --live-300: #f6a299;
+  --live-400: #ee7a6d;
+  --live-500: #e05a4b;
+  --live-600: #bf4638;
+  --live-a10: rgba(224, 90, 75, 0.1);
+  --live-a18: rgba(224, 90, 75, 0.18);
+  --live-a35: rgba(224, 90, 75, 0.35);
+
+  --ok-400: #a7bc93;
+  --ok-500: #93aa7e;
+  --ok-a14: rgba(147, 170, 126, 0.14);
+  --info-400: #b9b1a2;
+  --info-a14: rgba(185, 177, 162, 0.14);
 
   /*
-   * Type. One grotesque with a width axis does all the talking: regular width
-   * for reading, condensed capitals for labels, wide and heavy for the name.
-   * Numbers, keys and clock times are monospaced, like a typed cue sheet.
+   * Type: the system's own face on a Mac (San Francisco), and Inter, its
+   * closest relative, everywhere else. Numbers that change line up.
    */
-  --font-ui: 'Cue Ampersand', 'Archivo Variable', 'Archivo', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Menlo, Consolas, monospace;
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter Variable', 'Inter', 'Segoe UI Variable Text',
+    'Segoe UI', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
 
-  /* Corners: just enough to not look sharp. */
-  --r-4: 2px;
-  --r-6: 2px;
-  --r-8: 2px;
-  --r-10: 3px;
-  --r-12: 3px;
-  --r-14: 4px;
-  --r-18: 4px;
+  /* Corners: generous and consistent. Nested corners get smaller as they go in. */
+  --r-4: 5px;
+  --r-6: 7px;
+  --r-8: 9px;
+  --r-10: 11px;
+  --r-12: 14px;
+  --r-14: 18px;
+  --r-18: 24px;
+  --r-pill: 999px;
 
-  /* Nothing floats except things that really are on top. */
-  --hi: none;
-  --shadow-1: none;
-  --shadow-pop: 0 0 0 1px var(--line-4), 0 16px 40px rgba(0, 0, 0, 0.7);
-  --shadow-dialog: 0 0 0 1px var(--line-4), 0 32px 80px rgba(0, 0, 0, 0.75);
-  --focus-ring: 0 0 0 2px var(--amber-400);
+  /* Materials */
+  --hi: inset 0 1px 0 rgba(255, 244, 220, 0.06);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-pop:
+    0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 244, 220, 0.09), 0 18px 50px rgba(0, 0, 0, 0.55),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-dialog:
+    0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 244, 220, 0.09),
+    0 40px 100px rgba(0, 0, 0, 0.65), 0 8px 24px rgba(0, 0, 0, 0.35);
+  /* Things that float over the desk are a little see-through, with the desk blurred behind. */
+  --glass: rgba(38, 34, 29, 0.78);
+  --glass-blur: blur(28px) saturate(1.5);
+  --focus-ring: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--accent-a60);
 
-  /* Motion: quick and mechanical. Things switch; they don't float. */
-  --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* Motion: soft and springy, never slow */
+  --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
   --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  /* Kept for the sliding highlights: a firm stop, no bounce. */
-  --ease-spring: cubic-bezier(0.2, 0, 0, 1);
-  --t-fast: 90ms;
-  --t-med: 150ms;
-  --t-slow: 240ms;
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.5, 1);
+  --t-fast: 120ms;
+  --t-med: 200ms;
+  --t-slow: 320ms;
 
   /* Layout */
-  --topbar-h: 44px;
-  --livebar-h: 64px;
+  --topbar-h: 48px;
+  --livebar-h: 72px;
+  --gap: 8px;
 }

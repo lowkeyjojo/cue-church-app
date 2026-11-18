@@ -23,7 +23,7 @@ export function TestPattern({ size, name }: { size: Size; name: string }) {
         width={W * 0.93}
         height={H * 0.93}
         fill="none"
-        stroke="#f2a33a"
+        stroke="#d6b86c"
         strokeWidth={3}
         strokeDasharray="18 10"
       />
@@ -83,7 +83,7 @@ export function TestPattern({ size, name }: { size: Size; name: string }) {
         textAnchor="middle"
         fontFamily="Inter Variable, sans-serif"
       >
-        {res} · amber = 93% action safe · red = 90% title safe
+        {res} · gold = 93% action safe · red = 90% title safe
       </text>
     </svg>
   )

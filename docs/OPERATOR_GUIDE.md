@@ -51,7 +51,7 @@ A guide for whoever is at the computer on Sunday. Cue has two screens: **yours**
 
 **Space means Show, even after you've clicked a button.** If you move around Cue with **Tab** instead of the mouse, Space and Enter press the button you're on, as in any app (on a library item, Enter puts it in Preview), and **Ctrl + Enter** (⌘ Enter) shows the preview.
 
-**When the pastor mentions something you don't have:** press **Ctrl + L** (⌘ L on a Mac), type what you need and press Enter. Click an image in the results: Cue fetches the full-size picture and puts it in Preview. Check it, then press **Ctrl + Enter** (⌘ Enter) to show it. Press **R** afterwards to go back to the slides.
+**When the pastor mentions something you don't have:** press **Ctrl + L** (⌘ L on a Mac), type what you need and press Enter. Click an image in the results: Cue fetches the full-size picture and puts it in Preview. For pictures from YouTube, Instagram, TikTok and similar sites, Google often has no full-size picture; after a moment Cue brings in the best copy it can get instead, and the bar under the results says which one you have. Check it, then press **Ctrl + Enter** (⌘ Enter) to show it. Press **R** afterwards to go back to the slides.
 
 Other quick ways in:
 
@@ -82,7 +82,9 @@ Cue keeps a list of everything shown under **Shown today** at the bottom left, s
 
 **Google won't load.** Without internet, the Search tab says so. Your plan, slides and library still work, because everything you've imported or shown is stored on the computer.
 
-**"Using a lower-resolution copy".** That website didn't share its full-size image. Try another result if the picture looks soft on the TV.
+**"Using a lower-resolution copy".** That website didn't share its full-size image, so you have Google's small copy. Try another result if the picture looks soft on the TV.
+
+**"From the post's preview image".** Google had no full-size picture for this result, so Cue took the picture the post or video shows when it's shared. It is the same picture, usually at a good size; the numbers next to it are its size.
 
 **Cue closed unexpectedly.** Open it again: the audience screen comes back exactly as it was.
 

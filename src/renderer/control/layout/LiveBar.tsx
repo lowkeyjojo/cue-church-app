@@ -1,17 +1,33 @@
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
-import { ChevronUp, CircleOff, CornerUpLeft, Moon, SunMedium, Volume1, Volume2, VolumeX } from 'lucide-react'
+import {
+  Blend,
+  ChevronUp,
+  CircleOff,
+  CornerUpLeft,
+  Moon,
+  SunMedium,
+  Volume1,
+  Volume2,
+  VolumeX
+} from 'lucide-react'
 import { presentationLabel } from '@shared/show/presentation'
-import type { TransitionKind } from '@shared/types'
+import type { ShowState, TransitionKind } from '@shared/types'
 import { dispatch } from '../lib/api'
 import { useShow } from '../lib/store'
 import { useUI } from '../lib/ui'
 import { IconButton } from '../ui/Button'
 import { Segmented, Select, Slider } from '../ui/Controls'
+import { Popover } from '../ui/Popover'
 import { Tooltip } from '../ui/Tooltip'
 import s from './LiveBar.module.css'
 
 const DURATIONS = [250, 500, 800, 1200, 2000]
+
+const seconds = (ms: number) => `${ms / 1000}s`
+const KIND_NAMES: Record<TransitionKind, string> = { cut: 'Cut', fade: 'Fade', dip: 'Dip' }
+const transitionName = (t: ShowState['transition']) =>
+  t.kind === 'cut' ? 'Cut' : `${KIND_NAMES[t.kind]} · ${seconds(t.duration)}`
 
 /** The always-visible strip of live controls. */
 export function LiveBar() {
@@ -69,7 +85,7 @@ export function LiveBar() {
             <kbd>R</kbd>
           </button>
         </Tooltip>
-        <Tooltip label="Remove what's on screen">
+        <Tooltip label="Take it off the screen" shortcut="Esc">
           <button
             className={clsx(s.big, s.clear)}
             disabled={!show.live}
@@ -77,37 +93,66 @@ export function LiveBar() {
           >
             <CircleOff size={16} />
             <span>Clear</span>
+            <kbd>Esc</kbd>
           </button>
         </Tooltip>
       </div>
 
+      {/* How things change on screen is set once and left alone, so it lives behind one button. */}
       <div className={s.group}>
-        <span className={s.label}>Transition</span>
-        <Segmented<TransitionKind>
-          size="sm"
-          value={t.kind}
-          onChange={(kind) => dispatch({ type: 'transition', transition: { kind } })}
-          options={[
-            { value: 'cut', label: 'Cut', tooltip: 'Instant' },
-            { value: 'fade', label: 'Fade', tooltip: 'Crossfade' },
-            { value: 'dip', label: 'Dip', tooltip: 'Fade through black' }
-          ]}
-        />
-        <Select
-          className={s.duration}
-          value={String(t.duration)}
-          disabled={t.kind === 'cut'}
-          aria-label="Transition length"
-          onChange={(e) => dispatch({ type: 'transition', transition: { duration: Number(e.target.value) } })}
+        <Popover
+          side="top"
+          width={280}
+          trigger={
+            <button className={clsx(s.big, s.transition)} aria-label={`Transition: ${transitionName(t)}`}>
+              <Blend size={16} />
+              <span>{transitionName(t)}</span>
+              <ChevronUp size={14} className={s.caret} />
+            </button>
+          }
         >
-          {[...new Set([...DURATIONS, t.duration])]
-            .sort((a, b) => a - b)
-            .map((d) => (
-              <option key={d} value={d}>
-                {d < 1000 ? `${d / 1000}s`.replace(/^0/, '') : `${d / 1000}s`}
-              </option>
-            ))}
-        </Select>
+          <div className={s.transitionPanel}>
+            <div className={s.panelTitle}>How things change on screen</div>
+            <Segmented<TransitionKind>
+              className={s.wide}
+              value={t.kind}
+              ariaLabel="Transition"
+              onChange={(kind) => dispatch({ type: 'transition', transition: { kind } })}
+              options={[
+                { value: 'cut', label: 'Cut' },
+                { value: 'fade', label: 'Fade' },
+                { value: 'dip', label: 'Dip' }
+              ]}
+            />
+            <p className={s.panelHint}>
+              {t.kind === 'cut'
+                ? 'Changes instantly.'
+                : t.kind === 'fade'
+                  ? 'One picture melts into the next.'
+                  : 'Fades to black, then to the next picture.'}
+            </p>
+            <label className={s.panelRow}>
+              <span>Length</span>
+              <Select
+                className={s.duration}
+                value={String(t.duration)}
+                disabled={t.kind === 'cut'}
+                aria-label="Transition length"
+                onChange={(e) =>
+                  dispatch({ type: 'transition', transition: { duration: Number(e.target.value) } })
+                }
+              >
+                {[...new Set([...DURATIONS, t.duration])]
+                  .sort((a, b) => a - b)
+                  .map((d) => (
+                    <option key={d} value={d}>
+                      {seconds(d)}
+                    </option>
+                  ))}
+              </Select>
+            </label>
+          </div>
+        </Popover>
       </div>
 
       <div className={s.group}>
@@ -126,9 +171,6 @@ export function LiveBar() {
           ariaLabel="Master volume"
           onChange={(volume) => dispatch({ type: 'volume', volume })}
         />
-        <span className={s.volumeValue}>
-          {show.audio.muted ? 'Muted' : `${Math.round(show.audio.volume * 100)}%`}
-        </span>
         <Clock />
       </div>
     </footer>

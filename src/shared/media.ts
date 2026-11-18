@@ -177,6 +177,58 @@ export function sniffMime(bytes: Uint8Array): string | null {
   return null
 }
 
+/**
+ * Width and height of a PNG, JPEG, GIF, WebP or AVIF, read from its header
+ * (no decoding). A JPEG's orientation tag is not applied. Null when unreadable.
+ */
+export function imageSize(bytes: Uint8Array): { width: number; height: number } | null {
+  const b = bytes
+  if (b.length < 30) return null
+  const view = new DataView(b.buffer, b.byteOffset, b.byteLength)
+  const ascii = (start: number, len: number) => String.fromCharCode(...b.subarray(start, start + len))
+  const size = (width: number, height: number) => (width > 0 && height > 0 ? { width, height } : null)
+  if (b[0] === 0x89 && ascii(1, 3) === 'PNG') return size(view.getUint32(16), view.getUint32(20))
+  if (ascii(0, 4) === 'GIF8') return size(view.getUint16(6, true), view.getUint16(8, true))
+  if (ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WEBP') {
+    const format = ascii(12, 4)
+    if (format === 'VP8 ') return size(view.getUint16(26, true) & 0x3fff, view.getUint16(28, true) & 0x3fff)
+    if (format === 'VP8L') {
+      const bits = view.getUint32(21, true)
+      return size((bits & 0x3fff) + 1, ((bits >>> 14) & 0x3fff) + 1)
+    }
+    if (format === 'VP8X') {
+      const uint24 = (i: number) => b[i] | (b[i + 1] << 8) | (b[i + 2] << 16)
+      return size(uint24(24) + 1, uint24(27) + 1)
+    }
+    return null
+  }
+  if (b[0] === 0xff && b[1] === 0xd8) {
+    // Walk the segments to the frame header (SOF0…SOF15, which excludes the DHT, JPG and DAC markers).
+    for (let i = 2; i + 9 <= b.length;) {
+      if (b[i] !== 0xff) return null
+      const marker = b[i + 1]
+      if (marker === 0xff) i++
+      else if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) i += 2
+      else if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc)
+        return size(view.getUint16(i + 7), view.getUint16(i + 5))
+      else i += 2 + view.getUint16(i + 2)
+    }
+    return null
+  }
+  if (ascii(4, 4) === 'ftyp') {
+    // AVIF: the largest "image spatial extents" property is the picture itself (others are tiles or alpha).
+    let best: { width: number; height: number } | null = null
+    const end = Math.min(b.length, 256 * 1024) - 16
+    for (let i = 8; i <= end; i++) {
+      if (b[i] !== 0x69 || b[i + 1] !== 0x73 || b[i + 2] !== 0x70 || b[i + 3] !== 0x65) continue
+      const found = size(view.getUint32(i + 8), view.getUint32(i + 12))
+      if (found && (!best || found.width * found.height > best.width * best.height)) best = found
+    }
+    return best
+  }
+  return null
+}
+
 /** Does this GIF / PNG / WebP contain more than one frame? Reads the file's structure, not just its bytes. */
 export function isAnimated(bytes: Uint8Array, mime: string): boolean {
   if (mime === 'image/gif') return gifFrames(bytes, 2) > 1

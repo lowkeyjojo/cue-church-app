@@ -6,17 +6,10 @@
 <meta charset="utf-8" />
 <style>
   @font-face {
-    font-family: 'Archivo';
-    src: url('../../node_modules/@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2')
+    font-family: 'Inter';
+    src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
       format('woff2');
     font-weight: 100 900;
-    font-stretch: 62% 125%;
-  }
-  @font-face {
-    font-family: 'Plex Mono';
-    src: url('../../node_modules/@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2')
-      format('woff2');
-    font-weight: 500;
   }
   html,
   body {
@@ -25,43 +18,37 @@
     height: 400px;
     overflow: hidden;
   }
-  /* Flat, like the app: warm black, one amber rule, the instruction set large. */
+  /* The app's own colours: black into walnut, beige words, a touch of sage. */
   body {
     position: relative;
-    font-family: 'Archivo', sans-serif;
-    background: #10100f;
-    color: #f3f0e9;
-  }
-  body::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    background: #f7a81b;
+    font-family: 'Inter', sans-serif;
+    background:
+      radial-gradient(460px 260px at 50% -10%, rgba(147, 170, 126, 0.16), transparent 70%),
+      linear-gradient(180deg, #1c1916 0%, #0a0908 100%);
+    color: #f4eee2;
   }
   .title {
     position: absolute;
-    top: 30px;
-    left: 40px;
-    font-size: 30px;
-    font-weight: 800;
+    top: 36px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 650;
     letter-spacing: -0.02em;
   }
   .title b {
-    color: #f7a81b;
-    font-weight: 800;
+    color: #a7bc93;
+    font-weight: 650;
   }
   .sub {
     position: absolute;
-    top: 72px;
-    left: 40px;
-    font-family: 'Plex Mono', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #807d75;
+    top: 70px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12.5px;
+    color: #bdb5a6;
   }
   /* The tray the two icons and their Finder labels rest on. */
   .tray {
@@ -70,8 +57,9 @@
     right: 64px;
     top: 122px;
     height: 180px;
-    border-radius: 3px;
-    background: #74726b;
+    border-radius: 24px;
+    background: #8a8475;
+    box-shadow: inset 0 1px 0 rgba(255, 244, 220, 0.25);
   }
   .arrow {
     position: absolute;
@@ -89,11 +77,12 @@
   }
   .foot {
     position: absolute;
-    bottom: 30px;
-    left: 40px;
-    right: 40px;
+    bottom: 32px;
+    left: 0;
+    right: 0;
+    text-align: center;
     font-size: 11.5px;
-    color: #807d75;
+    color: #8b8375;
   }
 </style>
 <div class="title">Drag <b>Cue</b> into Applications</div>
@@ -104,30 +93,30 @@
     <path
       d="M3 3l10 10L3 23"
       fill="none"
-      stroke="#10100f"
+      stroke="#151311"
       stroke-width="3.5"
-      stroke-linecap="square"
-      stroke-linejoin="miter"
+      stroke-linecap="round"
+      stroke-linejoin="round"
     />
   </svg>
   <svg width="16" height="26" viewBox="0 0 16 26">
     <path
       d="M3 3l10 10L3 23"
       fill="none"
-      stroke="#10100f"
+      stroke="#151311"
       stroke-width="3.5"
-      stroke-linecap="square"
-      stroke-linejoin="miter"
+      stroke-linecap="round"
+      stroke-linejoin="round"
     />
   </svg>
   <svg width="16" height="26" viewBox="0 0 16 26">
     <path
       d="M3 3l10 10L3 23"
       fill="none"
-      stroke="#10100f"
+      stroke="#151311"
       stroke-width="3.5"
-      stroke-linecap="square"
-      stroke-linejoin="miter"
+      stroke-linecap="round"
+      stroke-linejoin="round"
     />
   </svg>
 </div>
