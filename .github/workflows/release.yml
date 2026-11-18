@@ -4,6 +4,11 @@ name: Release
 # as a GitHub release. Or run it by hand: give a version to publish the
 # release (the tag is created on the commit it runs on), or none to just get
 # the files.
+#
+# The file names carry no version (Cue-mac.dmg, Cue-windows-setup.exe), so
+# releases/latest/download/<name> is a permanent link to the newest one. That
+# is what install.ps1, install.sh and the README point at. An installed Cue on
+# Windows reads latest.yml from the newest release to update itself.
 on:
   push:
     tags: ['v*']
@@ -37,6 +42,22 @@ jobs:
         with:
           node-version: 22
           cache: npm
+
+      # Cue decides whether it is out of date by comparing its own version with
+      # the release's. A release tagged differently from package.json would
+      # offer itself as an update for ever, or never.
+      - name: Check that the release and package.json agree on the version
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.version
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version || github.ref_name }}
+        run: |
+          package="v$(node -p "require('./package.json').version")"
+          if [ "$VERSION" != "$package" ]; then
+            echo "This would publish $VERSION, but package.json says $package. Change one so they match." >&2
+            exit 1
+          fi
+
       - run: npm ci
       - run: npm run ${{ matrix.script }}
         env:
@@ -49,45 +70,87 @@ jobs:
           WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
-      # Install what was just built, the way a user would, and make sure Cue
-      # opens. An installer that doesn't work is never uploaded or published.
-      - name: Install and start Cue (Windows)
+      # Windows: prove that an installed Cue updates itself to this build. The
+      # same code is packaged again as version 0.0.1 (into release-old/, which
+      # is never uploaded) and installed; it is then offered this build from a
+      # local folder, has to download it by itself, and has to be this version
+      # after it is closed. A build that can't be updated to is never published.
+      - name: Build an older Cue to update from (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: npx electron-builder --config electron-builder.config.mjs --win --publish never -c.extraMetadata.version=0.0.1 -c.directories.output=release-old
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+      - name: Update the older Cue to this build (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $installer = Get-ChildItem release/*/*.exe | Where-Object { $_.Name -match 'setup' -and $_.Name -notmatch 'arm64' } | Select-Object -First 1
-          if (-not $installer) { throw 'No Windows installer was built' }
-          Write-Host "Installing $($installer.Name)"
-          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+          $old = Get-Item release-old/Cue-windows-setup.exe
+          $new = Get-ChildItem release/*/latest.yml | Select-Object -First 1
+          if (-not $new) { throw 'The build wrote no latest.yml, so an installed Cue could not find it' }
+          $version = node -p "require('./package.json').version"
+          Write-Host "Installing the older Cue ($($old.FullName))"
+          $setup = Start-Process -FilePath $old.FullName -ArgumentList '/S' -PassThru -Wait
+          if ($setup.ExitCode -ne 0) { throw "The older installer stopped with code $($setup.ExitCode)" }
           $exe = $null
           foreach ($i in 1..60) {
             $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter Cue.exe -ErrorAction SilentlyContinue | Select-Object -First 1
             if ($exe) { break }
             Start-Sleep -Seconds 1
           }
-          if (-not $exe) { throw 'The installer finished but Cue.exe was not installed' }
+          if (-not $exe) { throw 'The older installer finished but Cue.exe was not installed' }
+          node scripts/smoke-update.mjs $exe.FullName $new.Directory.FullName $version
+          if ($LASTEXITCODE -ne 0) { throw 'An installed Cue did not update itself to this build' }
+
+      # Install what was just built, the way the one-line installers in the
+      # README do (same scripts, the local files in place of the download), and
+      # make sure Cue opens. An installer that doesn't work is never uploaded
+      # or published.
+      - name: Install and start Cue (Windows)
+        if: runner.os == 'Windows'
+        # Windows PowerShell 5.1, which is what "irm ... | iex" meets on most PCs.
+        shell: powershell
+        run: |
+          $installer = Get-ChildItem release/*/Cue-windows-setup.exe | Select-Object -First 1
+          if (-not $installer) { throw 'No Windows installer was built' }
+          $from = Join-Path $env:RUNNER_TEMP 'cue-install'
+          New-Item -ItemType Directory -Force -Path $from | Out-Null
+          Copy-Item -LiteralPath $installer.FullName -Destination $from
+          $hash = (Get-FileHash -LiteralPath (Join-Path $from $installer.Name) -Algorithm SHA256).Hash.ToLower()
+          Set-Content -LiteralPath (Join-Path $from 'SHA256SUMS.txt') -Value "$hash  $($installer.Name)" -Encoding ascii
+          $env:CUE_INSTALL_FROM = $from
+          $env:CUE_INSTALL_NO_LAUNCH = '1'
+          # Run as text, exactly as "irm ... | iex" does.
+          Get-Content -Raw -LiteralPath install.ps1 | Invoke-Expression
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter Cue.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { throw 'install.ps1 finished but Cue.exe was not installed' }
           Write-Host "Installed to $($exe.FullName)"
           node scripts/smoke-installed.mjs $exe.FullName
+          if ($LASTEXITCODE -ne 0) { throw 'The installed Cue did not start correctly' }
       - name: Install and start Cue (macOS)
         if: runner.os == 'macOS'
         run: |
-          dmg=$(ls release/*/*.dmg | grep -v x64 | head -1)
-          echo "Opening $dmg"
-          hdiutil attach "$dmg" -nobrowse -readonly -mountpoint "$RUNNER_TEMP/cue-dmg"
-          mkdir -p "$RUNNER_TEMP/Applications"
-          cp -R "$RUNNER_TEMP/cue-dmg/Cue.app" "$RUNNER_TEMP/Applications/"
-          hdiutil detach "$RUNNER_TEMP/cue-dmg"
+          dmg=$(ls release/*/Cue-mac.dmg | head -1)
+          from="$RUNNER_TEMP/cue-install"
+          mkdir -p "$from"
+          cp "$dmg" "$from/"
+          (cd "$from" && shasum -a 256 Cue-mac.dmg > SHA256SUMS.txt)
+          # Piped in, exactly as "curl ... | bash" does, to the bash 3.2 that macOS ships.
+          CUE_INSTALL_FROM="$from" CUE_INSTALL_DIR="$RUNNER_TEMP/Applications" CUE_INSTALL_NO_LAUNCH=1 /bin/bash < install.sh
           # A broken signature makes macOS call the app "damaged" and refuse to open it.
           codesign --verify --deep --strict --verbose=2 "$RUNNER_TEMP/Applications/Cue.app"
           node scripts/smoke-installed.mjs "$RUNNER_TEMP/Applications/Cue.app/Contents/MacOS/Cue"
 
+      # Only the files a release needs, and nothing from release-old/.
       - uses: actions/upload-artifact@v4
         with:
           name: cue-${{ matrix.name }}
           path: |
-            release/*/*.dmg
-            release/*/*.zip
-            release/*/*.exe
+            release/*/Cue-mac.dmg
+            release/*/Cue-windows-setup.exe
+            release/*/Cue-windows-setup.exe.blockmap
+            release/*/latest.yml
           if-no-files-found: error
 
   publish:
@@ -110,14 +173,35 @@ jobs:
             echo "The version must look like v1.0.0, not '$VERSION'" >&2
             exit 1
           fi
-          # The artifacts keep their release/<version>/ folders: attach the files inside.
+          # The artifacts keep their release/<version>/ folders: gather the files in one place.
+          #   Cue-mac.dmg, Cue-windows-setup.exe  the downloads
+          #   latest.yml, *.blockmap              what an installed Cue on Windows reads to update itself
           shopt -s globstar nullglob
-          files=(dist/**/*.dmg dist/**/*.zip dist/**/*.exe)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No installers were built" >&2
+          mkdir upload
+          for name in Cue-mac.dmg Cue-windows-setup.exe Cue-windows-setup.exe.blockmap latest.yml; do
+            found=(dist/**/"$name")
+            if [ ${#found[@]} -ne 1 ]; then
+              echo "Expected one $name among the built files, found ${#found[@]}" >&2
+              exit 1
+            fi
+            cp "${found[0]}" upload/
+          done
+          cd upload
+
+          # latest.yml is what the updater trusts: it has to describe this version and this very installer.
+          listed_version=$(sed -n 's/^version: *//p' latest.yml | head -1 | tr -d '\r')
+          listed_sha512=$(sed -n 's/^sha512: *//p' latest.yml | head -1 | tr -d '\r')
+          actual_sha512=$(openssl dgst -sha512 -binary Cue-windows-setup.exe | base64 -w0)
+          if [ "v$listed_version" != "$VERSION" ] || [ "$listed_sha512" != "$actual_sha512" ]; then
+            echo "latest.yml (version $listed_version) doesn't describe the Cue-windows-setup.exe being published as $VERSION" >&2
             exit 1
           fi
-          gh release create "$VERSION" "${files[@]}" \
+
+          # What install.ps1 and install.sh check their download against: file names only, no paths.
+          sha256sum Cue-mac.dmg Cue-windows-setup.exe > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+          gh release create "$VERSION" Cue-mac.dmg Cue-windows-setup.exe Cue-windows-setup.exe.blockmap latest.yml SHA256SUMS.txt \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "Cue $VERSION" \

@@ -86,7 +86,8 @@ export const DEFAULT_SETTINGS: Settings = {
     tileSize: 176,
     tab: 'search',
     firstRunDone: false
-  }
+  },
+  updates: { auto: true }
 }
 
 export const FONTS: { id: FontId; label: string; family: string; kind: 'sans' | 'serif' | 'display' }[] = [

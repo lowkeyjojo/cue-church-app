@@ -1,0 +1,40 @@
+/* Standing by: a new version is waiting. Amber, like everything that is about to happen. */
+.notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--amber-500);
+  border-radius: var(--r-8);
+  background: var(--amber-500);
+  color: var(--amber-ink);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease);
+}
+.notice:hover {
+  background: var(--amber-400);
+  border-color: var(--amber-400);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px;
+}
+.text {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}

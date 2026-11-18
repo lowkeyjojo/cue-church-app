@@ -5,6 +5,7 @@ import {
   FolderOpen,
   Monitor,
   MousePointer2,
+  RefreshCw,
   Search,
   ScrollText,
   Speaker,
@@ -14,6 +15,7 @@ import {
 import { FONTS } from '@shared/defaults'
 import { BIBLE_TRANSLATIONS, type TranslationId } from '@shared/scripture'
 import type { FitMode, FontId, OutputMode, Settings, SettingsPatch, SlideTheme } from '@shared/types'
+import { updateSummary } from '@shared/updates'
 import { attempt, dispatch } from '../../lib/api'
 import { useApp, useSettings, useShow } from '../../lib/store'
 import { useUI } from '../../lib/ui'
@@ -73,7 +75,7 @@ export function SettingsDialog({ tab: initial }: { tab: string }) {
           {tab === 'presenter' && <PresenterSettings settings={settings} />}
           {tab === 'search' && <SearchSettings settings={settings} />}
           {tab === 'slides' && <SlidesSettings settings={settings} />}
-          {tab === 'library' && <LibrarySettings />}
+          {tab === 'library' && <LibrarySettings settings={settings} />}
         </div>
       </div>
     </Dialog>
@@ -508,8 +510,10 @@ function FontSelect({ value, onChange }: { value: FontId; onChange: (f: FontId) 
   )
 }
 
-function LibrarySettings() {
+function LibrarySettings({ settings }: { settings: Settings }) {
   const info = useApp((st) => st.info)
+  const updates = useApp((st) => st.updates)
+  const getIt = updates.status === 'available' && !!updates.manual
   const items = useApp((st) => st.items)
   const all = Object.values(items)
   const transient = all.filter((i) => !i.saved).length
@@ -527,6 +531,41 @@ function LibrarySettings() {
           inline
         >
           <span />
+        </Field>
+      </Group>
+      <Group title="Updates">
+        <Field
+          label="Keep Cue up to date"
+          hint={
+            info?.platform === 'win32'
+              ? 'New versions download quietly and install when you close Cue'
+              : 'Cue tells you when a new version is out'
+          }
+          inline
+        >
+          <Switch checked={settings.updates.auto} onChange={(auto) => update({ updates: { auto } })} />
+        </Field>
+        <Field label={`Cue ${info?.version ?? ''}`} hint={updateSummary(updates) || undefined} inline>
+          {getIt ? (
+            <Button
+              size="sm"
+              icon={<ExternalLink />}
+              aria-label="Get it"
+              onClick={() => attempt('updates:install')}
+            >
+              Get it
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              icon={<RefreshCw />}
+              aria-label="Check now"
+              disabled={updates.status === 'checking' || updates.status === 'downloading'}
+              onClick={() => attempt('updates:check')}
+            >
+              Check now
+            </Button>
+          )}
         </Field>
       </Group>
       <Group title="Help">

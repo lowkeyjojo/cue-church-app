@@ -59,7 +59,7 @@ The contract is typed in `src/shared/ipc.ts`:
 
 - `CueApi` maps each method (`show:dispatch`, `library:import`, `plans:export`…) to its arguments and result. Main registers handlers with `handle(method, fn)` (`src/main/handlers.ts`). Only the control window is a trusted caller; anything else is rejected.
 - Failures come back as `{ ok: false, error }` values rather than rejected promises. The preload turns them back into thrown `Error`s, so the renderer can simply `await` and catch. Errors thrown as `UserError` (`src/main/errors.ts`: a site refusing a download, an unsupported file, a reference that isn't in the Bible) are expected and logged as warnings without stack traces; their message is written for the operator.
-- `CueEvents` are broadcast from main to the control window: `show:state`, `library:upsert`, `plans:changed`, `settings:changed`, `displays:changed`, `toast`, `progress`, `ui:command` and `plans:open`.
+- `CueEvents` are broadcast from main to the control window: `show:state`, `library:upsert`, `plans:changed`, `settings:changed`, `displays:changed`, `updates:changed`, `toast`, `progress`, `ui:command` and `plans:open`.
 
 ## The show engine
 
@@ -127,6 +127,14 @@ All data lives in the user data folder (see the README). Each store is a `JsonSt
 
 The fullscreen window must cover its display exactly, no more: anything extra lands on the screen next to it, usually the operator's, as a strip that stays on top of everything. On Windows that happened: a frameless window still has an invisible sizing border, and one that can't be resized is never allowed to be smaller than its size plus that border, so the picture was 14 px wider and 7 px taller than the screen. The fullscreen window is therefore created without that border (`thickFrame: false`). As a second line of defence, `OutputManager.settle` compares the window with its display after placing it, in the display's own pixels (`screen.dipToScreenRect`, so screens with different scaling are covered too), corrects it if it's off, and checks again shortly after; each placement and correction is logged. A window that is already on the right display is never placed again (only checked), so moving the control window or a display change doesn't blink the room's screen. The fullscreen window can't take keyboard focus on Windows and macOS: every key belongs to the control window.
 
+## Updates
+
+`Updates` (`src/main/updates.ts`) owns an `UpdateState` that the control window mirrors (`updates:state`, `updates:check`, `updates:install`, and the `updates:changed` event). It looks for a new version 15 seconds after startup and every six hours, while **Settings → Library → Keep Cue up to date** is on. It doesn't run in development or under test (unless a test supplies its own feed, below), and it never restarts Cue by itself. A check that fails is a warning in the log: no dialog, no toast.
+
+- **An installed Cue on Windows** uses electron-updater (bundled into `out/main` like everything else). It reads `latest.yml` from the newest GitHub release, downloads the installer in the background and checks it against the SHA-512 in that file; the builds aren't signed, so there is no publisher signature to compare, and no check is switched off. The update installs silently when Cue is closed. **Update ready → Restart now** in the top bar installs it at once; if something is on the audience screen, it asks a second time first.
+- **Everywhere else** (macOS, Linux, an unpackaged Cue) the app can't replace itself, which would need a signed build. Cue asks the GitHub API for the latest release, compares its tag with its own version (`src/shared/updates.ts`) and shows **Update available**; **Get it** opens the release page in the browser. Only Cue's own release pages are opened, whatever the answer says.
+- **For tests**, `CUE_UPDATE_FEED` replaces the releases with a server on the same computer. Only `http://127.0.0.1:<port>` or `http://localhost:<port>` is accepted; anything else is ignored with a warning. On an installed Windows Cue it is a folder holding `latest.yml` and the installer; elsewhere Cue reads `<feed>/latest.json` (`tag_name`, `html_url`). With a feed, the first check comes one second after the window opens.
+
 ## Security
 
 - Every window uses context isolation and a sandboxed preload; nothing in a renderer can reach Node.js.
@@ -135,6 +143,7 @@ The fullscreen window must cover its display exactly, no more: anything extra la
 - The `<webview>` is configured by main, not by the page: its preload, partition and web preferences are fixed in `will-attach-webview`, and it can't open windows.
 - Permissions are allowlisted per session: Cue's windows may enumerate audio outputs, choose a speaker and go fullscreen; the browser pane may only go fullscreen and write to the clipboard.
 - IPC handlers only answer the control window.
+- Installing and updating never ask anyone to lower their guard: the one-line installers verify a SHA-256 before running anything, the updater verifies a SHA-512, and neither touches SmartScreen, Defender or Gatekeeper settings.
 
 ## Look and motion
 
@@ -150,12 +159,23 @@ Motion is mechanical and short: things switch, they don't float. The easing curv
 ## Tests
 
 - **Unit** (`npm test`): the show reducer's workflow rules, scripture references and lookups, file-format detection, the justified image grid and utilities.
-- **End to end** (`npm run test:e2e`): Playwright launches the built app per spec file, with `CUE_E2E=1`, a throwaway `CUE_USER_DATA` folder and `CUE_OUTPUT_MODE=window`, and drives it like an operator: keyboard, clicks, drag and drop. It checks results both in main's state (exposed as `globalThis.__cue` only in E2E mode) and in the pixels of the audience window. `CUE_GOOGLE_BASE` points the Google pane at a local stand-in (`tests/e2e/support/mock-google.ts`) that reproduces the thumbnail-then-original behaviour and hotlink protection. Fixtures (PNG, PDF, WAV) are generated by the tests; a small WebM clip is checked in.
+- **End to end** (`npm run test:e2e`): Playwright launches the built app per spec file, with `CUE_E2E=1`, a throwaway `CUE_USER_DATA` folder and `CUE_OUTPUT_MODE=window`, and drives it like an operator: keyboard, clicks, drag and drop. It checks results both in main's state (exposed as `globalThis.__cue` only in E2E mode) and in the pixels of the audience window. `CUE_GOOGLE_BASE` points the Google pane at a local stand-in (`tests/e2e/support/mock-google.ts`) that reproduces the thumbnail-then-original behaviour and hotlink protection, and `CUE_UPDATE_FEED` points the update check at a local stand-in for the releases (`tests/e2e/updates.spec.ts`). Fixtures (PNG, PDF, WAV) are generated by the tests; a small WebM clip is checked in.
+- **The installers** (`tests/unit/install.test.ts`): `install.sh` runs with stand-ins for the macOS tools, to check that a download which doesn't match its checksum is never opened.
 
 ## Build
 
 `electron.vite.config.ts` builds three targets: the main process (ESM), the preloads (each a single, self-contained CommonJS file, since sandboxed preloads can't load chunks), and the renderer pages. It also copies pdf.js's character maps, fonts and wasm decoders next to the renderer, so PDFs render offline, and injects each page's CSP. `electron-builder.config.mjs` packages `out/` into installers.
 
-There is one download per platform, so nobody can pick the wrong one: a universal Mac disk image (Apple silicon and Intel) and a one-click Windows installer for x64, which also runs on ARM PCs. The disk image's window is drawn by `scripts/make-installer-art.mjs` (`npm run art`) from `build/installer/dmg-background.html`.
+There is one download per platform, so nobody can pick the wrong one: a universal Mac disk image (Apple silicon and Intel) and a one-click Windows installer for x64, which also runs on ARM PCs. Their names carry no version (`Cue-mac.dmg`, `Cue-windows-setup.exe`), so `releases/latest/download/<name>` is a permanent link to the newest one. The disk image's window is drawn by `scripts/make-installer-art.mjs` (`npm run art`) from `build/installer/dmg-background.html`.
 
-The Release workflow (`.github/workflows/release.yml`) builds both, then installs each the way a person would (the Windows installer silently, the Mac app out of its disk image) and runs `scripts/smoke-installed.mjs` against the installed app with no test flags: it has to show its window, draw the interface, read a verse from the bundled Bible, quit, and do it all a second time. Nothing is published unless that passes. Run it with a `version` (say `v1.0.0`) to tag and publish a release; without one it only builds and tests.
+`publish` in the builder config names the GitHub repository. Nothing is uploaded by electron-builder (`--publish never`); the setting makes it write `app-update.yml` into the app, which tells an installed Cue where its releases are, and `latest.yml` next to the Windows installer, with the version and the installer's SHA-512.
+
+`install.ps1` and `install.sh` in the repository root are the one-line installers from the README. Each downloads the installer and `SHA256SUMS.txt` from the latest release, refuses to go on unless the SHA-256 matches, installs (the Windows installer silently; the Mac app copied out of its disk image into Applications) and opens Cue. `CUE_INSTALL_FROM=<folder>` makes them use local files instead of downloading, `CUE_INSTALL_NO_LAUNCH=1` skips opening Cue, and `CUE_INSTALL_DIR` sets the Mac destination; the checksum can't be skipped.
+
+The Release workflow (`.github/workflows/release.yml`) builds both platforms and then, on a clean machine:
+
+1. **Windows only: proves the update.** The same code is packaged again as version 0.0.1 into `release-old/` and installed. `scripts/smoke-update.mjs` serves the real build's folder on localhost, starts the old Cue with `CUE_UPDATE_FEED`, waits for "Update … is ready" in its log, closes it normally, and then requires the installed Cue to report the new version.
+2. **Installs with the one-line installers**, given the freshly built files (Windows PowerShell 5.1 and macOS's bash 3.2, fed the script as text the way `irm | iex` and `curl | bash` do).
+3. **Runs `scripts/smoke-installed.mjs`** against the installed app: it has to show its window, draw the interface, read a verse from the bundled Bible, quit, and do it all a second time. The only setting it changes is switching the update check off, so the result doesn't depend on the network.
+
+Nothing is published unless all of that passes. Run the workflow with a `version` (say `v1.0.0`) to tag and publish a release; without one it only builds and tests. The version must be the one in `package.json`, because Cue compares the two to decide whether it is out of date. A release carries five files: the two installers, `SHA256SUMS.txt` (written in the publish job), and `latest.yml` with the installer's `.blockmap` for the updater; the publish job checks that `latest.yml` describes the installer it is about to publish.

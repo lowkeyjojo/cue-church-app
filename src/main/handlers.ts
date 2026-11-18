@@ -19,6 +19,7 @@ import type { HistoryStore } from './store/history'
 import type { LibraryStore } from './store/library'
 import type { PlansStore } from './store/plans'
 import type { SettingsStore } from './store/settings'
+import type { Updates } from './updates'
 
 export interface Services {
   bible: Bible
@@ -31,6 +32,7 @@ export interface Services {
   importer: Importer
   processor: MediaProcessor
   web: WebIngest
+  updates: Updates
   control: () => BrowserWindow | null
 }
 
@@ -217,6 +219,11 @@ export function registerHandlers(s: Services): void {
   handle('displays:get', () => s.output.snapshot())
   handle('displays:identify', () => s.output.identify())
   handle('output:set', (opts) => s.output.setMode(opts))
+
+  // --- updates ---
+  handle('updates:state', () => s.updates.state)
+  handle('updates:check', () => s.updates.check())
+  handle('updates:install', () => s.updates.install())
 
   // --- search ---
   handle('search:query', async (provider, query, page, filters): Promise<SearchResponse> => {
