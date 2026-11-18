@@ -103,9 +103,24 @@ Web images picked but never saved are kept for 30 days unless a plan or the hist
 
 1. Download the original URL through the browser pane's own session, with the source page as referrer, so sites with hotlink protection still hand it over.
 2. If the site refuses, copy the image out of the page itself, since the embedded browser is already displaying it. Electron addresses a `<webview>` by a point in the host window, so the page reports where the image is at that moment; the copied bitmap must match the image's natural size, so an overlay or a thumbnail is never shown by mistake. The operator's clipboard is restored afterwards.
-3. Otherwise use Google's thumbnail, with a toast saying the copy is low resolution.
+3. If there is no usable original, and the image's source page is on a social or video site, use the preview image that page publishes (below).
+4. Otherwise use Google's thumbnail, with a toast saying the copy is low resolution.
 
-The guest preload doesn't depend on Google's markup, which changes often. It looks for the most prominent image on screen and follows Google's swap from its own thumbnail to the original.
+Each way in logs one `Web image: …` line at INFO.
+
+The guest preload doesn't depend on Google's markup, which changes often. It looks for the most prominent image on screen and follows Google's swap from its own thumbnail to the original. Its pick carries the thumbnail's natural size (`thumbWidth`, `thumbHeight`) for step 3.
+
+**A pick always lands in Preview.** For results from YouTube, Instagram, TikTok and the like, Google's big preview usually never leaves its own thumbnail, so the pick never becomes `full`. `GoogleBrowser.tsx` waits `ORIGINAL_WAIT_MS` (1.8 s, in `googlePick.ts`) for the original and then brings in the best copy there is (steps 3 and 4) and previews it; the pick bar says which it is ("From the post's preview image", "Lower-resolution copy"). If the original arrives later, it is brought in and takes the stand-in's place in Preview, but only while Preview still holds that stand-in: anything the operator has previewed since, or an empty Preview after they showed the stand-in, is left alone. The audience screen is never touched. A thumbnail pick is not copied out of the page (step 2): that gives the thumbnail's own bitmap, the same pixels as its URL.
+
+**The source page's preview image** (`library:importPagePreview`, `WebIngest.fromSourcePage`, `src/main/media/pagePreview.ts`, pure helpers in `src/shared/pagePreview.ts`):
+
+- For a YouTube video (`watch?v=`, `youtu.be/`, `/shorts/`, `/embed/`, `/live/`) the candidates are the video's own thumbnails on `i.ytimg.com`, largest first; the page isn't fetched.
+- For the other sites in `isSocialHost` (Instagram, TikTok, Facebook, X/Twitter, Pinterest, Reddit, Vimeo, Threads, LinkedIn and their subdomains) Cue fetches the page (https only, 8 s, the first 1.5 MB, the browser pane's session, so its user agent and cookies) and reads `og:image:secure_url`, `og:image` and `twitter:image` from its `<meta>` tags.
+- No other site is asked, or even contacted: an ordinary website's preview image is often a logo or a share banner rather than the picture the operator clicked.
+- A candidate is used only if `fitsThumbnail` accepts it: its shape is within 15 % of the thumbnail's and it has at least as many pixels (and is larger than YouTube's 120×90 "no thumbnail" placeholder). `imageSize` (`src/shared/media.ts`) reads the size from the file's header. A different crop, a banner or an unreadable format falls through to the thumbnail.
+- The whole step gets 12 s at most.
+
+These are addresses Cue chooses by itself rather than ones the operator opened, so they go through `fetchGuarded` (`src/main/media/webFetch.ts`): https only, a named public host (`isPublicHost` refuses IP addresses, `localhost` and local-network names), and every redirect checked the same way before it is followed; a page's redirect must also stay on a social site. It doesn't resolve names, so a public name that points at a private address is not caught. The operator's own picks (`download` in `webIngest.ts`) only require http or https, as before.
 
 ## Storage
 
@@ -159,7 +174,7 @@ Motion is mechanical and short: things switch, they don't float. The easing curv
 ## Tests
 
 - **Unit** (`npm test`): the show reducer's workflow rules, scripture references and lookups, file-format detection, the justified image grid and utilities.
-- **End to end** (`npm run test:e2e`): Playwright launches the built app per spec file, with `CUE_E2E=1`, a throwaway `CUE_USER_DATA` folder and `CUE_OUTPUT_MODE=window`, and drives it like an operator: keyboard, clicks, drag and drop. It checks results both in main's state (exposed as `globalThis.__cue` only in E2E mode) and in the pixels of the audience window. `CUE_GOOGLE_BASE` points the Google pane at a local stand-in (`tests/e2e/support/mock-google.ts`) that reproduces the thumbnail-then-original behaviour and hotlink protection, and `CUE_UPDATE_FEED` points the update check at a local stand-in for the releases (`tests/e2e/updates.spec.ts`). Fixtures (PNG, PDF, WAV) are generated by the tests; a small WebM clip is checked in.
+- **End to end** (`npm run test:e2e`): Playwright launches the built app per spec file, with `CUE_E2E=1`, a throwaway `CUE_USER_DATA` folder and `CUE_OUTPUT_MODE=window`, and drives it like an operator: keyboard, clicks, drag and drop. It checks results both in main's state (exposed as `globalThis.__cue` only in E2E mode) and in the pixels of the audience window. `CUE_GOOGLE_BASE` points the Google pane at a local stand-in (`tests/e2e/support/mock-google.ts`) that reproduces the thumbnail-then-original behaviour, hotlink protection and results that never leave the thumbnail; `CUE_SOCIAL_BASE` (`http://127.0.0.1:<port>/<folder>`, honoured only with `CUE_E2E`) names the folder of that stand-in whose pages count as a social site; and `CUE_UPDATE_FEED` points the update check at a local stand-in for the releases (`tests/e2e/updates.spec.ts`). Fixtures (PNG, PDF, WAV) are generated by the tests; a small WebM clip is checked in.
 - **The installers** (`tests/unit/install.test.ts`): `install.sh` runs with stand-ins for the macOS tools, to check that a download which doesn't match its checksum is never opened.
 
 ## Build

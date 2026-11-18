@@ -6,7 +6,7 @@ Cue is a cross-platform church presentation application for macOS and Windows. I
 
 ## What Cue does
 
-- **Google Images, built in.** Search Google Images inside Cue. Click a result and the full-size original lands in **Preview**; one more click or key puts it on screen. There's no manual downloading and no switching apps. Wikimedia Commons, Openverse and Pexels are built in too, with license and attribution for every image.
+- **Google Images, built in.** Search Google Images inside Cue. Click a result and the full-size original lands in **Preview**; one more click or key puts it on screen. Results from YouTube, Instagram, TikTok and the like, where Google has only a small copy, land there too, from the best copy Cue can get. There's no manual downloading and no switching apps. Wikimedia Commons, Openverse and Pexels are built in too, with license and attribution for every image.
 - **Preview, then Live.** Nothing reaches the room until you press **Show**. The Preview and Live monitors show exactly what the audience sees, including transitions, zoom and blackout.
 - **Service plans.** Line up slides, PDFs, photos, videos, countdowns and section headings, then run the service with one key. The next item waits in Preview automatically. Plans export as a single `.cueplan` file with all their media, so you can prepare at home and run at church.
 - **Spontaneous moments.** Show a map the pastor just mentioned, paste an image or link (Ctrl/⌘+V), or type a quick text slide (Ctrl/⌘+T). **Back** (R) returns to your sermon slides at the page you left.
@@ -91,7 +91,7 @@ After you click anything with the mouse, Space still means Show. When you move a
 
 ## Image search, copyright and privacy
 
-- **Google Images** runs as the real Google page inside Cue. Cue doesn't scrape or proxy Google's results or call any unofficial API. It notices the image you open and fetches that one file for you, so Google's own terms, SafeSearch (on by default) and usage-rights filter apply as usual. Google's own Custom Search JSON API stops serving results on 1 January 2027, which is another reason Cue embeds the page rather than depending on it.
+- **Google Images** runs as the real Google page inside Cue. Cue doesn't scrape or proxy Google's results or call any unofficial API. It notices the image you open and fetches that one file for you (for a result from a social or video site, where Google has only a small copy, also that post's page, to find the preview image it publishes), so Google's own terms, SafeSearch (on by default) and usage-rights filter apply as usual. Google's own Custom Search JSON API stops serving results on 1 January 2027, which is another reason Cue embeds the page rather than depending on it.
 - **Wikimedia Commons, Openverse and Pexels** are searched through their public APIs. Results show the author and license; a Pexels API key (free) is optional.
 - **Copyright:** images you find online usually belong to someone. Cue records where every image came from (page, author, license) and can show a small credit on screen. Prefer the Creative Commons filter or the openly licensed sources when you can, and follow your church's copyright licenses (e.g. for song lyrics).
 - **Bible text:** Cue includes only public-domain translations. The World English Bible (published by eBible.org) comes from [TehShrike/world-english-bible](https://github.com/TehShrike/world-english-bible) and the King James Version from [thiagobodruk/bible](https://github.com/thiagobodruk/bible); `npm run bible` rebuilds both. The KJV is public domain except in the United Kingdom, where the Crown's rights in it are administered by Cambridge University Press. Modern translations such as the NIV or ESV are licensed, so type or paste their text into a slide under your church's license instead.
@@ -156,6 +156,7 @@ Before relying on it in a service:
 - **Rehearse on the church's own TV or projector**: full-screen placement, overscan (use the test pattern) and video sound through HDMI or the sound desk.
 - **Not supported yet:** HEIC photos (export as JPEG), PowerPoint and Keynote files directly (export as PDF), and stage display or remote control from a phone.
 - **Google's page can change.** If Google ever stops showing full-size originals, Cue falls back to copying the image from the page, then to Google's thumbnail, and says so.
+- **Pictures from social and video sites.** Google usually shows only a small copy of these. Cue then asks the post's or video's own page for its preview image and uses it when it is the same picture; a site that refuses, or wants a login, leaves you with Google's small copy.
 
 ## Vision
 
