@@ -510,6 +510,10 @@ export interface Settings {
     controlBounds?: Rect
     maximized?: boolean
   }
+  updates: {
+    /** Look for new versions in the background (and, on Windows, download and install them). */
+    auto: boolean
+  }
 }
 
 export type SettingsPatch = {
@@ -533,6 +537,20 @@ export interface AppInfo {
   e2e: boolean
   /** Test-only override for the Google Images base URL. */
   googleBase?: string
+}
+
+/** Where Cue is with keeping itself up to date. Main owns it; the control window mirrors it. */
+export interface UpdateState {
+  status: 'idle' | 'checking' | 'current' | 'available' | 'downloading' | 'ready' | 'error'
+  /** The new version, once one is known. */
+  version?: string
+  /** Download progress, 0–100. */
+  percent?: number
+  /** Cue can't install this one itself: the operator gets it from `url`. */
+  manual?: boolean
+  url?: string
+  /** Why the last check failed, in plain words. */
+  message?: string
 }
 
 export interface Toast {

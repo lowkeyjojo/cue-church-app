@@ -7,7 +7,7 @@
 //
 //   node scripts/smoke-installed.mjs "<path to Cue executable>"
 import { _electron as electron } from '@playwright/test'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -19,6 +19,10 @@ if (!executablePath) {
 
 // Only the data folder is redirected, so the machine's real Cue data is untouched.
 const dataDir = mkdtempSync(join(tmpdir(), 'cue-smoke-'))
+// The one setting that differs from a new install: Cue doesn't look for updates here, so the
+// result can't depend on the network or on which release is the newest that day.
+// (scripts/smoke-update.mjs is the check that an installed Cue updates itself.)
+writeFileSync(join(dataDir, 'settings.json'), JSON.stringify({ updates: { auto: false } }))
 const env = { ...process.env, CUE_USER_DATA: dataDir }
 delete env.CUE_E2E
 delete env.ELECTRON_RUN_AS_NODE

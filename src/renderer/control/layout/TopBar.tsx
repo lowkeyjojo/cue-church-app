@@ -3,6 +3,7 @@ import { modKey } from '../lib/api'
 import { useUI } from '../lib/ui'
 import { IconButton } from '../ui/Button'
 import { OutputStatus } from './OutputStatus'
+import { UpdateNotice } from './UpdateNotice'
 import s from './TopBar.module.css'
 
 export function TopBar() {
@@ -25,6 +26,7 @@ export function TopBar() {
       </button>
       <div className={s.right}>
         <OutputStatus />
+        <UpdateNotice />
         <IconButton
           label="Settings"
           shortcut={`${modKey} ,`}
