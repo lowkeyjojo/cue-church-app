@@ -5,7 +5,7 @@ import { googleImagesUrl, queryFromGoogleUrl } from '@shared/google'
 import { useApp, useSettings } from '../../lib/store'
 import { useUI, type GuestPick } from '../../lib/ui'
 import { PickBar } from './PickBar'
-import { ingestGooglePick, type GuestHandle } from './googlePick'
+import { ORIGINAL_WAIT_MS, ingestGooglePick, isOriginalOf, type GuestHandle } from './googlePick'
 import { previewMedia } from '../../lib/planActions'
 import s from './SearchView.module.css'
 
@@ -182,26 +182,44 @@ export const GoogleBrowser = forwardRef<
       if (ev.channel !== 'cue:pick') return
       const pick = (ev.args[0] as GuestPick | null) ?? null
       const seq = ++pickSeq.current
-      useUI.getState().setSearch({ pick, pickedMediaId: null })
-      if (!pick || !useApp.getState().settings?.search.autoPreview) return
-      // Wait for Google to swap in the original before downloading anything.
-      if (!pick.full) return
+      const before = useUI.getState().search
+      const auto = !!useApp.getState().settings?.search.autoPreview
+      // The original of the result that is already picked: what came in for it stays in hand until
+      // the original has.
+      const standIn = auto && pick && isOriginalOf(pick, before.pick) ? before.pickedMediaId : null
+      useUI
+        .getState()
+        .setSearch({ pick, pickedMediaId: standIn, pickedVia: standIn ? before.pickedVia : null })
+      if (!pick || !auto) return
+      // Give Google a moment to swap in the original. If it doesn't (it never does for most social
+      // and video sites), the best copy there is comes in instead, and the original replaces it
+      // should it still arrive.
+      const wait = pick.full ? 250 : ORIGINAL_WAIT_MS
       setTimeout(async () => {
         if (seq !== pickSeq.current) return
-        const item = await ingestGooglePick(pick, guest(), {
-          query: useUI.getState().search.submitted
-        })
-        if (item && seq === pickSeq.current) {
-          useUI.getState().setSearch({ pickedMediaId: item.id })
-          previewMedia(item.id)
+        const got = await ingestGooglePick(pick, guest(), { query: useUI.getState().search.submitted })
+        if (seq !== pickSeq.current) return
+        if (!got) {
+          if (!standIn) useUI.getState().setSearch({ pickedVia: 'failed' })
+          return
         }
-      }, 250)
+        useUI.getState().setSearch({ pickedMediaId: got.item.id, pickedVia: got.via })
+        // A late original takes its stand-in's place in Preview, never the place of something the
+        // operator has put there since (or leaves empty after showing the stand-in).
+        const replaced = standIn && useApp.getState().show?.preview?.mediaId !== standIn
+        if (got.item.id !== standIn && !replaced) previewMedia(got.item.id)
+      }, wait)
+    }
+    // Leaving the page, or dismissing the pick, calls off a pick that hasn't come in yet.
+    const onLeave = (e: Event) => {
+      pickSeq.current++
+      onNavigate(e)
     }
     const events: [string, (e: Event) => void][] = [
       ['dom-ready', onReady],
       ['did-start-loading', emit],
       ['did-stop-loading', emit],
-      ['did-navigate', onNavigate],
+      ['did-navigate', onLeave],
       ['did-navigate-in-page', (e) => (e as Event & { isMainFrame: boolean }).isMainFrame && onNavigate(e)],
       ['did-fail-load', onFail],
       ['ipc-message', onMessage]
@@ -242,7 +260,7 @@ export const GoogleBrowser = forwardRef<
           </button>
         </div>
       )}
-      <PickBar guest={guest} />
+      <PickBar guest={guest} onDismiss={() => void pickSeq.current++} />
     </div>
   )
 })
