@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { isAnimated, parseRange, safeFileName, sniffMime } from '@shared/media'
+import { imageSize, isAnimated, parseRange, safeFileName, sniffMime } from '@shared/media'
+import { gradientPng } from '../e2e/support/png'
 
 const bytes = (...parts: (number[] | string)[]) =>
   new Uint8Array(parts.flatMap((p) => (typeof p === 'string' ? [...p].map((c) => c.charCodeAt(0)) : p)))
@@ -95,6 +96,69 @@ describe('sniffMime', () => {
     expect(sniffMime(pad(bytes([0, 0, 0, 24], 'ftypmif1', [0, 0, 0, 0], 'avif')))).toBe('image/avif')
     expect(sniffMime(pad(bytes([0, 0, 0, 24], 'ftypheic', [0, 0, 0, 0], 'mif1')))).toBe('image/heic')
     expect(sniffMime(pad(bytes([0, 0, 0, 24], 'ftypmif1', [0, 0, 0, 0], 'heic')))).toBe('image/heic')
+  })
+})
+
+describe('imageSize', () => {
+  const base64 = (text: string) => new Uint8Array(Buffer.from(text, 'base64'))
+  const uint16 = (n: number) => [n >> 8, n & 255]
+  /** A JPEG's structure up to its frame header: `sof` is the frame marker, `before` the segments ahead of it. */
+  const jpeg = (sof: number, width: number, height: number, before: number[] = []) =>
+    bytes(
+      [0xff, 0xd8],
+      [0xff, 0xe0, ...uint16(16)],
+      'JFIF',
+      new Array(10).fill(0),
+      before,
+      [0xff, sof, ...uint16(17), 8, ...uint16(height), ...uint16(width), 3],
+      new Array(24).fill(0)
+    )
+
+  it('reads a PNG and a GIF', () => {
+    expect(imageSize(gradientPng(321, 123, [0, 0, 0], [255, 255, 255]))).toEqual({ width: 321, height: 123 })
+    expect(imageSize(bytes('GIF89a', [0x41, 0x01, 0x7b, 0x00], new Array(24).fill(0)))).toEqual({
+      width: 321,
+      height: 123
+    })
+  })
+
+  it('reads a JPEG, baseline or progressive, past whatever comes before the frame header', () => {
+    expect(imageSize(jpeg(0xc0, 1280, 720))).toEqual({ width: 1280, height: 720 })
+    expect(imageSize(jpeg(0xc2, 1080, 1350))).toEqual({ width: 1080, height: 1350 })
+    // An Exif block, a quantisation table, a Huffman table (0xC4 is not a frame header) and padding.
+    const before = [
+      ...[0xff, 0xe1, ...uint16(300), ...new Array(298).fill(0xc0)],
+      ...[0xff, 0xdb, ...uint16(67), ...new Array(65).fill(1)],
+      ...[0xff, 0xc4, ...uint16(31), ...new Array(29).fill(2)],
+      0xff
+    ]
+    expect(imageSize(jpeg(0xc0, 1920, 1080, before))).toEqual({ width: 1920, height: 1080 })
+  })
+
+  // Real 321×123 files, as small as an encoder makes them.
+  it('reads a WebP: lossy, lossless and extended', () => {
+    const lossy =
+      'UklGRpIAAABXRUJQVlA4IIYAAABwDACdASpBAXsAPm02mUmkIyKhIEgAgA2JaW7hdrEe3AAAKzeirhBkENVSa7bRcIMghqqTXbaLhBkENVSa7bRcIMghqqTXbaLhBkENVSa7bRcIMghqqTXbaLhBkENVSa7bRcIMghqqTXbaLOAA/v9xs3/+6DLOHB7//ztbDEE8AAAAAAAAAA=='
+    const lossless = 'UklGRigAAABXRUJQVlA4TBsAAAAvQIEeAAdQnuLVo/8BBWkbMPVvvzsR/U/uv7IA'
+    const extended = 'UklGRsIAAABXRUJQVlA4WAoAAAAQAAAAQAEAegAAQUxQSBUAAAABB1DAiAgoSNuAqX/73Ynof3L/lQUA'
+    for (const file of [lossy, lossless, extended])
+      expect(imageSize(base64(file))).toEqual({ width: 321, height: 123 })
+  })
+
+  it('reads an AVIF', () => {
+    const avif =
+      'AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADrbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAAAAAAAOcGl0bQAAAAAAAQAAAB5pbG9jAAAAAEQAAAEAAQAAAAEAAAETAAAAPwAAAChpaW5mAAAAAAABAAAAGmluZmUCAAAAAAEAAGF2MDFDb2xvcgAAAABqaXBycAAAAEtpcGNvAAAAFGlzcGUAAAAAAAABQQAAAHsAAAAQcGl4aQAAAAADCAgIAAAADGF2MUOBAAwAAAAAE2NvbHJuY2x4AAEADQAGgAAAABdpcG1hAAAAAAAAAAEAAQQBAoMEAAAAR21kYXQSAAoKGCGoHpogIaDQgDIvETHh4ZlAgggnlAAAAMIRaNaU+lPlRAd+RD3fAVUScCgIC6WfIHmadmwyyLiIkoA='
+    expect(imageSize(base64(avif))).toEqual({ width: 321, height: 123 })
+  })
+
+  it('returns null for anything else, and for files cut short', () => {
+    expect(imageSize(new Uint8Array(0))).toBeNull()
+    expect(imageSize(bytes('<!doctype html><html><head><title>Log in</title></head></html>'))).toBeNull()
+    expect(imageSize(bytes('%PDF-1.7', new Array(40).fill(0)))).toBeNull()
+    const table = [0xff, 0xdb, ...uint16(67), ...new Array(65).fill(1)]
+    expect(imageSize(jpeg(0xc0, 1280, 720, table).subarray(0, 60))).toBeNull()
+    expect(imageSize(bytes([0xff, 0xd8, 0xff, 0xe0, 0xff, 0xff], new Array(40).fill(0)))).toBeNull()
+    expect(imageSize(bytes('GIF89a', new Array(30).fill(0)))).toBeNull()
   })
 })
 

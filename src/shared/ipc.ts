@@ -51,6 +51,11 @@ export interface CueApi {
   'library:import': (paths?: string[], opts?: { collectionId?: Id }) => ImportResult
   'library:importData': (data: Uint8Array, name: string, mime?: string) => MediaItem
   'library:importWeb': (pick: WebPick, opts?: { save?: boolean }) => MediaItem
+  /**
+   * Bring in the preview image the pick's source page publishes, when that page is on a social or
+   * video site and the image is the picked picture. Null when there is nothing to ask the page for.
+   */
+  'library:importPagePreview': (pick: WebPick, opts?: { save?: boolean }) => MediaItem | null
   'library:update': (id: Id, patch: MediaItemPatch) => MediaItem | null
   'library:remove': (ids: Id[]) => void
   'library:reveal': (id: Id) => void

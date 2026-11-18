@@ -402,6 +402,9 @@ export interface WebPick {
   title?: string
   width?: number
   height?: number
+  /** Natural size of the thumbnail the operator saw, to tell whether another copy is the same picture. */
+  thumbWidth?: number
+  thumbHeight?: number
   provider?: SearchProviderId
   query?: string
   author?: string

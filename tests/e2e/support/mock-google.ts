@@ -1,6 +1,9 @@
 // A stand-in for Google Images that reproduces the behaviours Cue relies on:
 // inline data: thumbnails in a grid, and a preview panel that first shows the
-// thumbnail and then swaps in the original image (with a source link).
+// thumbnail and then swaps in the original image (with a source link). For
+// some results, as for most social and video sites on the real Google, the
+// preview never leaves the thumbnail; their source pages stand in for those
+// sites and publish a preview image of their own (og:image).
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { gradientPng, type Rgb } from './png'
@@ -15,7 +18,21 @@ export interface MockResult {
   referer?: boolean
   /** The original is never served directly; only the copy already shown in the page works. */
   blocked?: boolean
+  /**
+   * When the preview swaps its thumbnail for the original: by itself after a
+   * moment (the default), never, or when the test calls `showOriginal()` in the page.
+   */
+  swap?: 'never' | 'asked'
+  /** The source page is under /social/ (the folder tests tell Cue to treat as a social site), not /page/. */
+  social?: boolean
+  /** The source page's preview image (og:image). */
+  og?: { w: number; h: number }
+  /** The source page answers with a redirect to a page outside /social/. */
+  redirects?: boolean
 }
+
+/** Every thumbnail's size. */
+export const THUMB = { w: 120, h: 80 }
 
 export const RESULTS: MockResult[] = [
   {
@@ -59,13 +76,93 @@ export const RESULTS: MockResult[] = [
     w: 1200,
     h: 800,
     blocked: true
+  },
+  {
+    id: 5,
+    title: 'Sunrise service (reel)',
+    colors: [
+      [230, 140, 60],
+      [60, 30, 90]
+    ],
+    w: 1600,
+    h: 1067,
+    swap: 'never',
+    social: true,
+    og: { w: 1200, h: 800 }
+  },
+  {
+    id: 6,
+    title: 'Baptism day (post)',
+    colors: [
+      [70, 150, 200],
+      [20, 40, 80]
+    ],
+    w: 1600,
+    h: 1067,
+    swap: 'never',
+    social: true,
+    // A share banner: not the shape of the picture.
+    og: { w: 1200, h: 630 }
+  },
+  {
+    id: 7,
+    title: 'Parish hall (blog)',
+    colors: [
+      [150, 150, 90],
+      [50, 60, 30]
+    ],
+    w: 1600,
+    h: 1067,
+    swap: 'never',
+    og: { w: 1200, h: 800 }
+  },
+  {
+    id: 8,
+    title: 'Youth camp (moved)',
+    colors: [
+      [200, 80, 80],
+      [60, 20, 40]
+    ],
+    w: 1600,
+    h: 1067,
+    swap: 'never',
+    social: true,
+    redirects: true,
+    og: { w: 1200, h: 800 }
+  },
+  {
+    id: 9,
+    title: 'Choir on the steps (video)',
+    colors: [
+      [90, 60, 160],
+      [20, 20, 50]
+    ],
+    w: 1500,
+    h: 1000,
+    swap: 'asked',
+    social: true,
+    og: { w: 900, h: 600 }
+  },
+  {
+    id: 10,
+    title: 'Harvest table (slow site)',
+    colors: [
+      [190, 170, 60],
+      [70, 50, 20]
+    ],
+    w: 1350,
+    h: 900,
+    swap: 'asked'
   }
 ]
+
+/** Where a result's source page is, on the server at `base`. */
+export const pagePath = (r: MockResult) => `/${r.social ? 'social' : 'page'}/${r.id}`
 
 export interface MockGoogle {
   base: string
   searchUrl: string
-  requests: { path: string; query: string; referer: string }[]
+  requests: { path: string; query: string; referer: string; agent: string }[]
   close(): Promise<void>
 }
 
@@ -73,7 +170,7 @@ export async function startMockGoogle(): Promise<MockGoogle> {
   const thumbs = new Map(
     RESULTS.map((r) => [
       r.id,
-      `data:image/png;base64,${gradientPng(120, 80, ...r.colors).toString('base64')}`
+      `data:image/png;base64,${gradientPng(THUMB.w, THUMB.h, ...r.colors).toString('base64')}`
     ])
   )
   const originals = new Map(RESULTS.map((r) => [r.id, gradientPng(r.w, r.h, ...r.colors)]))
@@ -81,7 +178,12 @@ export async function startMockGoogle(): Promise<MockGoogle> {
   let base = ''
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://x')
-    requests.push({ path: url.pathname, query: url.search, referer: req.headers.referer ?? '' })
+    requests.push({
+      path: url.pathname,
+      query: url.search,
+      referer: req.headers.referer ?? '',
+      agent: req.headers['user-agent'] ?? ''
+    })
     if (url.pathname === '/search') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
       res.end(resultsPage(url.searchParams.get('q') ?? '', thumbs, base))
@@ -105,9 +207,36 @@ export async function startMockGoogle(): Promise<MockGoogle> {
       res.end(originals.get(r.id))
       return
     }
-    if (url.pathname.startsWith('/page/')) {
-      res.writeHead(200, { 'Content-Type': 'text/html' })
-      res.end('<h1>Source page</h1>')
+    const page = /^\/(page|social|elsewhere)\/(\d+)$/.exec(url.pathname)
+    if (page) {
+      const r = RESULTS.find((x) => x.id === Number(page[2]))
+      if (r?.redirects && page[1] === 'social') {
+        res.writeHead(302, { Location: `/elsewhere/${r.id}` })
+        res.end()
+        return
+      }
+      // Written the way real pages vary: either attribute first, either quote, relative, with an entity.
+      const meta = !r?.og
+        ? ''
+        : r.id % 2
+          ? `<meta content='/og/${r.id}.png?size=l&amp;v=2' property='og:image'>`
+          : `<meta property="og:image" content="${base}/og/${r.id}.png">`
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.end(
+        `<!doctype html><html><head><title>Source page</title>${meta}</head><h1>Source page</h1></html>`
+      )
+      return
+    }
+    const og = /^\/og\/(\d+)\.png$/.exec(url.pathname)
+    if (og) {
+      const r = RESULTS.find((x) => x.id === Number(og[1]))
+      if (!r?.og) {
+        res.writeHead(404)
+        res.end()
+        return
+      }
+      res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' })
+      res.end(gradientPng(r.og.w, r.og.h, ...r.colors))
       return
     }
     res.writeHead(404)
@@ -130,7 +259,7 @@ function escapeHtml(text: string): string {
 function resultsPage(q: string, thumbs: Map<number, string>, base: string): string {
   const tiles = RESULTS.map(
     (r) =>
-      `<div class="tile" data-id="${r.id}" role="button" tabindex="0"><img src="${thumbs.get(r.id)}" alt="${escapeHtml(r.title)}"><div class="cap">${escapeHtml(r.title)}</div></div>`
+      `<div class="tile" data-id="${r.id}" data-swap="${r.swap ?? 'soon'}" data-page="${base}${pagePath(r)}" role="button" tabindex="0"><img src="${thumbs.get(r.id)}" alt="${escapeHtml(r.title)}"><div class="cap">${escapeHtml(r.title)}</div></div>`
   ).join('')
   return `<!doctype html><html><head><title>${escapeHtml(q)} - Google Search</title><style>
 body{margin:0;font-family:Arial,sans-serif;background:#fff}
@@ -145,6 +274,9 @@ main{display:flex}
 <aside id="panel"><img id="big" alt=""><h3 id="t"></h3><a id="visit" href="#">Visit</a></aside></main>
 <script>
 const base=${JSON.stringify(base)}
+let pending=null
+// For results whose original arrives when the test says so.
+window.showOriginal=()=>{ if(pending){ document.getElementById('big').src=pending; pending=null } }
 document.querySelectorAll('.tile').forEach(t=>t.addEventListener('click',()=>{
   const id=t.dataset.id, img=t.querySelector('img')
   const panel=document.getElementById('panel'), big=document.getElementById('big')
@@ -152,9 +284,11 @@ document.querySelectorAll('.tile').forEach(t=>t.addEventListener('click',()=>{
   big.src=img.src
   big.alt=img.alt
   document.getElementById('t').textContent=img.alt
-  document.getElementById('visit').href=base+'/page/'+id
-  // Like Google: swap in the original once it has loaded.
-  setTimeout(()=>{ big.src=base+'/originals/'+id+'.png' }, 350)
+  document.getElementById('visit').href=t.dataset.page
+  const original=base+'/originals/'+id+'.png'
+  pending=t.dataset.swap==='asked'?original:null
+  // Like Google: swap in the original once it has loaded. For social and video sites it never does.
+  if(t.dataset.swap==='soon') setTimeout(()=>{ big.src=original }, 350)
 }))
 </script></body></html>`
 }

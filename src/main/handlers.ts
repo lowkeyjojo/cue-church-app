@@ -82,6 +82,7 @@ export function registerHandlers(s: Services): void {
     s.importer.importBytes(new Uint8Array(data), { name, mime, source: { type: 'paste' }, saved: false })
   )
   handle('library:importWeb', (pick, opts) => s.web.ingest(pick, opts))
+  handle('library:importPagePreview', (pick, opts) => s.web.fromSourcePage(pick, opts))
   handle('scripture:passage', (reference, translation) =>
     s.bible.passage(reference, translation ?? s.settings.data.slides.bible)
   )
