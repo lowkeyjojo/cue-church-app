@@ -23,19 +23,37 @@ Cue is a cross-platform church presentation application for macOS and Windows. I
 
 ## Install
 
-Download the latest version from the [Releases page](https://github.com/lowkeyjojo/cue-church-app/releases/latest). There is one file per platform:
+One line installs Cue: it downloads the newest version, checks it against the published checksum, installs it and opens it.
 
-- **macOS** (12 Monterey or later, Apple Silicon and Intel): `Cue-<version>-mac.dmg`. Open it and drag Cue into Applications.
-- **Windows** (10 or 11): `Cue-<version>-windows-setup.exe`. Run it: Cue installs for your user account, with no questions and no administrator prompt, and opens when it's done.
+**Windows** (10 or 11): open PowerShell (press Start, type `powershell`, press Enter) and paste:
+
+```powershell
+irm https://raw.githubusercontent.com/lowkeyjojo/cue-church-app/main/install.ps1 | iex
+```
+
+**macOS** (12 Monterey or later, Apple Silicon and Intel): open Terminal and paste:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lowkeyjojo/cue-church-app/main/install.sh | bash
+```
+
+Or download it yourself. These two links always fetch the newest version:
+
+- **Windows:** [Cue-windows-setup.exe](https://github.com/lowkeyjojo/cue-church-app/releases/latest/download/Cue-windows-setup.exe). Run it: Cue installs for your user account, with no questions and no administrator prompt, and opens when it's done.
+- **macOS:** [Cue-mac.dmg](https://github.com/lowkeyjojo/cue-church-app/releases/latest/download/Cue-mac.dmg). Open it and drag Cue into Applications.
 
 The first time Cue opens, a short welcome sets up your screen.
 
-**"Can't be verified" warnings.** Cue's builds aren't signed with a paid developer certificate yet, so each system asks once before it runs them. That's the only reason for the warning; you don't need to turn off any protection.
+**You only install once.** On Windows, Cue keeps itself up to date: a new version downloads in the background and installs when you close Cue, never during a service. On a Mac, Cue tells you when a new version is out; run the line above again, or download the new disk image. **Settings → Library → Updates** has the switch and a **Check now** button.
 
-- **macOS:** open Cue once (macOS refuses), then go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+**"Can't be verified" prompts.** Cue's builds aren't signed with a paid developer certificate yet, so a copy downloaded with a browser makes the system ask once before it runs. That's the only reason for the prompt, and you never need to turn any protection off to get past it:
+
 - **Windows:** in the blue "Windows protected your PC" box, click **More info**, then **Run anyway**. Leave SmartScreen and Defender switched on.
+- **macOS:** open Cue once (macOS refuses), then go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
 
-To remove the warnings for everyone, the builds need signing: an Apple Developer ID (Apple Developer Program) for macOS and a code-signing certificate for Windows. The release workflow signs automatically once those are added as repository secrets (see Development).
+The one-line installers don't meet that prompt, because they fetch the file directly rather than through a browser, and they refuse to run it unless its SHA-256 matches the release's `SHA256SUMS.txt`. If Windows 11 says **Smart App Control** blocked Cue, that PC runs signed apps only: leave it on, and Cue will work there once the builds are signed.
+
+Signing removes the prompts for everyone: an Apple Developer ID (Apple Developer Program) for macOS and a code-signing certificate for Windows. The release workflow signs automatically once those are added as repository secrets (see Development).
 
 ## Your first Sunday
 
@@ -102,8 +120,8 @@ npm run dev
 | `npm test`          | Unit tests (Vitest): the show reducer, scripture, layout and utilities       |
 | `npm run test:e2e`  | Build, then drive the real app with Playwright (uses Xvfb on headless Linux) |
 | `npm run check`     | Typecheck, lint and unit tests together                                      |
-| `npm run dist:mac`  | Package for macOS (on a Mac): `release/<version>/Cue-<version>-mac.dmg`      |
-| `npm run dist:win`  | Package for Windows (on Windows): `Cue-<version>-windows-setup.exe`          |
+| `npm run dist:mac`  | Package for macOS (on a Mac): `release/<version>/Cue-mac.dmg`                |
+| `npm run dist:win`  | Package for Windows (on Windows): `Cue-windows-setup.exe` and `latest.yml`   |
 | `npm run dist:dir`  | Unpacked app for the current platform, for a quick smoke test                |
 | `npm run icons`     | Redraw the app icons in `build/` and `resources/`                            |
 | `npm run art`       | Redraw the Mac disk image's background from `build/installer/`               |
@@ -111,7 +129,9 @@ npm run dev
 
 The end-to-end suite launches Cue with a throwaway data folder and a local stand-in for Google Images, so it needs no network. Pass Playwright arguments through, for example `npm run test:e2e -- tests/e2e/google.spec.ts`, and add `--no-build` to reuse the current `out/`.
 
-**Packaging and signing.** `electron-builder.config.mjs` builds one universal DMG for macOS (Apple Silicon and Intel) and one one-click installer for Windows (x64, which also runs on Windows 11 on ARM). Signing is optional and configured through environment variables: `CSC_LINK` and `CSC_KEY_PASSWORD` (Developer ID certificate), plus `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` for notarization; `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` for Windows. Without them the Mac app is ad-hoc signed so it still runs on Apple Silicon. The **Release** workflow builds both platforms, then installs each build on a clean machine and checks that Cue opens (`scripts/smoke-installed.mjs`) before anything is published. To publish a GitHub release, push a tag like `v1.0.0`, or run the workflow from the Actions tab with that version (it creates the tag). The same variables can be added as repository secrets.
+**Packaging and signing.** `electron-builder.config.mjs` builds one universal DMG for macOS (Apple Silicon and Intel) and one one-click installer for Windows (x64, which also runs on Windows 11 on ARM). Signing is optional and configured through environment variables: `CSC_LINK` and `CSC_KEY_PASSWORD` (Developer ID certificate), plus `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD` and `APPLE_TEAM_ID` for notarization; `WIN_CSC_LINK` and `WIN_CSC_KEY_PASSWORD` for Windows. Without them the Mac app is ad-hoc signed so it still runs on Apple Silicon. The **Release** workflow builds both platforms, then installs each build on a clean machine with the one-line installers (`install.ps1`, `install.sh`) and checks that Cue opens (`scripts/smoke-installed.mjs`). On Windows it also installs an older copy and checks that it updates itself to the new build (`scripts/smoke-update.mjs`). Nothing is published unless all of that passes. To publish a GitHub release, push a tag like `v1.0.0`, or run the workflow from the Actions tab with that version (it creates the tag); the version has to be the one in `package.json`. The same variables can be added as repository secrets.
+
+**Releases and updates.** The download names carry no version (`Cue-mac.dmg`, `Cue-windows-setup.exe`), so `releases/latest/download/<name>` is always the newest one. Each release also carries `SHA256SUMS.txt`, which the installers check their download against, and `latest.yml` with the installer's block map, which an installed Cue on Windows reads to update itself. `CUE_UPDATE_FEED=http://127.0.0.1:<port>` points Cue at a stand-in for the releases on the same computer, for tests; any other address is ignored.
 
 **CI.** Every push runs typecheck, lint, formatting and unit tests, then the end-to-end suite on Linux, macOS and Windows.
 
@@ -129,7 +149,7 @@ Logs are in `logs/cue.log` (Settings → Library → **Show logs**). Set `CUE_US
 
 ## Project status
 
-Cue 0.9 is feature-complete for the workflows above, with unit tests and an end-to-end suite that CI runs on Linux, macOS and Windows. The earlier Apple Silicon prototype's source wasn't available in this repository, so Cue was rebuilt from scratch around the same Google-image-to-audience workflow.
+Cue 0.10 is feature-complete for the workflows above, with unit tests and an end-to-end suite that CI runs on Linux, macOS and Windows. The earlier Apple Silicon prototype's source wasn't available in this repository, so Cue was rebuilt from scratch around the same Google-image-to-audience workflow.
 
 Before relying on it in a service:
 
