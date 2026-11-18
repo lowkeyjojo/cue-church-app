@@ -206,12 +206,14 @@ export function useKeyboard(): void {
           break
         case 'Escape':
           // Escape first closes whatever is open (a menu, a popover); with nothing open it
-          // takes the picture off the screen, as it ends a slideshow anywhere else.
+          // takes the picture off the screen, as it ends a slideshow anywhere else. Both
+          // commands do nothing when there is nothing to take off, so this doesn't need to
+          // know what is showing: this window's copy of the state can be a moment behind.
           if (document.querySelector('[role="menu"],[data-radix-popper-content-wrapper]')) handled = false
-          else if (live || state?.ambient.active) {
-            if (live) show({ type: 'clear' })
-            if (state?.ambient.active) show({ type: 'ambient' })
-          } else handled = false
+          else {
+            show({ type: 'clear' })
+            show({ type: 'ambient', on: false })
+          }
           break
         case 'f':
         case 'F':
@@ -239,7 +241,9 @@ export function useKeyboard(): void {
             show({ type: 'zoom', where: 'live', zoom: zoomAround(live!.zoom, 0.8, 0.5, 0.5) })
           break
         case '0':
-          if (live?.zoom) show({ type: 'zoom', where: 'live', zoom: null })
+          // Always sent: resetting a picture that isn't zoomed does nothing, and this
+          // window's copy of the state may not have caught up with a zoom made a moment ago.
+          show({ type: 'zoom', where: 'live', zoom: null })
           break
         default:
           if (/^[1-9]$/.test(key)) previewPlanIndex(Number(key) - 1)
