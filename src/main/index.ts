@@ -25,6 +25,7 @@ import { HistoryStore } from './store/history'
 import { LibraryStore } from './store/library'
 import { PlansStore } from './store/plans'
 import { SettingsStore } from './store/settings'
+import { Updates } from './updates'
 import { configureAppSession, configureWebSession, createControlWindow } from './windows/control'
 
 initPaths()
@@ -107,6 +108,7 @@ async function start(): Promise<void> {
   let control: BrowserWindow | null = null
   let windowOpened = false
   let restarting = false
+  let updates: Updates | null = null
   await app.whenReady()
   nativeTheme.themeSource = 'dark'
   log.info(
@@ -120,6 +122,8 @@ async function start(): Promise<void> {
     if (restarting) return
     restarting = true
     log.warn('This Cue has no window: restarting')
+    // An update that is waiting installs when Cue is closed, not in the middle of this.
+    updates?.skipInstallOnQuit()
     app.relaunch({ args: [...process.argv.slice(1).filter((arg) => !isPlanFile(arg)), ...files] })
     // A moment later, so a second launch gets its answer first.
     setTimeout(() => app.exit(0), 50)
@@ -175,6 +179,7 @@ async function start(): Promise<void> {
   const web = new WebIngest(importer, library)
   const show = new ShowController(library, plans, settings, history)
   const output = new OutputManager(settings)
+  const updater = (updates = new Updates(settings))
 
   // --- wiring: stores -> renderers ---
   show.on('state', (state) => {
@@ -199,6 +204,7 @@ async function start(): Promise<void> {
   plans.on('changed', (p) => broadcast('plans:changed', p))
   history.on('changed', (h) => broadcast('history:changed', h))
   settings.on('changed', (s) => broadcast('settings:changed', s))
+  updater.on('state', (state) => broadcast('updates:changed', state))
   output.setShowState(show.state)
 
   const dispatch = (cmd: ShowCommand) => show.dispatch(cmd)
@@ -256,6 +262,7 @@ async function start(): Promise<void> {
     importer,
     processor,
     web,
+    updates: updater,
     control: () => control
   })
   installIpc()
@@ -265,6 +272,7 @@ async function start(): Promise<void> {
   addControl(control.webContents)
   output.attachControl(control)
   output.apply()
+  updater.start()
 
   /** Import a .cueplan opened from the file manager and bring it up in the plan panel. */
   const importPlanFile = async (file: string) => {
@@ -313,7 +321,8 @@ async function start(): Promise<void> {
   }
 
   control.on('close', (event) => {
-    if (isE2E) return
+    // Restarting into an update was confirmed in the control window already.
+    if (isE2E || updater.installing) return
     const s = show.state
     const onScreen = output.snapshot().output.active && !s.blackout && (s.live || s.ambient.active)
     if (!onScreen) return
@@ -340,6 +349,7 @@ async function start(): Promise<void> {
     history.flush()
     output.destroy()
     worker.shutdown()
+    updater.stop()
   })
 
   if (isE2E) {
@@ -353,6 +363,7 @@ async function start(): Promise<void> {
       web,
       output,
       processor,
+      updates: updater,
       control
     }
   }

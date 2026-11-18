@@ -68,6 +68,8 @@ Cue keeps a list of everything shown under **Shown today** at the bottom left, s
 - Show the "Thank you" ambient, or press **B**.
 - Images you used from the web are kept for 30 days. Star the ones you want to keep for good, and they move into your library.
 
+**Updates never interrupt a service.** Cue doesn't restart by itself. On Windows a new version downloads quietly and installs when you close Cue; an **Update ready** button at the top right says so, and you can leave it until you're done. On a Mac the button says **Update available** and takes you to the download.
+
 ## If something goes wrong
 
 **The TV shows nothing.** Look at the badge at the top right. If it says no TV is connected, check the cable and that the display is set to _Extend_. Click the badge and use **Identify** to see which screen is which, or pick the display yourself. As a last resort, choose **Window** mode and drag the audience window onto the TV.

@@ -26,6 +26,7 @@ import type {
   ShowCommand,
   ShowState,
   Toast,
+  UpdateState,
   WebPick
 } from './types'
 
@@ -86,6 +87,12 @@ export interface CueApi {
   'displays:identify': () => void
   'output:set': (opts: { mode?: OutputMode; displayId?: number | null }) => DisplaysSnapshot
 
+  'updates:state': () => UpdateState
+  /** Look for a new version now; resolves with where that got to. */
+  'updates:check': () => UpdateState
+  /** Restart into the downloaded update, or open the download page when Cue can't install it itself. */
+  'updates:install': () => void
+
   'search:query': (
     provider: SearchProviderId,
     query: string,
@@ -135,6 +142,7 @@ export interface CueEvents {
   'history:changed': HistoryEntry[]
   'settings:changed': Settings
   'displays:changed': DisplaysSnapshot
+  'updates:changed': UpdateState
   toast: Toast
   progress: ProgressInfo
   'ui:command': UiCommand

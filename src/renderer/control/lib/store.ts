@@ -9,7 +9,8 @@ import type {
   PlaybackStatus,
   Plan,
   Settings,
-  ShowState
+  ShowState,
+  UpdateState
 } from '@shared/types'
 import { bridge, call } from './api'
 import { useToasts } from './toasts'
@@ -27,6 +28,7 @@ export interface AppState {
   history: HistoryEntry[]
   settings: Settings | null
   displays: DisplaysSnapshot | null
+  updates: UpdateState
   progress: Record<string, { label: string; done: number; total: number }>
 }
 
@@ -41,6 +43,7 @@ export const useApp = create<AppState>(() => ({
   history: [],
   settings: null,
   displays: null,
+  updates: { status: 'idle' },
   progress: {}
 }))
 
@@ -73,6 +76,12 @@ export async function bootstrap(): Promise<void> {
   bridge.on('history:changed', (history) => set({ history }))
   bridge.on('settings:changed', (settings) => set({ settings }))
   bridge.on('displays:changed', (displays) => set({ displays }))
+  // News that arrives while the first snapshot is on its way is newer than the snapshot.
+  let updatesHeard = false
+  bridge.on('updates:changed', (updates) => {
+    updatesHeard = true
+    set({ updates })
+  })
   bridge.on('toast', (t) => useToasts.getState().push(t))
   bridge.on('progress', (p) => {
     const progress = { ...get().progress }
@@ -81,7 +90,7 @@ export async function bootstrap(): Promise<void> {
     set({ progress })
   })
 
-  const [info, show, playback, library, plans, history, settings, displays] = await Promise.all([
+  const [info, show, playback, library, plans, history, settings, displays, updates] = await Promise.all([
     call('app:info'),
     call('show:get'),
     call('show:playback'),
@@ -89,7 +98,8 @@ export async function bootstrap(): Promise<void> {
     call('plans:list'),
     call('history:list'),
     call('settings:get'),
-    call('displays:get')
+    call('displays:get'),
+    call('updates:state')
   ])
   const items: Record<Id, MediaItem> = {}
   for (const item of library.items) items[item.id] = item
@@ -104,7 +114,8 @@ export async function bootstrap(): Promise<void> {
     plans,
     history,
     settings,
-    displays
+    displays,
+    ...(updatesHeard ? {} : { updates })
   })
 }
 

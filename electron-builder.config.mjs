@@ -1,8 +1,17 @@
 // Packaging: one download per platform, so nobody can pick the wrong one.
-//   macOS    Cue-<version>-mac.dmg            universal (Apple Silicon and Intel)
-//   Windows  Cue-<version>-windows-setup.exe  installs for the current user and opens Cue
+//   macOS    Cue-mac.dmg            universal (Apple Silicon and Intel)
+//   Windows  Cue-windows-setup.exe  installs for the current user and opens Cue
+// The names carry no version, so a link to releases/latest/download/<name>
+// always fetches the newest one (install.ps1, install.sh and the README use it).
 // `npm run dist:mac` / `dist:win` build on their own platform; the Release
 // workflow builds both, installs each and checks that Cue opens.
+//
+// Updates: `publish` names the GitHub repository, which makes electron-builder
+// write app-update.yml into the app (where an installed Cue looks for new
+// versions) and latest.yml next to the Windows installer (the version and its
+// SHA-512, which the updater checks every download against). Nothing is
+// uploaded from here: the npm scripts pass `--publish never`, and the Release
+// workflow attaches the files once the installed app has passed its checks.
 //
 // Signing is optional. With a Developer ID certificate (CSC_LINK or CSC_NAME)
 // the Mac app is signed, and notarized when Apple credentials are present
@@ -54,7 +63,7 @@ export default {
   mac: {
     category: 'public.app-category.productivity',
     target: [{ target: 'dmg', arch: ['universal'] }],
-    artifactName: '${productName}-${version}-mac.${ext}',
+    artifactName: '${productName}-mac.${ext}',
     icon: 'build/icon.icns',
     identity: macIdentity ? undefined : '-',
     hardenedRuntime: true,
@@ -93,7 +102,7 @@ export default {
     installerIcon: 'build/icon.ico',
     uninstallerIcon: 'build/icon.ico',
     uninstallDisplayName: 'Cue',
-    artifactName: '${productName}-${version}-windows-setup.${ext}'
+    artifactName: '${productName}-windows-setup.${ext}'
   },
 
   linux: {
@@ -103,5 +112,5 @@ export default {
     synopsis: 'Church presentation app'
   },
 
-  publish: null
+  publish: { provider: 'github', owner: 'lowkeyjojo', repo: 'cue-church-app' }
 }
