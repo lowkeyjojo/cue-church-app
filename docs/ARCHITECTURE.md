@@ -125,6 +125,8 @@ All data lives in the user data folder (see the README). Each store is a `JsonSt
 
 `OutputManager` (`src/main/output/output.ts`) decides where the audience window goes. In **Auto** it uses the external display (remembering which one by its identity, so it returns when reconnected) and never covers the operator's own screen; with one display it waits and says so. **Fullscreen**, **Window** and **Off** override that. It reacts to displays being plugged in or removed, keeps the computer from sleeping while something is on screen, and can show each display's number for identification.
 
+The fullscreen window must cover its display exactly, no more: anything extra lands on the operator's screen as a strip that stays on top of everything. That is easy to get wrong on Windows when the two screens use different scaling (a laptop at 125 % and a TV at 100 %), because a size given in scaled units depends on which screen the window is believed to be on. So after placing the window, `OutputManager.settle` compares it with its display in the display's own pixels (`screen.dipToScreenRect`), corrects it if it's off, and checks again shortly after; each placement and correction is logged. A window that is already on the right display is never placed again (only checked), so moving the control window or a display change doesn't blink the room's screen. The fullscreen window can't take keyboard focus on Windows and macOS: every key belongs to the control window.
+
 ## Security
 
 - Every window uses context isolation and a sandboxed preload; nothing in a renderer can reach Node.js.

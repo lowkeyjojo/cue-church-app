@@ -52,6 +52,9 @@ export class OutputManager extends Emitter<{
   private identifyWindows: BrowserWindow[] = []
   private control: BrowserWindow | null = null
   private disposed = false
+  /** Which display (and at what size and scale) the fullscreen window was last placed on. */
+  private placed: string | null = null
+  private settleTimers: ReturnType<typeof setTimeout>[] = []
   private reapply = debounce(() => this.apply(), 400)
 
   constructor(private settings: SettingsStore) {
@@ -137,6 +140,9 @@ export class OutputManager extends Emitter<{
     if (mode === 'off') next = { kind: null, display: null, note: 'Output is turned off' }
     else if (mode === 'window') next = { kind: 'window', display: controlDisplay }
     else if (external) next = { kind: 'fullscreen', display: external }
+    // Tests have one screen: this lets them run the real fullscreen placement on it.
+    else if (mode === 'fullscreen' && isE2E && process.env.CUE_E2E_FULLSCREEN === '1')
+      next = { kind: 'fullscreen', display: controlDisplay }
     else if (mode === 'fullscreen')
       next = {
         kind: 'window',
@@ -227,19 +233,50 @@ export class OutputManager extends Emitter<{
 
   private showFullscreen(display: Display): void {
     if (this.winKind !== 'fullscreen') this.destroyWindow()
-    const win = this.win ?? this.createWindow('fullscreen', display.bounds)
-    const b = display.bounds
-    if (isWin && win.isFullScreen()) win.setFullScreen(false)
-    win.setBounds(b)
-    if (isMac) {
-      win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
-      win.setAlwaysOnTop(true, 'screen-saver')
-    } else {
-      win.setAlwaysOnTop(true, 'screen-saver')
+    const key = placementKey(display)
+    if (this.win && this.placed === key) {
+      // Already on this display. Placing it again would blink the room's screen every time the
+      // control window moves or the OS reports a display change, so only check it still fits.
+      this.settle(this.win, display)
+      return
     }
+    const win = this.win ?? this.createWindow('fullscreen', display.bounds)
+    this.placed = key
+    if (isWin && win.isFullScreen()) win.setFullScreen(false)
+    win.setBounds(display.bounds)
+    if (isMac) win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+    win.setAlwaysOnTop(true, 'screen-saver')
     if (!win.isVisible()) win.showInactive()
     if (isWin) win.setFullScreen(true)
-    win.setBounds(b)
+    log.info(
+      `Audience output placed on ${describe(display)} at ${Math.round(display.scaleFactor * 100)}% (${formatRect(display.bounds)})`
+    )
+    this.settle(win, display)
+  }
+
+  /**
+   * Make sure the fullscreen window covers its display exactly: now, and again once the OS has
+   * finished moving it. When two screens use different scaling (a laptop at 125 % and a TV at
+   * 100 %), a size given in scaled units can come out too large on the TV, and the extra spills
+   * onto the operator's screen as a strip that stays on top of everything. So the check is done
+   * in the display's own pixels, and so is the correction.
+   */
+  private settle(win: BrowserWindow, display: Display): void {
+    for (const t of this.settleTimers) clearTimeout(t)
+    const key = this.placed
+    let corrections = 0
+    const check = () => {
+      if (win.isDestroyed() || this.win !== win || this.placed !== key) return
+      const { want, have } = placement(win, display)
+      if (sameRect(want, have)) return
+      if (corrections++ >= 6) return
+      log.warn(
+        `Audience output covered ${formatRect(have)} instead of its display's ${formatRect(want)}: correcting`
+      )
+      win.setBounds(isWin ? screen.screenToDipRect(win, want) : want)
+    }
+    check()
+    this.settleTimers = [150, 600, 2000].map((ms) => setTimeout(check, ms))
   }
 
   private showWindowed(): void {
@@ -269,6 +306,9 @@ export class OutputManager extends Emitter<{
       minimizable: !fullscreen,
       maximizable: !fullscreen,
       fullscreenable: !isMac,
+      // The room's screen never takes the keyboard: every key belongs to the control window.
+      // (On Linux an unfocusable window leaves the window manager, so it stays as it is there.)
+      focusable: !fullscreen || !(isWin || isMac),
       enableLargerThanScreen: fullscreen,
       autoHideMenuBar: true,
       webPreferences: {
@@ -308,6 +348,7 @@ export class OutputManager extends Emitter<{
       if (this.win !== win) return
       this.win = null
       this.winKind = null
+      this.placed = null
       this.ready = false
       this.emit('playback', null)
       // Closing the floating output window is the operator saying "turn it off".
@@ -328,6 +369,9 @@ export class OutputManager extends Emitter<{
     const win = this.win
     this.win = null
     this.winKind = null
+    this.placed = null
+    for (const t of this.settleTimers) clearTimeout(t)
+    this.settleTimers = []
     this.ready = false
     if (win && !win.isDestroyed()) win.destroy()
     this.emit('playback', null)
@@ -389,6 +433,37 @@ function labelFor(d: Display, all: Display[]): string {
 
 function describe(d: Display): string {
   return `${d.label || d.id} ${d.size.width}x${d.size.height}`
+}
+
+/** Changes whenever the display the window was placed on changes size, position or scaling. */
+function placementKey(d: Display): string {
+  return `${d.id}:${formatRect(d.bounds)}@${d.scaleFactor}`
+}
+
+function formatRect(r: Rect): string {
+  return `${r.width}x${r.height} at ${r.x},${r.y}`
+}
+
+function sameRect(a: Rect, b: Rect): boolean {
+  return (
+    Math.abs(a.x - b.x) <= 1 &&
+    Math.abs(a.y - b.y) <= 1 &&
+    Math.abs(a.width - b.width) <= 1 &&
+    Math.abs(a.height - b.height) <= 1
+  )
+}
+
+/**
+ * Where a display is and where a window really is, in the units the OS places windows in.
+ * On Windows those are physical pixels: the scaled units Electron normally uses depend on which
+ * screen it believes the window is on, which is exactly what can't be trusted here.
+ */
+function placement(win: BrowserWindow, display: Display): { want: Rect; have: Rect } {
+  if (!isWin) return { want: display.bounds, have: win.getBounds() }
+  return {
+    want: screen.dipToScreenRect(null, display.bounds),
+    have: screen.dipToScreenRect(win, win.getBounds())
+  }
 }
 
 function onSomeDisplay(r: Rect): boolean {
