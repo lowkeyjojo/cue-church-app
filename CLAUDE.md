@@ -29,7 +29,7 @@ Cue is an Electron + React + TypeScript church presentation app. Read `docs/ARCH
 - Ship one installer per platform (`electron-builder.config.mjs`). Extra variants on the Releases page get downloaded by mistake.
 - The control window must always become visible: keep the reveal fallback in `windows/control.ts`.
 - Entrance animations may change opacity and transform only. Animating layout breaks drag-and-drop geometry and E2E clicks.
-- The fullscreen output is placed and checked in physical pixels on Windows (`OutputManager.settle`), never re-placed when it's already on its display, and can't take focus. Screens with different scaling make scaled sizes unreliable there, and there is no test machine with two screens: `CUE_E2E_FULLSCREEN=1` with output mode `fullscreen` runs the real placement on the one screen.
+- The fullscreen output has no Windows sizing border (`thickFrame: false`): with one, a non-resizable window is forced 14 × 7 px larger than its screen and spills onto the next one. `OutputManager.settle` also checks the fit in physical pixels, the window is never re-placed when it's already on its display, and it can't take focus. No test machine has two screens: `CUE_E2E_FULLSCREEN=1` with output mode `fullscreen` runs the real placement on the one screen, and that test is what caught the border on Windows.
 - Preloads run sandboxed, so each must build to a single CommonJS file (`isolatedEntries` in `electron.vite.config.ts`).
 - In the main process import `fflate/browser`; fflate's Node build collides with the bundler's `require` shim.
 - Electron 44's clipboard API is asynchronous and `ClipboardItem`-based.

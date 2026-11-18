@@ -256,10 +256,10 @@ export class OutputManager extends Emitter<{
 
   /**
    * Make sure the fullscreen window covers its display exactly: now, and again once the OS has
-   * finished moving it. When two screens use different scaling (a laptop at 125 % and a TV at
-   * 100 %), a size given in scaled units can come out too large on the TV, and the extra spills
-   * onto the operator's screen as a strip that stays on top of everything. So the check is done
-   * in the display's own pixels, and so is the correction.
+   * finished moving it. Anything extra lands on the screen next to it, which is usually the
+   * operator's, as a strip that stays on top of everything. The check is done in the display's
+   * own pixels, and so is the correction, so it also holds when the two screens use different
+   * scaling (a laptop at 125 % and a TV at 100 %).
    */
   private settle(win: BrowserWindow, display: Display): void {
     for (const t of this.settleTimers) clearTimeout(t)
@@ -306,6 +306,11 @@ export class OutputManager extends Emitter<{
       minimizable: !fullscreen,
       maximizable: !fullscreen,
       fullscreenable: !isMac,
+      // No Windows sizing border on the fullscreen picture. The border is invisible, but a window
+      // that can't be resized is never allowed to be smaller than its size plus that border: the
+      // picture came out 14 px wider and 7 px taller than the screen, and the extra showed as a
+      // strip along the edge of the screen next to it, on top of everything.
+      thickFrame: !fullscreen,
       // The room's screen never takes the keyboard: every key belongs to the control window.
       // (On Linux an unfocusable window leaves the window manager, so it stays as it is there.)
       focusable: !fullscreen || !(isWin || isMac),
@@ -456,7 +461,7 @@ function sameRect(a: Rect, b: Rect): boolean {
 /**
  * Where a display is and where a window really is, in the units the OS places windows in.
  * On Windows those are physical pixels: the scaled units Electron normally uses depend on which
- * screen it believes the window is on, which is exactly what can't be trusted here.
+ * screen it believes the window is on.
  */
 function placement(win: BrowserWindow, display: Display): { want: Rect; have: Rect } {
   if (!isWin) return { want: display.bounds, have: win.getBounds() }
