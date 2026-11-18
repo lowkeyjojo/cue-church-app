@@ -28,7 +28,8 @@ export const SHORTCUTS: { group: string; items: ShortcutHelp[] }[] = [
       { keys: ['←'], label: 'Previous slide / page (also Page Up, ↑)' },
       { keys: ['B'], label: 'Blackout on/off (also . or ⇧' + mod + 'B anywhere)' },
       { keys: ['A'], label: 'Ambient on/off (also ⇧' + mod + 'A anywhere)' },
-      { keys: ['R'], label: 'Back to what was showing before (e.g. your slides)' }
+      { keys: ['R'], label: 'Back to what was showing before (e.g. your slides)' },
+      { keys: ['Esc'], label: 'Take everything off the screen (R brings it back)' }
     ]
   },
   {
@@ -202,6 +203,15 @@ export function useKeyboard(): void {
         case 'r':
         case 'R':
           show({ type: 'back' })
+          break
+        case 'Escape':
+          // Escape first closes whatever is open (a menu, a popover); with nothing open it
+          // takes the picture off the screen, as it ends a slideshow anywhere else.
+          if (document.querySelector('[role="menu"],[data-radix-popper-content-wrapper]')) handled = false
+          else if (live || state?.ambient.active) {
+            if (live) show({ type: 'clear' })
+            if (state?.ambient.active) show({ type: 'ambient' })
+          } else handled = false
           break
         case 'f':
         case 'F':

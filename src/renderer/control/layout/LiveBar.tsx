@@ -69,7 +69,7 @@ export function LiveBar() {
             <kbd>R</kbd>
           </button>
         </Tooltip>
-        <Tooltip label="Remove what's on screen">
+        <Tooltip label="Take it off the screen" shortcut="Esc">
           <button
             className={clsx(s.big, s.clear)}
             disabled={!show.live}
@@ -77,6 +77,7 @@ export function LiveBar() {
           >
             <CircleOff size={16} />
             <span>Clear</span>
+            <kbd>Esc</kbd>
           </button>
         </Tooltip>
       </div>

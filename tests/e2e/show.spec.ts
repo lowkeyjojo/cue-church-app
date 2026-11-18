@@ -101,6 +101,30 @@ test('the countdown plays on the ambient background', async () => {
   await expect(output.getByText(/^[0-9]:[0-5][0-9]$/)).toBeVisible()
 })
 
+test('Escape closes what is open first, then takes everything off the screen', async () => {
+  await cue.control.getByTestId('plan-entry').nth(1).dblclick()
+  await expect.poll(async () => (await cue.state()).live?.title).toBe('Welcome & announcements')
+
+  // With a dialog open, Escape belongs to the dialog: the screen is left alone.
+  await cue.control.keyboard.press('ControlOrMeta+,')
+  await expect(cue.control.getByRole('dialog', { name: 'Settings' })).toBeVisible()
+  await cue.control.keyboard.press('Escape')
+  await expect(cue.control.getByRole('dialog', { name: 'Settings' })).toHaveCount(0)
+  expect((await cue.state()).live?.title).toBe('Welcome & announcements')
+
+  // With nothing open, it clears the screen, ambient included…
+  await cue.dispatch({ type: 'ambient' })
+  await expect.poll(async () => (await cue.state()).ambient.active).toBe(true)
+  await cue.control.keyboard.press('Escape')
+  await expect.poll(async () => (await cue.state()).live).toBeNull()
+  expect((await cue.state()).ambient.active).toBe(false)
+  await expect.poll(async () => brightness(await cue.outputColor())).toBeLessThan(3)
+
+  // …and R brings back what was there.
+  await cue.control.keyboard.press('r')
+  await expect.poll(async () => (await cue.state()).live?.title).toBe('Welcome & announcements')
+})
+
 test('nothing went wrong behind the scenes', async () => {
   expect(cue.pageErrors).toEqual([])
   expect(cue.errors()).toEqual([])

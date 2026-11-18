@@ -38,8 +38,31 @@
     color: inherit;
   }
 
-  button {
-    cursor: default;
+  /* Anything you can click says so. */
+  button:not(:disabled),
+  a[href],
+  select,
+  summary,
+  label[for],
+  input[type='color'],
+  input[type='checkbox'],
+  input[type='radio'],
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'],
+  [role='switch'],
+  [role='radio'],
+  [role='checkbox'],
+  [role='option'],
+  [role='menuitem']:not([data-disabled]),
+  [role='menuitemradio']:not([data-disabled]),
+  [role='menuitemcheckbox']:not([data-disabled]) {
+    cursor: pointer;
+  }
+  [role='slider'] {
+    cursor: grab;
+  }
+  [role='slider']:active {
+    cursor: grabbing;
   }
 
   input,

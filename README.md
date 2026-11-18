@@ -75,6 +75,7 @@ The [Operator guide](docs/OPERATOR_GUIDE.md) walks through a whole service, with
 | B                  | Blackout on/off (Shift + Ctrl/⌘ + B works anywhere)       |
 | A                  | Ambient on/off (Shift + Ctrl/⌘ + A works anywhere)        |
 | R                  | Back to what was showing before (e.g. your slides)        |
+| Esc                | Take everything off the screen (R brings it back)         |
 | F                  | Cycle fit → fill → blur                                   |
 | + / − / 0          | Zoom in, zoom out, reset zoom                             |
 | K / M              | Play or pause video / mute                                |
