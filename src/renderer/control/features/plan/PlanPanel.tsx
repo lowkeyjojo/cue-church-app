@@ -16,7 +16,7 @@ import {
   Pencil,
   Play,
   Plus,
-  Sparkles,
+  SunMedium,
   Square,
   Trash,
   Type,
@@ -318,7 +318,7 @@ function AddMenu({ plan }: { plan: Plan }) {
     },
     {
       label: 'Ambient or countdown…',
-      icon: <Sparkles />,
+      icon: <SunMedium />,
       onSelect: async () => {
         const entry = await add({
           type: 'ambient',
@@ -431,7 +431,7 @@ function EntryRow({ plan, entry, number }: { plan: Plan; entry: PlanEntry; numbe
     item?.kind === 'deck' && { label: 'Edit slides…', icon: <Type />, onSelect: () => open('deck', item.id) },
     entry.type === 'ambient' && {
       label: 'Edit ambient…',
-      icon: <Sparkles />,
+      icon: <SunMedium />,
       onSelect: () => open('ambient', { planId: plan.id, entryId: entry.id })
     },
     { label: 'Rename', icon: <Pencil />, onSelect: () => setEditing(true) },

@@ -4,11 +4,11 @@
     max-width: calc(100vw - 20px);
     padding: 12px;
     border-radius: var(--r-12);
-    background: #1c1d22;
+    background: var(--bg-3);
     box-shadow: var(--shadow-pop);
     z-index: 850;
     outline: none;
-    animation: pop 140ms var(--ease);
+    animation: pop 100ms var(--ease);
     transform-origin: var(--radix-popover-content-transform-origin);
   }
 }
@@ -16,6 +16,6 @@
 @keyframes pop {
   from {
     opacity: 0;
-    transform: scale(0.97);
+    transform: translateY(-3px);
   }
 }

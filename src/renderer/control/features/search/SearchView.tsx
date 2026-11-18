@@ -11,7 +11,7 @@ import {
   Search,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles
+  Aperture
 } from 'lucide-react'
 import type { SearchFilters, SearchProviderId } from '@shared/types'
 import { domainOf } from '@shared/util'
@@ -112,7 +112,7 @@ export function SearchView({ active }: { active: boolean }) {
               {
                 value: 'openverse',
                 label: compact ? undefined : 'Openverse',
-                icon: <Sparkles />,
+                icon: <Aperture />,
                 tooltip: 'Openverse — Creative Commons images'
               },
               ...(settings.search.pexelsKey

@@ -10,9 +10,7 @@ export function TopBar() {
   return (
     <header className={s.bar}>
       <div className={s.brand}>
-        <span className={s.mark} aria-hidden>
-          <span className={s.markLight} />
-        </span>
+        <span className={s.mark} aria-hidden />
         <span className={s.word}>Cue</span>
       </div>
       <button className={s.palette} onClick={() => open('palette', true)}>

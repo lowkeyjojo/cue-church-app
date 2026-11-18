@@ -1,40 +1,40 @@
-/* First run. A two-panel setup screen: the brand over Cue's ambient light, and the steps. */
+/*
+ * First run. A poster, not a wizard: the name set large in black on the
+ * standby amber, and three short steps beside it.
+ */
 .overlay {
   position: fixed;
   inset: 0;
+  background: var(--bg-0);
   z-index: 800;
-  background: rgba(4, 4, 6, 0.72);
-  backdrop-filter: blur(10px) saturate(0.8);
-  animation: fade 420ms var(--ease-out);
+  animation: fade 200ms var(--ease);
 }
 .welcome {
   position: fixed;
   left: 50%;
   top: 50%;
-  z-index: 801;
-  display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
-  width: min(900px, calc(100vw - 48px));
-  height: min(540px, calc(100vh - 64px));
   transform: translate(-50%, -50%);
-  border-radius: 20px;
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  width: min(940px, calc(100vw - 48px));
+  height: min(560px, calc(100vh - 48px));
   overflow: hidden;
-  background: var(--bg-2);
-  box-shadow:
-    0 40px 120px rgba(0, 0, 0, 0.7),
-    0 0 0 1px var(--line-3);
+  border-radius: var(--r-14);
+  background: var(--bg-1);
+  box-shadow: 0 0 0 1px var(--line-3);
+  z-index: 801;
   outline: none;
-  animation: arrive 640ms var(--ease-out);
+  animation: open 360ms var(--ease-out);
 }
 @keyframes fade {
   from {
     opacity: 0;
   }
 }
-@keyframes arrive {
+@keyframes open {
   from {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 22px)) scale(0.955);
+    transform: translate(-50%, calc(-50% + 10px));
   }
 }
 
@@ -42,236 +42,202 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 30px 30px 32px;
-  background: #0b0807;
+  padding: 26px 28px 28px;
+  background: var(--amber-500);
+  color: var(--amber-ink);
   overflow: hidden;
 }
-.heroShade {
+/* The slab wipes in from the left edge, like a lamp coming up. */
+.hero::after {
+  content: '';
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(180deg, rgba(8, 6, 5, 0.25), rgba(8, 6, 5, 0.05) 40%, rgba(8, 6, 5, 0.7)),
-    linear-gradient(90deg, transparent 70%, rgba(0, 0, 0, 0.35));
+  background: var(--bg-1);
+  transform-origin: right;
+  animation: wipe 520ms var(--ease-out) 80ms both;
 }
-.brand {
-  position: relative;
-  display: flex;
+@keyframes wipe {
+  to {
+    transform: scaleX(0);
+  }
+}
+.heroLabel {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
-.mark {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 13px;
-  background: linear-gradient(160deg, #2a2b31, #131417);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 10px 30px rgba(0, 0, 0, 0.55);
-  animation: markIn 700ms var(--ease-out) 150ms backwards;
+.heroLabel::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--amber-ink);
+  animation: standby 1.2s steps(2, jump-none) infinite;
 }
-.mark span {
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffd596, #f2a33a 60%, #c9761b);
-  /* The cue light comes on, then settles into a slow glow. */
-  animation:
-    ignite 900ms var(--ease-out) 450ms backwards,
-    glow 3.2s ease-in-out 1350ms infinite;
-  box-shadow: 0 0 22px rgba(242, 163, 58, 0.75);
+@keyframes standby {
+  50% {
+    opacity: 0.2;
+  }
 }
 .word {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  animation: wordIn 600ms var(--ease-out) 380ms backwards;
-}
-.tagline {
-  position: relative;
-  margin: 0;
-  font-size: 25px;
-  font-weight: 650;
-  line-height: 1.22;
-  letter-spacing: -0.02em;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
-  animation: wordIn 700ms var(--ease-out) 560ms backwards;
-}
-@keyframes markIn {
-  from {
-    opacity: 0;
-    transform: scale(0.6) rotate(-8deg);
-  }
-}
-@keyframes ignite {
-  0% {
-    opacity: 0.15;
-    transform: scale(0.5);
-    box-shadow: 0 0 0 rgba(242, 163, 58, 0);
-  }
-  55% {
-    opacity: 1;
-    transform: scale(1.18);
-    box-shadow: 0 0 46px rgba(242, 163, 58, 1);
-  }
-}
-@keyframes glow {
-  50% {
-    box-shadow: 0 0 34px rgba(242, 163, 58, 0.95);
-  }
+  margin-top: auto;
+  font-size: 132px;
+  font-stretch: 125%;
+  font-weight: 900;
+  line-height: 0.82;
+  letter-spacing: -0.035em;
+  margin-left: -6px;
+  animation: wordIn 520ms var(--ease-out) 320ms backwards;
 }
 @keyframes wordIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(18px);
   }
+}
+.tagline {
+  margin: 22px 0 0;
+  padding-top: 14px;
+  border-top: 2px solid var(--amber-ink);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  animation: wordIn 520ms var(--ease-out) 420ms backwards;
 }
 
 .side {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 26px 30px 22px 32px;
+  padding: 26px 32px 24px;
 }
 .progress {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 4px;
+}
+.count {
+  margin-right: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+.count strong {
+  color: var(--text-1);
+  font-weight: 600;
 }
 .bar {
   flex: 1;
-  height: 3px;
-  border-radius: 3px;
-  background: var(--bg-5);
-  overflow: hidden;
+  height: 2px;
+  background: var(--line-3);
+  transition: background-color var(--t-slow) var(--ease);
 }
-.bar::after {
-  content: '';
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--amber-500), var(--amber-300));
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 520ms var(--ease-out);
+.barOn {
+  background: var(--amber-500);
 }
-.barOn::after {
-  transform: scaleX(1);
-}
+
 .step {
   flex: 1;
   min-height: 0;
   padding-top: 26px;
 }
 .fromRight {
-  animation: fromRight 460ms var(--ease-out);
+  animation: fromRight 280ms var(--ease-out);
 }
 .fromLeft {
-  animation: fromLeft 460ms var(--ease-out);
+  animation: fromLeft 280ms var(--ease-out);
 }
 @keyframes fromRight {
   from {
     opacity: 0;
-    transform: translateX(26px);
+    transform: translateX(18px);
   }
 }
 @keyframes fromLeft {
   from {
     opacity: 0;
-    transform: translateX(-26px);
+    transform: translateX(-18px);
   }
 }
 .title {
   margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 750;
+  line-height: 1.05;
   letter-spacing: -0.02em;
 }
 .lead {
-  margin: 6px 0 22px;
+  margin: 8px 0 0;
   color: var(--text-2);
-  font-size: 14px;
-  line-height: 1.45;
-}
-.features {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.features li {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: var(--r-12);
-  background: var(--bg-3);
-  box-shadow: inset 0 0 0 1px var(--line-1);
-  animation: wordIn 520ms var(--ease-out) backwards;
-}
-.features li:nth-child(1) {
-  animation-delay: 120ms;
-}
-.features li:nth-child(2) {
-  animation-delay: 190ms;
-}
-.features li:nth-child(3) {
-  animation-delay: 260ms;
-}
-.featureIcon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--amber-a14);
-  color: var(--amber-300);
-}
-.features div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.features strong {
-  font-size: 13.5px;
-}
-.features div span {
-  color: var(--text-2);
-  font-size: 12.5px;
+  font-size: 14.5px;
   line-height: 1.4;
 }
+
+/* What Cue does, as three numbered lines on a ruled sheet. */
+.features {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line-3);
+}
+.features li {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  align-items: baseline;
+  padding: 13px 0 14px;
+  border-bottom: 1px solid var(--line-3);
+}
+.no {
+  color: var(--amber-400);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+.features strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+.features li div span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .stepBody {
   display: flex;
   flex-direction: column;
-  gap: 16px;
   align-items: flex-start;
+  gap: 18px;
+  margin-top: 24px;
 }
 .statusCard {
-  display: flex;
-  gap: 12px;
-  padding: 14px;
-  width: 100%;
-  border-radius: var(--r-12);
-  background: var(--bg-3);
-  box-shadow: inset 0 0 0 1px var(--line-1);
-  color: var(--amber-400);
+  align-self: stretch;
+  padding: 12px 14px;
+  border-left: 3px solid var(--line-4);
+  background: var(--bg-2);
 }
-.statusCard div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.statusOn {
+  border-left-color: var(--ok-400);
 }
 .statusCard strong {
-  color: var(--text-1);
-  font-size: 13px;
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
 }
 .statusCard span {
+  display: block;
+  margin-top: 3px;
   color: var(--text-2);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.45;
 }
 .nameField {
@@ -279,84 +245,86 @@
   flex-direction: column;
   gap: 6px;
   width: 260px;
-  font-size: 12.5px;
-  font-weight: 550;
+}
+.nameField > span {
+  font-size: 13px;
+  font-weight: 650;
 }
 .nameField small {
   color: var(--text-3);
-  font-weight: 400;
+  font-size: 12px;
 }
+
+/* The three keys, drawn as keys. Space is the one that sends. */
 .bigKeys {
+  align-self: stretch;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  width: 100%;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  border-top: 1px solid var(--line-3);
+  border-bottom: 1px solid var(--line-3);
 }
 .bigKeys > div {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 12px;
-  padding: 22px 10px 18px;
-  border-radius: var(--r-12);
-  background: var(--bg-3);
-  box-shadow: inset 0 0 0 1px var(--line-1);
-  color: var(--text-2);
-  font-size: 12.5px;
-  text-align: center;
+  padding: 16px 14px 16px 0;
+}
+.bigKeys > div + div {
+  padding-left: 14px;
+  border-left: 1px solid var(--line-3);
 }
 .bigKeys span {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.3;
 }
 .bigKbd {
-  min-width: 56px;
-  height: 40px;
+  align-self: flex-start;
+  min-width: 46px;
+  height: 46px;
   padding: 0 14px;
-  border-radius: 10px;
-  font-size: 16px;
+  border: 1px solid var(--line-4);
+  border-radius: 3px;
   color: var(--text-1);
-  /* Each key is pressed in turn, like a hint. */
-  animation: press 3.6s var(--ease-io) infinite;
+  font-size: 15px;
+  font-weight: 500;
 }
-.bigKeys > div:nth-child(2) .bigKbd {
-  animation-delay: 1.2s;
-}
-.bigKeys > div:nth-child(3) .bigKbd {
-  animation-delay: 2.4s;
+.bigKeys > div:first-child .bigKbd {
+  min-width: 128px;
+  border-color: var(--amber-500);
+  background: var(--amber-500);
+  color: var(--amber-ink);
+  font-weight: 600;
+  animation: press 2.6s var(--ease) 900ms infinite;
 }
 @keyframes press {
   0%,
-  16%,
+  12%,
   100% {
     transform: none;
-    background: var(--bg-5);
-    color: var(--text-1);
+    background: var(--amber-500);
   }
   6% {
-    transform: translateY(2px) scale(0.96);
-    background: var(--amber-500);
-    color: var(--amber-ink);
+    transform: translateY(2px);
+    background: var(--amber-600);
   }
 }
 .note {
-  display: flex;
-  gap: 7px;
   margin: 0;
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1.5;
 }
-.note svg {
-  flex: none;
-  margin-top: 2px;
-}
+
 .footer {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-top: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line-2);
 }
 .grow {
   flex: 1;
@@ -372,6 +340,7 @@
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
+  font-stretch: 78%;
   text-transform: uppercase;
 }
 .keyList {
@@ -392,37 +361,33 @@
 .about {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
-  text-align: center;
   padding-bottom: 6px;
 }
 .aboutMark {
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 18px;
-  background: linear-gradient(160deg, #2a2b31, #131417);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 10px 30px rgba(0, 0, 0, 0.5);
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--amber-500);
 }
 .aboutMark span {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffd596, #f2a33a 60%, #c9761b);
-  box-shadow: 0 0 24px rgba(242, 163, 58, 0.7);
+  display: none;
 }
 .aboutName {
-  margin-top: 8px;
-  font-size: 20px;
-  font-weight: 700;
+  margin-top: 4px;
+  font-size: 44px;
+  font-stretch: 125%;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
 }
 .aboutVersion {
   color: var(--text-3);
-  font-size: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
 }
 .aboutText {
   margin: 6px 0;
@@ -435,7 +400,8 @@
   gap: 4px 12px;
   margin: 6px 0;
   max-width: 100%;
-  font-size: 11.5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
   text-align: left;
 }
 .aboutMeta dt {

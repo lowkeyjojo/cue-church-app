@@ -21,7 +21,8 @@
     font-family: var(--font-ui);
     font-size: 13px;
     line-height: 1.4;
-    font-feature-settings: 'cv11', 'ss01';
+    font-stretch: 100%;
+    font-variant-numeric: lining-nums;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow: hidden;
@@ -53,15 +54,15 @@
   }
 
   ::selection {
-    background: var(--amber-a40);
-    color: #fff;
+    background: var(--amber-500);
+    color: var(--amber-ink);
   }
 
   :focus {
     outline: none;
   }
 
-  /* Thin, quiet scrollbars */
+  /* Thin, square scrollbars */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -70,13 +71,12 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--bg-5);
     border: 3px solid transparent;
     background-clip: padding-box;
-    border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.16);
+    background-color: var(--line-4);
   }
   ::-webkit-scrollbar-corner {
     background: transparent;
@@ -84,6 +84,14 @@
 
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Small capitals for labels: the condensed cut, heavy and tracked. */
+  .caps {
+    font-stretch: 78%;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
   }
 
   .sr-only {
@@ -110,24 +118,22 @@
     }
   }
 
+  /* A key cap: typed, outlined, flat. */
   kbd {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 18px;
     height: 18px;
-    padding: 0 5px;
-    border-radius: 5px;
-    background: var(--bg-5);
-    box-shadow:
-      inset 0 -1px 0 rgba(0, 0, 0, 0.35),
-      0 0 0 1px var(--line-2);
+    padding: 0 4px;
+    border: 1px solid var(--line-4);
+    border-radius: 2px;
+    background: transparent;
     color: var(--text-2);
-    font-family: var(--font-ui);
-    font-size: 10.5px;
-    font-weight: 600;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
     line-height: 1;
-    letter-spacing: 0.01em;
   }
 
   /* A highlight that slides between options (see ui/useSlidingThumb.ts). */
@@ -147,11 +153,8 @@
     width: var(--thumb-w, 0);
     height: var(--thumb-h, 0);
     transform: translate(var(--thumb-x, 0), var(--thumb-y, 0));
-    border-radius: var(--thumb-r, 6px);
+    border-radius: var(--thumb-r, 1px);
     background: var(--thumb-bg, var(--bg-5));
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     opacity: 0;
     pointer-events: none;
   }
@@ -160,9 +163,9 @@
   }
   .thumbHost[data-thumb='ready']::before {
     transition:
-      transform 280ms var(--ease-spring),
-      width 280ms var(--ease-spring),
-      height 280ms var(--ease-spring);
+      transform 180ms var(--ease-spring),
+      width 180ms var(--ease-spring),
+      height 180ms var(--ease-spring);
   }
 
   @media (prefers-reduced-motion: reduce) {

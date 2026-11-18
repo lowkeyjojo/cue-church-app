@@ -125,6 +125,8 @@ All data lives in the user data folder (see the README). Each store is a `JsonSt
 
 `OutputManager` (`src/main/output/output.ts`) decides where the audience window goes. In **Auto** it uses the external display (remembering which one by its identity, so it returns when reconnected) and never covers the operator's own screen; with one display it waits and says so. **Fullscreen**, **Window** and **Off** override that. It reacts to displays being plugged in or removed, keeps the computer from sleeping while something is on screen, and can show each display's number for identification.
 
+The fullscreen window must cover its display exactly, no more: anything extra lands on the screen next to it, usually the operator's, as a strip that stays on top of everything. On Windows that happened: a frameless window still has an invisible sizing border, and one that can't be resized is never allowed to be smaller than its size plus that border, so the picture was 14 px wider and 7 px taller than the screen. The fullscreen window is therefore created without that border (`thickFrame: false`). As a second line of defence, `OutputManager.settle` compares the window with its display after placing it, in the display's own pixels (`screen.dipToScreenRect`, so screens with different scaling are covered too), corrects it if it's off, and checks again shortly after; each placement and correction is logged. A window that is already on the right display is never placed again (only checked), so moving the control window or a display change doesn't blink the room's screen. The fullscreen window can't take keyboard focus on Windows and macOS: every key belongs to the control window.
+
 ## Security
 
 - Every window uses context isolation and a sandboxed preload; nothing in a renderer can reach Node.js.
@@ -134,9 +136,16 @@ All data lives in the user data folder (see the README). Each store is a `JsonSt
 - Permissions are allowlisted per session: Cue's windows may enumerate audio outputs, choose a speaker and go fullscreen; the browser pane may only go fullscreen and write to the clipboard.
 - IPC handlers only answer the control window.
 
-## Motion
+## Look and motion
 
-Motion shows what changed, and it's kept short. The easing curves are tokens (`--ease-out` for things arriving, `--ease-spring` for a highlight that travels), and a global rule in `base.css` turns animation off for people who ask for reduced motion. Tabs and segmented controls share one highlight that slides between options (`ui/useSlidingThumb.ts` measures the selected option and the `.thumbHost` class draws it). Going live sends a ring out of the Live monitor, and staging does the same in amber: they're keyed on the presentation, so they play once per change. Entrance animations change opacity or transform only, never layout, so drag-and-drop geometry and E2E clicks aren't affected.
+The control window is drawn like a stage manager's desk: a ruled cue sheet and lamps. The rules that keep it that way live in `src/renderer/styles/tokens.css`:
+
+- **Flat and ruled.** Panels and rows are separated by hairlines, not by cards, shadows or gradients. Corners are 2 to 4 pixels. Only things that really are on top (menus, dialogs, toasts) cast a shadow.
+- **Colour is a signal.** Amber means standing by: staged in Preview, next in the plan, the one button that sends. Red means on the screen right now. Nothing else is coloured.
+- **One typeface, three widths.** Archivo carries a width axis: regular for reading, condensed capitals for labels (`font-stretch: 78%`), wide and heavy for the name. Numbers, key caps, times and counts are set in IBM Plex Mono, like a typed sheet. Slides keep their own typefaces (`stage/fonts.ts`).
+- **Selection inverts.** The chosen option in a menu, the palette or a segmented control is ink on paper (light fill, dark text), so it reads at a glance in a dim room.
+
+Motion is mechanical and short: things switch, they don't float. The easing curves are tokens, and a global rule in `base.css` turns animation off for people who ask for reduced motion. Tabs slide one amber mark along the rule and segmented controls slide one block between options (`ui/useSlidingThumb.ts` measures the selected option and the `.thumbHost` class draws it). When something goes on the screen the Live lamp strikes white and settles to red, and the monitor's edge flashes once; staging does the same in amber. Both are keyed on the presentation, so they play once per change. Entrance animations change opacity or transform only, never layout, so drag-and-drop geometry and E2E clicks aren't affected.
 
 ## Tests
 

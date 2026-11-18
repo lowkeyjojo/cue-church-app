@@ -13,7 +13,7 @@
   margin: -4px 0 -4px -6px;
   padding: 3px 6px;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 2px;
   background: transparent;
   color: var(--text-1);
   font-size: 15.5px;
@@ -62,13 +62,11 @@
 }
 .thumb {
   flex: 1;
-  border-radius: 6px;
+  border-radius: 2px;
   box-shadow: 0 0 0 1px var(--line-2);
 }
 .thumbOn .thumb {
-  box-shadow:
-    0 0 0 2px var(--amber-400),
-    0 0 14px var(--amber-a24);
+  box-shadow: 0 0 0 2px var(--amber-400);
 }
 .thumbOn .thumbNum {
   color: var(--amber-300);
@@ -81,7 +79,7 @@
   height: 34px;
   margin-left: 20px;
   border: 1px dashed var(--line-3);
-  border-radius: 8px;
+  border-radius: 2px;
   background: transparent;
   color: var(--text-2);
   font-size: 12px;
@@ -97,19 +95,17 @@
   justify-content: center;
   padding: 24px;
   min-width: 0;
-  background: radial-gradient(circle at 50% 40%, #16171b, #0c0d0f);
+  background: var(--bg-0);
 }
 .canvas {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
   max-height: 100%;
-  border-radius: 10px;
+  border-radius: 2px;
   overflow: hidden;
   background: #000;
-  box-shadow:
-    0 0 0 1px var(--line-3),
-    0 24px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 0 0 1px var(--line-3);
 }
 .inspector {
   display: flex;
@@ -129,6 +125,7 @@
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
+  font-stretch: 78%;
   text-transform: uppercase;
 }
 .pair {
@@ -145,7 +142,7 @@
   height: 28px;
   padding: 0;
   border: 1px solid var(--line-3);
-  border-radius: 7px;
+  border-radius: 2px;
   background: transparent;
 }
 .bg {
@@ -160,7 +157,7 @@
   height: 44px;
   padding: 0 10px 0 4px;
   border: 1px solid var(--line-2);
-  border-radius: 9px;
+  border-radius: 2px;
   background: var(--bg-1);
   color: var(--text-2);
   font-size: 12.5px;
@@ -170,7 +167,7 @@
   width: 60px;
   height: 34px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 2px;
 }
 .mediaPick span {
   overflow: hidden;
@@ -189,7 +186,7 @@
   aspect-ratio: 16 / 9;
   padding: 0;
   border: none;
-  border-radius: 5px;
+  border-radius: 2px;
   overflow: hidden;
   background: var(--bg-4);
 }

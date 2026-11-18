@@ -72,6 +72,78 @@ test('the output window can be turned off and back on, and shows a test pattern 
   }
 })
 
+test('the fullscreen picture covers its screen exactly, stays put, and never takes the keyboard', async () => {
+  // One screen here, so the fullscreen picture goes on it (tests only): the placement code is the real one.
+  const cue = await Cue.launch({
+    settings: { output: { mode: 'fullscreen' } },
+    env: { CUE_E2E_FULLSCREEN: '1' }
+  })
+  try {
+    await cue.output()
+    // Window and screen in the units the OS places windows in (physical pixels on Windows).
+    const read = () =>
+      cue.app.evaluate(({ BrowserWindow, screen }) => {
+        const win = BrowserWindow.getAllWindows().find((w) =>
+          w.webContents.getURL().includes('audience.html')
+        )!
+        const display = screen.getDisplayMatching(win.getBounds())
+        const physical = process.platform === 'win32'
+        const window = physical ? screen.dipToScreenRect(win, win.getBounds()) : win.getBounds()
+        const target = physical ? screen.dipToScreenRect(null, display.bounds) : display.bounds
+        return {
+          id: win.id,
+          // How far each edge is from the screen's: all zero means it fits exactly.
+          off: [
+            window.x - target.x,
+            window.y - target.y,
+            window.width - target.width,
+            window.height - target.height
+          ],
+          focusable: win.isFocusable(),
+          focused: win.isFocused()
+        }
+      })
+    const fits = (off: number[]) => off.every((n) => Math.abs(n) <= 1)
+    await expect.poll(async () => fits((await read()).off)).toBe(true)
+    const before = await read()
+    expect(before.focused).toBe(false)
+    if (process.platform !== 'linux') expect(before.focusable).toBe(false)
+
+    // It shows what it's given…
+    await cue.dispatch({ type: 'test-pattern', on: true })
+    await expect.poll(async () => brightness(await cue.outputColor())).toBeGreaterThan(20)
+
+    // …and a display change or a moved control window doesn't take it down and put it back:
+    // the room would see that as a blink.
+    await cue.app.evaluate(({ BrowserWindow, screen }) => {
+      const all = BrowserWindow.getAllWindows()
+      const win = all.find((w) => w.webContents.getURL().includes('audience.html'))!
+      const counts = { left: 0, hidden: 0 }
+      ;(globalThis as unknown as { __outputEvents: typeof counts }).__outputEvents = counts
+      win.on('leave-full-screen', () => counts.left++)
+      win.on('hide', () => counts.hidden++)
+      screen.emit('display-metrics-changed', {}, screen.getPrimaryDisplay(), ['workArea'])
+      const control = all.find((w) => w.webContents.getURL().includes('control.html'))!
+      const b = control.getBounds()
+      control.setBounds({ ...b, x: b.x + 24, y: b.y + 24 })
+    })
+    // Longer than the 400 ms the output manager waits before reacting.
+    await cue.control.waitForTimeout(1200)
+    const after = await read()
+    expect(after.id).toBe(before.id)
+    expect(fits(after.off)).toBe(true)
+    expect(
+      await cue.app.evaluate(
+        () => (globalThis as unknown as { __outputEvents: { left: number; hidden: number } }).__outputEvents
+      )
+    ).toEqual({ left: 0, hidden: 0 })
+    await expect.poll(async () => brightness(await cue.outputColor())).toBeGreaterThan(20)
+    expect(cue.errors()).toEqual([])
+  } finally {
+    await cue.close()
+  }
+})
+
 test('a Cue left running without its window restarts when Cue is opened again', async () => {
   const stuck = await Cue.launch()
   const { dataDir } = stuck

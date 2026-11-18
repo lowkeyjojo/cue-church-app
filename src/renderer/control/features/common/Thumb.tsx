@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { AudioLines, FileText, Film, Image as ImageIcon, Sparkles } from 'lucide-react'
+import { AudioLines, FileText, Film, Image as ImageIcon, SunMedium } from 'lucide-react'
 import type { AmbientConfig, Deck, Id, MediaItem, Presentation } from '@shared/types'
 import { pageFile, thumbUrl } from '@shared/util'
 import { AMBIENT_THEMES } from '../../../stage/GenerativeBackground'
@@ -68,7 +68,7 @@ export function AmbientThumb({ config, className }: { config: AmbientConfig; cla
       }
     >
       {firstThumb && <img src={firstThumb} alt="" draggable={false} loading="lazy" />}
-      <Sparkles className={s.ambientIcon} size={12} />
+      <SunMedium className={s.ambientIcon} size={12} />
     </div>
   )
 }

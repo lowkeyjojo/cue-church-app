@@ -1,14 +1,14 @@
 /* Primitive styles live in a cascade layer so feature styles can always override them. */
 @layer ui {
-  /* Segmented control */
+  /* Segmented control: a row of keys, one of them down. */
   .segmented {
     display: inline-flex;
-    align-items: center;
-    gap: 2px;
+    align-items: stretch;
+    gap: 0;
     padding: 2px;
+    border: 1px solid var(--line-3);
     border-radius: var(--r-8);
-    background: var(--bg-1);
-    box-shadow: inset 0 0 0 1px var(--line-2);
+    background: var(--bg-0);
     flex: none;
   }
   .segment {
@@ -17,13 +17,11 @@
     justify-content: center;
     gap: 6px;
     border: none;
-    border-radius: 6px;
+    border-radius: 1px;
     background: transparent;
-    color: var(--text-2);
-    font-weight: 550;
-    transition:
-      background-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease);
+    color: var(--text-3);
+    font-weight: 600;
+    transition: color var(--t-fast) var(--ease);
   }
   .segment:hover {
     color: var(--text-1);
@@ -33,29 +31,31 @@
     height: 14px;
   }
   .seg_md .segment {
-    height: 26px;
+    height: 24px;
     padding: 0 10px;
     font-size: 12px;
   }
   .seg_sm .segment {
-    height: 22px;
+    height: 20px;
     padding: 0 8px;
     font-size: 11.5px;
   }
   .segmentOn {
-    background: var(--bg-5);
-    color: var(--text-1);
-    box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    background: var(--text-1);
+    color: var(--bg-0);
+  }
+  .segmentOn:hover {
+    color: var(--bg-0);
   }
   /* Once measured, one highlight slides between the segments instead. */
+  .segmented {
+    --thumb-bg: var(--text-1);
+  }
   .segmented[data-thumb] .segmentOn {
     background: transparent;
-    box-shadow: none;
   }
 
-  /* Slider */
+  /* Slider: a fader. A thin slot and a square cap. */
   .slider {
     position: relative;
     display: flex;
@@ -71,65 +71,67 @@
   .track {
     position: relative;
     flex: 1;
-    height: 4px;
-    border-radius: 4px;
-    background: var(--bg-5);
-    overflow: hidden;
+    height: 2px;
+    background: var(--bg-6);
   }
   .range {
     position: absolute;
     height: 100%;
-    background: linear-gradient(90deg, var(--amber-600), var(--amber-400));
+    background: var(--text-1);
   }
   .thumb {
     display: block;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #f4f4f6;
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(0, 0, 0, 0.2);
-    transition: transform var(--t-fast) var(--ease);
+    width: 8px;
+    height: 16px;
+    border-radius: 1px;
+    background: var(--text-1);
+    box-shadow: 0 0 0 2px var(--bg-1);
+    transition: background-color var(--t-fast) var(--ease);
   }
   .thumb:hover {
-    transform: scale(1.1);
+    background: #fff;
   }
   .thumb:focus-visible {
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.5),
-      0 0 0 4px var(--amber-a40);
+    background: var(--amber-400);
+    box-shadow: 0 0 0 2px var(--bg-1);
   }
 
-  /* Switch */
+  /* Switch: a slide switch. Off is empty, on is amber. */
   .switch {
     position: relative;
-    width: 32px;
-    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    width: 30px;
+    height: 16px;
+    padding: 0;
     flex: none;
-    border: none;
-    border-radius: 999px;
-    background: var(--bg-6);
-    box-shadow: inset 0 0 0 1px var(--line-2);
-    transition: background-color var(--t-med) var(--ease);
+    border: 1px solid var(--line-4);
+    border-radius: 2px;
+    background: transparent;
+    transition:
+      background-color var(--t-med) var(--ease),
+      border-color var(--t-med) var(--ease);
   }
   .switch[data-state='checked'] {
     background: var(--amber-500);
+    border-color: var(--amber-500);
   }
   .switch:disabled {
     opacity: 0.4;
   }
   .switchThumb {
     display: block;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    width: 10px;
+    height: 10px;
+    border-radius: 1px;
+    background: var(--text-2);
     transform: translateX(2px);
-    transition: transform var(--t-med) var(--ease);
+    transition:
+      transform var(--t-med) var(--ease),
+      background-color var(--t-med) var(--ease);
   }
   .switchThumb[data-state='checked'] {
+    background: var(--amber-ink);
     transform: translateX(16px);
   }
 
@@ -138,22 +140,22 @@
     width: 100%;
     height: 30px;
     padding: 0 10px;
-    border: 1px solid var(--line-2);
+    border: 1px solid var(--line-3);
     border-radius: var(--r-8);
-    background: var(--bg-1);
+    background: var(--bg-0);
     color: var(--text-1);
     font-size: 12.5px;
     outline: none;
-    transition:
-      border-color var(--t-fast) var(--ease),
-      box-shadow var(--t-fast) var(--ease);
+    transition: border-color var(--t-fast) var(--ease);
   }
   .input::placeholder {
     color: var(--text-3);
   }
+  .input:hover {
+    border-color: var(--line-4);
+  }
   .input:focus {
-    border-color: var(--amber-a60);
-    box-shadow: 0 0 0 3px var(--amber-a14);
+    border-color: var(--amber-400);
   }
   .textarea {
     height: auto;
@@ -235,7 +237,7 @@
   .fieldLabel {
     color: var(--text-1);
     font-size: 12.5px;
-    font-weight: 550;
+    font-weight: 600;
   }
   .fieldInline .fieldLabel {
     font-weight: 500;
@@ -258,7 +260,7 @@
   /* Spinner */
   .spinner {
     animation: spin 900ms linear infinite;
-    color: var(--amber-400);
+    color: var(--text-2);
   }
 
   /* Empty state */
@@ -278,22 +280,18 @@
   .emptyIcon {
     display: grid;
     place-items: center;
-    width: 46px;
-    height: 46px;
-    margin-bottom: 4px;
-    border-radius: 14px;
-    background: var(--bg-3);
-    box-shadow: inset 0 0 0 1px var(--line-2);
-    color: var(--amber-400);
+    margin-bottom: 2px;
+    color: var(--text-4);
   }
   .emptyIcon svg {
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
+    stroke-width: 1.5;
   }
   .emptyTitle {
     color: var(--text-1);
-    font-size: 13.5px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 650;
   }
   .emptyText {
     max-width: 340px;
@@ -315,9 +313,10 @@
     gap: 8px;
     height: 28px;
     color: var(--text-3);
-    font-size: 10.5px;
+    font-size: 11px;
+    font-stretch: 78%;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
   }
   .sectionRight {

@@ -8,7 +8,7 @@ import {
   Play,
   Plus,
   Presentation as PresentationIcon,
-  Sparkles,
+  SunMedium,
   Star,
   Type
 } from 'lucide-react'
@@ -120,7 +120,7 @@ function ShowToolbar({ target }: { target: Target }) {
       {entry?.type === 'ambient' && plan && (
         <Button
           size="sm"
-          icon={<Sparkles />}
+          icon={<SunMedium />}
           onClick={() => open('ambient', { planId: plan.id, entryId: entry.id })}
         >
           Edit ambient
@@ -462,7 +462,7 @@ function AmbientDetail({ plan, entry }: { plan: Plan; entry: PlanEntry }) {
           Ambient scenes cover breaks and walk-in time with gentle motion and an optional welcome, clock or
           countdown. Countdowns start when the item goes live.
         </p>
-        <Button icon={<Sparkles />} onClick={() => open('ambient', { planId: plan.id, entryId: entry.id })}>
+        <Button icon={<SunMedium />} onClick={() => open('ambient', { planId: plan.id, entryId: entry.id })}>
           Edit ambient
         </Button>
       </div>

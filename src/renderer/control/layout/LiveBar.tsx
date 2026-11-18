@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import clsx from 'clsx'
-import { ChevronUp, CircleOff, CornerUpLeft, Moon, Sparkles, Volume1, Volume2, VolumeX } from 'lucide-react'
+import { ChevronUp, CircleOff, CornerUpLeft, Moon, SunMedium, Volume1, Volume2, VolumeX } from 'lucide-react'
 import { presentationLabel } from '@shared/show/presentation'
 import type { TransitionKind } from '@shared/types'
 import { dispatch } from '../lib/api'
@@ -45,7 +45,7 @@ export function LiveBar() {
               onClick={() => dispatch({ type: 'ambient' })}
               data-testid="ambient"
             >
-              <Sparkles size={17} />
+              <SunMedium size={17} />
               <span>Ambient</span>
               <kbd>A</kbd>
             </button>
