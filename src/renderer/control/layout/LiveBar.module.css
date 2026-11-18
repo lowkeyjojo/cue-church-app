@@ -125,21 +125,49 @@
   white-space: nowrap;
 }
 
-.duration {
-  width: 76px;
+.transition {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
 }
-.duration select {
-  height: 30px;
+.caret {
+  margin-left: -2px;
+  opacity: 0.6;
+}
+.transitionPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.panelTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+.wide {
+  display: flex;
+}
+.wide > * {
+  flex: 1;
+}
+.wide button {
+  width: 100%;
+}
+.panelHint {
+  margin: -4px 0 0;
+  color: var(--text-3);
   font-size: 12.5px;
 }
-.volume {
-  width: 110px;
+.panelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-2);
+  font-size: 13px;
 }
-.volumeValue {
-  width: 40px;
-  color: var(--text-3);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
+.duration {
+  width: 92px;
+}
+.volume {
+  width: 120px;
 }
 .clock {
   margin-left: 8px;
@@ -154,10 +182,6 @@
 }
 
 @media (max-width: 1360px) {
-  .label,
-  .volumeValue {
-    display: none;
-  }
   .back {
     max-width: 200px;
   }
