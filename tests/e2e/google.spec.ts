@@ -254,6 +254,25 @@ test.describe('results whose original Google never shows', () => {
     expect((await cue.state()).live).toBeNull()
   })
 
+  test('with auto-preview off, the Preview button brings in the same best copy', async () => {
+    await cue.invoke('settings:update', { search: { autoPreview: false } })
+    const before = (await cue.state()).preview?.mediaId
+    const title = 'Choir on the steps (video)'
+    await click(title)
+    const bar = cue.control.getByTestId('pick-bar')
+    await expect(bar).toContainText(title)
+    // The buttons wait for the original as long as auto-preview would, and nothing comes in by itself.
+    const preview = bar.getByRole('button', { name: 'Preview' })
+    await expect(preview).toBeEnabled()
+    await expect(bar).toContainText('best copy')
+    expect((await cue.state()).preview?.mediaId).toBe(before)
+    await preview.click()
+    await expect.poll(inPreview).toMatchObject({ name: title, width: 900, height: 600 })
+    await expect(bar).toContainText("From the post's preview image")
+    expect((await cue.state()).live).toBeNull()
+    await cue.invoke('settings:update', { search: { autoPreview: true } })
+  })
+
   test('nothing went wrong behind the scenes here either', async () => {
     expect(cue.pageErrors).toEqual([])
     expect(cue.errors()).toEqual([])

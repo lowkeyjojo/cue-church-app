@@ -3,9 +3,16 @@ import clsx from 'clsx'
 import { Globe } from 'lucide-react'
 import { googleImagesUrl, queryFromGoogleUrl } from '@shared/google'
 import { useApp, useSettings } from '../../lib/store'
+import { useToasts } from '../../lib/toasts'
 import { useUI, type GuestPick } from '../../lib/ui'
 import { PickBar } from './PickBar'
-import { ORIGINAL_WAIT_MS, ingestGooglePick, isOriginalOf, type GuestHandle } from './googlePick'
+import {
+  LOWRES_TOAST,
+  ORIGINAL_WAIT_MS,
+  ingestGooglePick,
+  isOriginalOf,
+  type GuestHandle
+} from './googlePick'
 import { previewMedia } from '../../lib/planActions'
 import s from './SearchView.module.css'
 
@@ -204,6 +211,7 @@ export const GoogleBrowser = forwardRef<
           return
         }
         useUI.getState().setSearch({ pickedMediaId: got.item.id, pickedVia: got.via })
+        if (standIn && got.via === 'original') useToasts.getState().dismiss(LOWRES_TOAST)
         // A late original takes its stand-in's place in Preview, never the place of something the
         // operator has put there since (or leaves empty after showing the stand-in).
         const replaced = standIn && useApp.getState().show?.preview?.mediaId !== standIn

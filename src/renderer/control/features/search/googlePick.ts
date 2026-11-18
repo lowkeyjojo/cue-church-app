@@ -10,6 +10,9 @@ import type { GuestPick, PickVia } from '../../lib/ui'
  */
 export const ORIGINAL_WAIT_MS = 1800
 
+/** Id of the "lower-resolution copy" notice, so it can be taken down if the original arrives after all. */
+export const LOWRES_TOAST = 'lowres'
+
 /** The embedded browser page, as far as bringing images in from it goes. */
 export interface GuestHandle {
   contentsId: number
@@ -82,7 +85,7 @@ export async function ingestGooglePick(
     try {
       const item = await call('library:importWeb', { ...base, url: thumb }, { save: opts.save })
       toast.show({
-        id: 'lowres',
+        id: LOWRES_TOAST,
         kind: 'warning',
         title: 'Using a lower-resolution copy',
         message: "The website didn't share its full-size image.",
