@@ -1,25 +1,17 @@
 .monitor {
   position: relative;
   flex: none;
-  border-radius: var(--r-10);
   overflow: hidden;
   background: #000;
-  box-shadow:
-    0 0 0 1px var(--line-3),
-    0 10px 30px rgba(0, 0, 0, 0.45);
-  transition: box-shadow var(--t-slow) var(--ease);
+  box-shadow: 0 0 0 1px var(--line-4);
+  transition: box-shadow var(--t-med) var(--ease);
   contain: layout paint;
 }
 .preview {
-  box-shadow:
-    0 0 0 1px var(--amber-a24),
-    0 10px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 1px var(--line-4);
 }
 .live.onAir {
-  box-shadow:
-    0 0 0 1.5px var(--live-500),
-    0 0 26px rgba(229, 72, 77, 0.22),
-    0 10px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 2px var(--live-500);
 }
 .pannable {
   cursor: grab;
@@ -28,9 +20,7 @@
   cursor: grabbing;
 }
 .dropping {
-  box-shadow:
-    0 0 0 2px var(--amber-400),
-    0 0 30px var(--amber-a40);
+  box-shadow: 0 0 0 2px var(--amber-400);
 }
 
 .empty {
@@ -39,10 +29,11 @@
   display: grid;
   place-items: center;
   color: var(--text-3);
-  font-size: 12px;
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   pointer-events: none;
-  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.012) 0 10px, transparent 10px 20px);
 }
 .state {
   position: absolute;
@@ -55,13 +46,14 @@
   pointer-events: none;
 }
 .stateBadge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #111;
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 0.1em;
+  padding: 3px 9px;
+  border-radius: 1px;
+  background: var(--text-1);
+  color: var(--bg-0);
+  font-size: 11.5px;
+  font-stretch: 78%;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .stateBehind {
@@ -76,28 +68,30 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  border-radius: 1px;
+  font-size: 10.5px;
+  font-stretch: 78%;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   pointer-events: none;
 }
 .cornerAmbient {
-  background: rgba(242, 163, 58, 0.92);
+  background: var(--amber-500);
   color: var(--amber-ink);
 }
 .zoomBadge {
   position: absolute;
   right: 8px;
   bottom: 8px;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+  border-radius: 1px;
+  background: rgba(0, 0, 0, 0.75);
   color: #fff;
+  font-family: var(--font-mono);
   font-size: 10.5px;
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
@@ -106,9 +100,9 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(242, 163, 58, 0.12);
+  background: rgba(247, 168, 27, 0.16);
   color: var(--amber-100);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
   pointer-events: none;
 }

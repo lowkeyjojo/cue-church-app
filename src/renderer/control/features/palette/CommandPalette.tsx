@@ -15,7 +15,7 @@ import {
   Plus,
   ScanSearch,
   Settings,
-  Sparkles,
+  SunMedium,
   SquareDot,
   Tv,
   Type,
@@ -114,7 +114,7 @@ export function CommandPalette() {
         group: 'Actions',
         label: 'Ambient',
         detail: 'break loop background',
-        icon: <Sparkles size={15} />,
+        icon: <SunMedium size={15} />,
         hint: 'A',
         run: () => dispatch({ type: 'ambient' })
       },

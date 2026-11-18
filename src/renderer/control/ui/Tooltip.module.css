@@ -5,15 +5,12 @@
     align-items: center;
     gap: 8px;
     max-width: 280px;
-    padding: 5px 8px;
-    border-radius: 7px;
-    background: #26272d;
-    box-shadow:
-      0 6px 20px rgba(0, 0, 0, 0.45),
-      0 0 0 1px var(--line-3);
-    color: var(--text-1);
+    padding: 4px 7px;
+    border-radius: var(--r-8);
+    background: var(--text-1);
+    color: var(--bg-0);
     font-size: 11.5px;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.35;
     z-index: 1000;
     user-select: none;
@@ -22,6 +19,10 @@
   .keys {
     display: inline-flex;
     gap: 3px;
+  }
+  .tooltip kbd {
+    border-color: rgba(10, 10, 9, 0.4);
+    color: var(--bg-0);
   }
 }
 

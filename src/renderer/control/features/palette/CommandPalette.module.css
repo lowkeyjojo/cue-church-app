@@ -51,6 +51,7 @@
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
+  font-stretch: 78%;
   text-transform: uppercase;
 }
 .item {
@@ -61,13 +62,18 @@
   min-height: 38px;
   padding: 4px 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: 2px;
   background: transparent;
   color: var(--text-1);
   text-align: left;
 }
 .itemOn {
-  background: var(--bg-5);
+  background: var(--text-1);
+  color: var(--bg-0);
+}
+.itemOn .icon,
+.itemOn .detail {
+  color: var(--bg-0);
 }
 .icon {
   display: inline-flex;
@@ -79,11 +85,11 @@
 }
 .thumb {
   width: 48px;
-  border-radius: 4px;
+  border-radius: 2px;
 }
 .label {
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

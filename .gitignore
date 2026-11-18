@@ -13,3 +13,5 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 *.tsbuildinfo
+.claude/worktrees/
+release-old/

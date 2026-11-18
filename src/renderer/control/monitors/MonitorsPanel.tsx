@@ -96,10 +96,7 @@ function PreviewBlock({ width, height, measure }: { width: number; height: numbe
   return (
     <section className={clsx(s.block, s.previewBlock)}>
       <header className={s.head} ref={measure}>
-        <span className={clsx(s.tag, s.tagPreview)}>
-          <span className={s.tagDot} />
-          Preview
-        </span>
+        <span className={clsx(s.tag, p && s.tagStaged)}>Preview</span>
         <div className={s.titleWrap}>
           <span className={s.title}>{p ? p.title : 'Nothing staged'}</span>
           {p?.subtitle && <span className={s.subtitle}>{p.subtitle}</span>}
@@ -125,7 +122,7 @@ function PreviewBlock({ width, height, measure }: { width: number; height: numbe
         {width > 0 && (
           <div className={s.frame}>
             <Monitor role="preview" width={width} height={height} />
-            {/* A soft amber ring each time something new is staged. */}
+            {/* The edge flashes amber each time something new is staged. */}
             {p && <span key={p.id} className={clsx(s.pulse, s.stagedPulse)} aria-hidden />}
           </div>
         )}
@@ -135,7 +132,7 @@ function PreviewBlock({ width, height, measure }: { width: number; height: numbe
         <Button
           variant="primary"
           size="lg"
-          className={clsx(s.take, p && s.armed)}
+          className={s.take}
           icon={<Tv />}
           disabled={!p}
           onClick={() => dispatch({ type: 'take' })}
@@ -159,10 +156,7 @@ function LiveBlock({ width, height, measure }: { width: number; height: number; 
     <section className={clsx(s.block, s.liveBlock)}>
       <div ref={measure}>
         <header className={s.head}>
-          <span className={clsx(s.tag, s.tagLive, onAir && out?.active && s.tagOnAir)}>
-            <span className={s.tagDot} />
-            Live
-          </span>
+          <span className={clsx(s.tag, onAir && out?.active && s.tagOnAir)}>Live</span>
           <div className={s.titleWrap}>
             <span className={s.title}>
               {show.blackout
@@ -191,7 +185,7 @@ function LiveBlock({ width, height, measure }: { width: number; height: number; 
         {width > 0 && (
           <div className={s.frame}>
             <Monitor role="live" width={width} height={height} />
-            {/* The moment something goes on air: a red ring leaves the monitor. */}
+            {/* The moment something goes on air, the edge flashes. */}
             {p && onAir && <span key={p.id} className={clsx(s.pulse, s.onAirPulse)} aria-hidden />}
           </div>
         )}

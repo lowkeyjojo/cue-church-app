@@ -134,9 +134,16 @@ All data lives in the user data folder (see the README). Each store is a `JsonSt
 - Permissions are allowlisted per session: Cue's windows may enumerate audio outputs, choose a speaker and go fullscreen; the browser pane may only go fullscreen and write to the clipboard.
 - IPC handlers only answer the control window.
 
-## Motion
+## Look and motion
 
-Motion shows what changed, and it's kept short. The easing curves are tokens (`--ease-out` for things arriving, `--ease-spring` for a highlight that travels), and a global rule in `base.css` turns animation off for people who ask for reduced motion. Tabs and segmented controls share one highlight that slides between options (`ui/useSlidingThumb.ts` measures the selected option and the `.thumbHost` class draws it). Going live sends a ring out of the Live monitor, and staging does the same in amber: they're keyed on the presentation, so they play once per change. Entrance animations change opacity or transform only, never layout, so drag-and-drop geometry and E2E clicks aren't affected.
+The control window is drawn like a stage manager's desk: a ruled cue sheet and lamps. The rules that keep it that way live in `src/renderer/styles/tokens.css`:
+
+- **Flat and ruled.** Panels and rows are separated by hairlines, not by cards, shadows or gradients. Corners are 2 to 4 pixels. Only things that really are on top (menus, dialogs, toasts) cast a shadow.
+- **Colour is a signal.** Amber means standing by: staged in Preview, next in the plan, the one button that sends. Red means on the screen right now. Nothing else is coloured.
+- **One typeface, three widths.** Archivo carries a width axis: regular for reading, condensed capitals for labels (`font-stretch: 78%`), wide and heavy for the name. Numbers, key caps, times and counts are set in IBM Plex Mono, like a typed sheet. Slides keep their own typefaces (`stage/fonts.ts`).
+- **Selection inverts.** The chosen option in a menu, the palette or a segmented control is ink on paper (light fill, dark text), so it reads at a glance in a dim room.
+
+Motion is mechanical and short: things switch, they don't float. The easing curves are tokens, and a global rule in `base.css` turns animation off for people who ask for reduced motion. Tabs slide one amber mark along the rule and segmented controls slide one block between options (`ui/useSlidingThumb.ts` measures the selected option and the `.thumbHost` class draws it). When something goes on the screen the Live lamp strikes white and settles to red, and the monitor's edge flashes once; staging does the same in amber. Both are keyed on the presentation, so they play once per change. Entrance animations change opacity or transform only, never layout, so drag-and-drop geometry and E2E clicks aren't affected.
 
 ## Tests
 

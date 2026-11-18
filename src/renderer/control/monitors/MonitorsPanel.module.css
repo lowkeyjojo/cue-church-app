@@ -12,60 +12,59 @@
   padding: 12px 14px;
 }
 .previewBlock {
-  border-bottom: 1px solid var(--line-1);
+  border-bottom: 1px solid var(--line-2);
 }
 .liveBlock {
   flex: 1;
   min-height: 0;
-  background: linear-gradient(180deg, rgba(229, 72, 77, 0.03), transparent 220px);
 }
 
 .head {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 35px;
-  padding-bottom: 9px;
+  height: 34px;
+  padding-bottom: 10px;
   min-width: 0;
 }
+/* The tally: a lamp with the monitor's name on it. Dark until it means something. */
 .tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   flex: none;
-  height: 20px;
-  padding: 0 8px 0 7px;
-  border-radius: 6px;
-  font-size: 10.5px;
-  font-weight: 750;
-  letter-spacing: 0.1em;
+  min-width: 64px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--line-4);
+  border-radius: 1px;
+  color: var(--text-3);
+  font-size: 11.5px;
+  font-stretch: 78%;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .tagDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
+  display: none;
 }
-.tagPreview {
-  color: var(--amber-300);
-  background: var(--amber-a14);
-}
-.tagLive {
-  color: var(--text-3);
-  background: var(--bg-4);
+.tagStaged {
+  border-color: var(--amber-500);
+  background: var(--amber-500);
+  color: var(--amber-ink);
 }
 .tagOnAir {
-  color: #fff;
+  border-color: var(--live-500);
   background: var(--live-500);
-  box-shadow: 0 0 14px rgba(229, 72, 77, 0.35);
+  color: #fff;
+  /* The lamp strikes: white-hot for an instant, then red. */
+  animation: strike 420ms var(--ease-out);
 }
-.tagOnAir .tagDot {
-  animation: pulse 1.6s ease-in-out infinite;
-}
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
+@keyframes strike {
+  from {
+    border-color: #fff;
+    background: #fff;
+    color: var(--live-600);
   }
 }
 .titleWrap {
@@ -76,15 +75,17 @@
   flex: 1;
 }
 .title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .subtitle {
   color: var(--text-3);
-  font-size: 11.5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -104,40 +105,32 @@
   position: relative;
   display: flex;
 }
+/* A change in a monitor flashes its edge once. No glow: the picture is the point. */
 .pulse {
   position: absolute;
   inset: 0;
-  border-radius: var(--r-10);
   pointer-events: none;
 }
 .onAirPulse {
-  animation: onAir 900ms var(--ease-out) both;
+  animation: onAir 520ms var(--ease-out) both;
 }
 @keyframes onAir {
   from {
-    box-shadow:
-      0 0 0 0 rgba(229, 72, 77, 0.7),
-      inset 0 0 0 2px rgba(255, 138, 142, 0.95);
+    box-shadow: inset 0 0 0 4px #fff;
   }
   to {
-    box-shadow:
-      0 0 0 16px rgba(229, 72, 77, 0),
-      inset 0 0 0 2px rgba(255, 138, 142, 0);
+    box-shadow: inset 0 0 0 0 rgba(255, 255, 255, 0);
   }
 }
 .stagedPulse {
-  animation: staged 650ms var(--ease-out) both;
+  animation: staged 380ms var(--ease-out) both;
 }
 @keyframes staged {
   from {
-    box-shadow:
-      0 0 0 0 rgba(242, 163, 58, 0.5),
-      inset 0 0 0 1.5px rgba(249, 192, 102, 0.8);
+    box-shadow: inset 0 0 0 3px var(--amber-300);
   }
   to {
-    box-shadow:
-      0 0 0 9px rgba(242, 163, 58, 0),
-      inset 0 0 0 1.5px rgba(249, 192, 102, 0);
+    box-shadow: inset 0 0 0 0 rgba(255, 204, 102, 0);
   }
 }
 
@@ -160,33 +153,26 @@
 .spacer {
   flex: 1;
 }
+/* The one big key. Amber when something is standing by, dark when there is nothing to send. */
 .take {
   width: 100%;
-  height: 44px;
-  font-size: 14.5px;
+  height: 48px;
+  font-size: 15px;
+  font-weight: 800;
   letter-spacing: 0.01em;
+}
+.take:disabled {
+  opacity: 1;
+  border-color: var(--line-3);
+  background: transparent;
+  color: var(--text-4);
+}
+.take:disabled kbd {
+  border-color: var(--line-3);
+  color: var(--text-4);
 }
 .take kbd {
   margin-left: 6px;
-}
-/* Something is staged: the button that sends it out glows, slowly. */
-.armed {
-  animation: armed 2.8s ease-in-out infinite;
-}
-@keyframes armed {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      0 1px 2px rgba(0, 0, 0, 0.4),
-      0 0 0 0 rgba(242, 163, 58, 0);
-  }
-  50% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      0 1px 2px rgba(0, 0, 0, 0.4),
-      0 0 24px 1px rgba(242, 163, 58, 0.32);
-  }
 }
 .hint {
   color: var(--text-3);
@@ -201,9 +187,8 @@
   gap: 10px;
   margin-bottom: 9px;
   padding: 7px 8px 7px 10px;
-  border-radius: var(--r-8);
-  background: var(--amber-a08);
-  box-shadow: inset 0 0 0 1px var(--amber-a24);
+  border-left: 3px solid var(--amber-500);
+  background: var(--amber-a14);
   color: var(--amber-200);
   font-size: 12px;
   line-height: 1.35;
@@ -218,11 +203,12 @@
   min-width: 46px;
   height: 24px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--r-8);
   background: transparent;
   color: var(--text-2);
-  font-size: 11.5px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 .zoomValue:hover {
@@ -237,23 +223,25 @@
   gap: 10px;
 }
 .stepBtn {
-  height: 38px;
+  height: 40px;
   font-size: 13px;
 }
 .pageCount {
-  min-width: 64px;
+  min-width: 72px;
   text-align: center;
-  color: var(--text-2);
-  font-size: 13px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .pageCount strong {
   display: inline-block;
   color: var(--text-1);
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 500;
 }
 .flip {
-  animation: flip 220ms var(--ease-out);
+  animation: flip 160ms var(--ease-out);
 }
 @keyframes flip {
   from {
@@ -270,8 +258,9 @@
   min-width: 42px;
   text-align: center;
   color: var(--text-2);
-  font-size: 11.5px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -279,16 +268,15 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 8px 10px;
-  border-radius: var(--r-10);
-  background: var(--bg-2);
-  box-shadow: inset 0 0 0 1px var(--line-1);
+  padding: 8px 0 0;
+  border-top: 1px solid var(--line-2);
 }
 .time {
-  min-width: 44px;
+  min-width: 48px;
   color: var(--text-2);
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   text-align: center;
 }

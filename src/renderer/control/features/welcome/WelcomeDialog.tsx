@@ -1,8 +1,7 @@
 import { useRef, useState } from 'react'
 import { Dialog as D } from 'radix-ui'
 import clsx from 'clsx'
-import { Globe, Keyboard, MonitorSpeaker, Moon, ScanSearch, Sparkles, Tv } from 'lucide-react'
-import { GenerativeBackground } from '../../../stage/GenerativeBackground'
+import { Moon, ScanSearch } from 'lucide-react'
 import { attempt, modKey } from '../../lib/api'
 import { useApp, useSettings } from '../../lib/store'
 import { useUI } from '../../lib/ui'
@@ -13,7 +12,7 @@ import s from './Welcome.module.css'
 /**
  * First run: what Cue is, connecting the screen, and the three keys that
  * matter. It is the first thing anyone sees after installing, so it carries
- * the brand: Cue's own ambient light plays behind the mark.
+ * the brand: the name in black on the amber of "standing by".
  */
 export function WelcomeDialog() {
   const close = useUI((st) => st.close)
@@ -37,35 +36,29 @@ export function WelcomeDialog() {
       title: 'Welcome to Cue',
       lead: 'Everything you show on Sunday, from one calm screen.',
       body: (
-        <ul className={s.features}>
+        <ol className={s.features}>
           <li>
-            <span className={s.featureIcon}>
-              <Globe size={17} />
-            </span>
+            <span className={s.no}>01</span>
             <div>
               <strong>Search the web</strong>
               <span>Click any image in Google and it lands in Preview, ready to show.</span>
             </div>
           </li>
           <li>
-            <span className={s.featureIcon}>
-              <Tv size={17} />
-            </span>
+            <span className={s.no}>02</span>
             <div>
               <strong>Preview, then show</strong>
               <span>Nothing reaches the screen until you press Show.</span>
             </div>
           </li>
           <li>
-            <span className={s.featureIcon}>
-              <Sparkles size={17} />
-            </span>
+            <span className={s.no}>03</span>
             <div>
-              <strong>Breaks & countdowns</strong>
-              <span>Gentle ambient scenes with a welcome, clock or countdown.</span>
+              <strong>Breaks and countdowns</strong>
+              <span>Quiet ambient scenes with a welcome, a clock or a countdown.</span>
             </div>
           </li>
-        </ul>
+        </ol>
       )
     },
     {
@@ -73,8 +66,7 @@ export function WelcomeDialog() {
       lead: 'The TV or projector the room looks at.',
       body: (
         <div className={s.stepBody}>
-          <div className={s.statusCard}>
-            <MonitorSpeaker size={20} />
+          <div className={clsx(s.statusCard, external.length > 0 && s.statusOn)}>
             <div>
               <strong>
                 {external.length
@@ -123,8 +115,8 @@ export function WelcomeDialog() {
             </div>
           </div>
           <p className={s.note}>
-            <Keyboard size={13} /> {modKey}+K finds anything. {modKey}+V pastes an image or link straight into
-            Preview. A sample service plan is ready on the left to try it all.
+            {modKey}+K finds anything. {modKey}+V pastes an image or link straight into Preview. A sample
+            service plan is ready on the left to try it all.
           </p>
         </div>
       )
@@ -147,14 +139,8 @@ export function WelcomeDialog() {
           }}
         >
           <div className={s.hero} aria-hidden>
-            <GenerativeBackground theme="ember" resolution={0.4} />
-            <div className={s.heroShade} />
-            <div className={s.brand}>
-              <span className={s.mark}>
-                <span />
-              </span>
-              <span className={s.word}>Cue</span>
-            </div>
+            <span className={s.heroLabel}>Standing by</span>
+            <span className={s.word}>Cue</span>
             <p className={s.tagline}>
               Find it privately.
               <br />
@@ -164,6 +150,9 @@ export function WelcomeDialog() {
 
           <div className={s.side}>
             <div className={s.progress}>
+              <span className={s.count}>
+                <strong>{step + 1}</strong> / {steps.length}
+              </span>
               {steps.map((_, i) => (
                 <span key={i} className={clsx(s.bar, i <= step && s.barOn)} />
               ))}

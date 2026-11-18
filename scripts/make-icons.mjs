@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Draws Cue's app icon — a graphite tile holding a glowing amber cue light,
-// the in-app logo mark — and writes every file the platforms need:
+// Draws Cue's app icon: the standby amber as a tile, with a heavy black C
+// cut from it. Flat, like the app. Writes every file the platforms need:
 //   build/icon.icns     macOS app icon
 //   build/icon.ico      Windows app and installer icon
 //   build/icon.png      1024 px master (Linux packages)
@@ -15,33 +15,13 @@ const root = join(import.meta.dirname, '..')
 // --- colour helpers (sRGB 0..1) -------------------------------------------
 
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
-const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t)
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x)
 const smoothstep = (a, b, x) => {
   const t = clamp01((x - a) / (b - a))
   return t * t * (3 - 2 * t)
 }
-function ramp(stops, t) {
-  t = clamp01(t)
-  for (let i = 1; i < stops.length; i++) {
-    const [p1, c1] = stops[i]
-    const [p0, c0] = stops[i - 1]
-    if (t <= p1) return mix(c0, c1, (t - p0) / (p1 - p0 || 1))
-  }
-  return stops[stops.length - 1][1]
-}
-
-const GRAPHITE_TOP = hex('#2e2f35')
-const GRAPHITE_BOTTOM = hex('#111215')
-const BEZEL_TOP = hex('#060708')
-const BEZEL_BOTTOM = hex('#1b1c20')
-const AMBER = hex('#f2a33a')
-const LIGHT = [
-  [0, hex('#fff1d6')],
-  [0.22, hex('#ffd596')],
-  [0.62, hex('#f2a33a')],
-  [1, hex('#b8681a')]
-]
+const AMBER = hex('#f7a81b')
+const INK = hex('#170f00')
 
 /** Signed distance (in canvas units) to a superellipse "squircle" of half-size a. */
 function squircle(u, v, a, n = 5) {
@@ -62,11 +42,11 @@ function render(size, { body, shadow }) {
   const out = Buffer.alloc(size * size * 4)
   const px = 2 / size // one pixel in canvas units (canvas spans -1..1)
   const aa = (d) => clamp01(0.5 - d / px) // coverage of a shape from its distance
-  // Small sizes get a bigger light so it still reads at 16 px.
+  // The C: a ring with a slot cut out of its right side. Heavier at small sizes so it survives 16 px.
   const small = size <= 32
-  const lightR = (small ? 0.38 : 0.3) * body
-  const bezelR = (small ? 0.5 : 0.4) * body
-  const detail = size >= 64
+  const outer = (small ? 0.64 : 0.58) * body
+  const stroke = (small ? 0.3 : 0.25) * body
+  const slot = (small ? 0.2 : 0.17) * body
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -92,44 +72,13 @@ function render(size, { body, shadow }) {
       const d = squircle(u, v, body)
       const inside = aa(d)
       if (inside > 0) {
-        // Graphite, lit from the top left.
-        const t = clamp01(((v + body) / (2 * body)) * 0.85 + ((u + body) / (2 * body)) * 0.15)
-        let base = mix(GRAPHITE_TOP, GRAPHITE_BOTTOM, t)
-        // The light's warm spill across the tile.
+        over(AMBER, inside)
         const rc = Math.hypot(u, v)
-        base = mix(base, AMBER, 0.2 * Math.exp(-((rc / (0.62 * body)) ** 2)))
-        // A fine edge all round (so the tile holds its shape on dark docks), brightest on top.
-        const edge = 1 - smoothstep(0, Math.max(0.016, 1.5 * px), -d)
-        base = mix(base, [1, 1, 1], edge * (0.05 + 0.08 * clamp01(-v / body + 0.15)))
-        over(base, inside)
-
-        // The recessed bezel the light sits in.
-        const bezel = aa(rc - bezelR)
-        if (bezel > 0) {
-          const bt = clamp01((v + bezelR) / (2 * bezelR))
-          let bc = mix(BEZEL_TOP, BEZEL_BOTTOM, bt)
-          // Light catching the lower lip of the bezel.
-          const lip = Math.exp(-(((rc - bezelR + px) / 0.012) ** 2)) * clamp01(v / bezelR)
-          bc = mix(bc, [1, 1, 1], 0.1 * lip)
-          // Glow from the light onto the bezel.
-          bc = mix(bc, AMBER, 0.75 * Math.exp(-((Math.max(0, rc - lightR) / (0.045 * body)) ** 1.6)))
-          over(bc, bezel * inside)
-        }
-
-        // The cue light itself.
-        const lit = aa(rc - lightR)
-        if (lit > 0) {
-          const gx = u + 0.32 * lightR
-          const gy = v + 0.32 * lightR
-          let lc = ramp(LIGHT, Math.hypot(gx, gy) / (1.32 * lightR))
-          if (detail) {
-            // A soft specular reflection, upper left.
-            const ex = (u + 0.36 * lightR) / (0.36 * lightR)
-            const ey = (v + 0.44 * lightR) / (0.22 * lightR)
-            lc = mix(lc, [1, 1, 1], 0.42 * (1 - smoothstep(0.35, 1, Math.hypot(ex, ey))))
-          }
-          over(lc, lit * inside)
-        }
+        // Distance to the ring, then to the ring minus the slot on its right.
+        const ring = Math.abs(rc - (outer - stroke / 2)) - stroke / 2
+        const inSlot = u > 0 ? slot - Math.abs(v) : -1
+        const c = Math.max(ring, inSlot)
+        over(INK, aa(c) * inside)
       }
 
       const i = (y * size + x) * 4

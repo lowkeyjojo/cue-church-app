@@ -19,6 +19,7 @@ Cue is an Electron + React + TypeScript church presentation app. Read `docs/ARCH
 - **One Stage for every screen.** The audience output and the monitors share `src/renderer/stage`, so a visual change shows up in all of them.
 - **UI primitives** are in `src/renderer/control/ui`; their CSS is in `@layer ui`, and feature CSS modules (unlayered) override them. Tokens are in `src/renderer/styles/tokens.css`.
 - **Shortcuts:** when one changes, update `SHORTCUTS` in `lib/keyboard.ts`, the menu (`src/main/menu.ts`) and the README table.
+- **Look:** flat and ruled (hairlines, not cards), corners of 2 to 4 px, no gradients, glows or blur. Amber means standing by and red means on screen; nothing else is coloured. Labels are condensed capitals (`font-stretch: 78%`), numbers and keys are `var(--font-mono)`. See "Look and motion" in `docs/ARCHITECTURE.md`.
 - **Copy:** short, plain, operator-facing language ("Show on TV", not "Take to program").
 - **Formatting:** Prettier with no semicolons, single quotes and 110 columns.
 - **Tests:** E2E specs select by role, label or `data-testid`, and check results in main's state (`cue.state()`) or the output's pixels (`cue.outputColor()`), never through timing alone.

@@ -12,45 +12,45 @@
     clamp(220px, var(--left-w), 26vw) 0 minmax(360px, 1fr) 0
     clamp(320px, var(--right-w), 38vw);
   min-height: 0;
-  border-top: 1px solid var(--line-1);
-  border-bottom: 1px solid var(--line-1);
+  border-top: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
 }
 
-/* Opening: the bars slide in from their edges and the three panels arrive one after another. */
+/* Opening: the desk switches on. Bars first, then the three panels left to right. */
 .app > :first-child {
-  animation: fromTop 520ms var(--ease-out) backwards;
+  animation: fromTop 320ms var(--ease-out) backwards;
 }
 .app > :last-child {
-  animation: fromBottom 520ms var(--ease-out) 120ms backwards;
+  animation: fromBottom 320ms var(--ease-out) 80ms backwards;
 }
 .main > * {
-  animation: panelIn 560ms var(--ease-out) backwards;
+  animation: panelIn 360ms var(--ease-out) backwards;
 }
 .main > :nth-child(1) {
-  animation-delay: 60ms;
+  animation-delay: 40ms;
 }
 .main > :nth-child(3) {
-  animation-delay: 130ms;
+  animation-delay: 100ms;
 }
 .main > :nth-child(5) {
-  animation-delay: 200ms;
+  animation-delay: 160ms;
 }
 @keyframes fromTop {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-6px);
   }
 }
 @keyframes fromBottom {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
 }
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.992);
+    transform: translateY(6px);
   }
 }
 
@@ -61,17 +61,15 @@
   background: var(--bg-0);
 }
 .splashMark {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, var(--amber-200), var(--amber-500) 60%, var(--amber-700));
-  box-shadow: 0 0 40px var(--amber-a60);
-  animation: breathe 1.4s ease-in-out infinite;
+  width: 14px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--amber-500);
+  animation: blink 900ms steps(2, jump-none) infinite;
 }
-@keyframes breathe {
+@keyframes blink {
   50% {
-    opacity: 0.45;
-    transform: scale(0.85);
+    opacity: 0.25;
   }
 }
 
@@ -81,7 +79,7 @@
   z-index: 700;
   display: grid;
   place-items: center;
-  background: rgba(10, 10, 12, 0.55);
+  background: rgba(0, 0, 0, 0.7);
   pointer-events: none;
   animation: fade 120ms var(--ease);
 }
@@ -89,14 +87,13 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 26px;
-  border-radius: 16px;
-  border: 1.5px dashed var(--amber-a60);
-  background: rgba(28, 29, 34, 0.94);
-  color: var(--amber-200);
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: var(--shadow-pop);
+  padding: 20px 28px;
+  border: 2px dashed var(--amber-500);
+  border-radius: var(--r-10);
+  background: var(--bg-1);
+  color: var(--amber-300);
+  font-size: 15px;
+  font-weight: 700;
 }
 @keyframes fade {
   from {
