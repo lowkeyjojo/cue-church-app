@@ -170,7 +170,7 @@ Before relying on it in a service:
 
 ## Design direction
 
-A stage manager's desk for a dim booth: a ruled cue sheet on warm black, large previews, and two lamps that can't be confused. Amber means standing by, red means on the screen. Corners are square, numbers are typed, and nothing glows that doesn't mean something.
+A quiet, rounded desk in the church's colours: black and dark walnut, warm beige text, sage green for anything you can act on, gold for what's standing by, and red only for what is on the screen. Soft materials, springy motion, and large previews that can't be confused.
 
 ## Development priorities
 

@@ -6,6 +6,8 @@ export const AMBIENT_THEMES: Record<
   AmbientThemeId,
   { label: string; colors: [string, string, string, string] }
 > = {
+  sage: { label: 'Sage', colors: ['#080a07', '#1c2a1c', '#5f754c', '#c9d6b4'] },
+  walnut: { label: 'Walnut', colors: ['#0a0806', '#2a1c12', '#7a5a38', '#d6b86c'] },
   ember: { label: 'Ember', colors: ['#0b0807', '#3d1c0a', '#a8571b', '#f2a33a'] },
   dawn: { label: 'Dawn', colors: ['#100a10', '#46223a', '#c0705a', '#f5c27a'] },
   ocean: { label: 'Ocean', colors: ['#03080e', '#0b2a40', '#1b6b84', '#6fd3d6'] },
@@ -94,7 +96,7 @@ interface Props {
 export function GenerativeBackground({ theme, resolution = 0.5, fps = 30 }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const [fallback, setFallback] = useState(false)
-  const colors = (AMBIENT_THEMES[theme] ?? AMBIENT_THEMES.ember).colors
+  const colors = (AMBIENT_THEMES[theme] ?? AMBIENT_THEMES.sage).colors
   // The render loop reads these, so a new theme doesn't rebuild the WebGL context.
   const settings = useRef({ colors, resolution, fps })
   useEffect(() => {

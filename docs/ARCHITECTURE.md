@@ -147,14 +147,17 @@ The fullscreen window must cover its display exactly, no more: anything extra la
 
 ## Look and motion
 
-The control window is drawn like a stage manager's desk: a ruled cue sheet and lamps. The rules that keep it that way live in `src/renderer/styles/tokens.css`:
+The control window is a quiet, rounded desk in the church's own colours. The rules that keep it that way live in `src/renderer/styles/tokens.css`:
 
-- **Flat and ruled.** Panels and rows are separated by hairlines, not by cards, shadows or gradients. Corners are 2 to 4 pixels. Only things that really are on top (menus, dialogs, toasts) cast a shadow.
-- **Colour is a signal.** Amber means standing by: staged in Preview, next in the plan, the one button that sends. Red means on the screen right now. Nothing else is coloured.
-- **One typeface, three widths.** Archivo carries a width axis: regular for reading, condensed capitals for labels (`font-stretch: 78%`), wide and heavy for the name. Numbers, key caps, times and counts are set in IBM Plex Mono, like a typed sheet. Slides keep their own typefaces (`stage/fonts.ts`).
-- **Selection inverts.** The chosen option in a menu, the palette or a segmented control is ink on paper (light fill, dark text), so it reads at a glance in a dim room.
+- **Colour.** Black into dark walnut for surfaces, warm beige for text. Sage green (`--accent-*`) is for anything you can act on and for what is selected. Gold (`--gold-*`) means standing by: staged in Preview, next in the plan. Red (`--live-*`) means on the screen right now, and nothing else is red.
+- **Shape.** Everything is rounded, on one scale (`--r-4` to `--r-18`, plus `--r-pill` for lamps and chips), and nested corners get smaller as they go in. The three main panels and the bottom bar float on the black with a small gap (`--gap`) between them; the gap is also the resize handle.
+- **Material.** Things that float over the desk (menus, popovers, tooltips, toasts, the command palette) are slightly see-through with the desk blurred behind them (`--glass`, `--glass-blur`). Panels are flat with a hairline of beige light.
+- **Type.** The system's own face on a Mac (San Francisco) and Inter, its closest relative, everywhere else. Sentence case throughout; only the PREVIEW and LIVE lamps are capitals. Numbers that change use tabular figures. Slides keep their own typefaces (`stage/fonts.ts`).
+- **Pointer.** Anything clickable shows the pointer cursor (one rule in `base.css`).
 
-Motion is mechanical and short: things switch, they don't float. The easing curves are tokens, and a global rule in `base.css` turns animation off for people who ask for reduced motion. Tabs slide one amber mark along the rule and segmented controls slide one block between options (`ui/useSlidingThumb.ts` measures the selected option and the `.thumbHost` class draws it). When something goes on the screen the Live lamp strikes white and settles to red, and the monitor's edge flashes once; staging does the same in amber. Both are keyed on the presentation, so they play once per change. Entrance animations change opacity or transform only, never layout, so drag-and-drop geometry and E2E clicks aren't affected.
+Motion is soft and springy, never slow: `--ease-spring` has a small overshoot and is used for things that arrive or settle (dialogs and menus grow from just behind the glass, chips and lamps pop, buttons give under the pointer and spring back). A global rule in `base.css` turns animation off for people who ask for reduced motion. Tabs and segmented controls share one raised highlight that slides between options (`ui/useSlidingThumb.ts` measures the selected option and the `.thumbHost` class draws it). When something goes on the screen a red ring leaves the Live monitor and its lamp pops; staging does the same in gold. Both are keyed on the presentation, so they play once per change. Entrance animations change opacity or transform only, never layout, so drag-and-drop geometry and E2E clicks aren't affected.
+
+What the audience sees follows the same palette by default: new slides get a gold accent, and the ambient backgrounds start with Sage and Walnut (`AMBIENT_THEMES` in `stage/GenerativeBackground.tsx`).
 
 ## Tests
 

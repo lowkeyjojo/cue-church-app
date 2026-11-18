@@ -513,10 +513,10 @@ function identifyWindow(d: Display, info: OutputIdentify): BrowserWindow {
     webPreferences: { sandbox: true, contextIsolation: true, javascript: false }
   })
   const html = `<!doctype html><html><body style="margin:0;height:100vh;display:grid;place-items:center;background:transparent;font-family:-apple-system,'Segoe UI',system-ui,sans-serif">
-  <div style="width:400px;height:220px;border-radius:28px;background:rgba(17,18,20,.92);border:1px solid rgba(255,255,255,.12);display:grid;place-items:center;text-align:center;color:#EDEDEF">
-  <div><div style="font-size:96px;font-weight:700;line-height:1;color:#F2A33A">${info.index}</div>
+  <div style="width:400px;height:220px;border-radius:28px;background:rgba(21,19,17,.94);border:1px solid rgba(240,228,205,.14);display:grid;place-items:center;text-align:center;color:#F4EEE2">
+  <div><div style="font-size:96px;font-weight:700;line-height:1;color:#A7BC93">${info.index}</div>
   <div style="margin-top:10px;font-size:20px;font-weight:600">${escapeHtml(info.label)}</div>
-  <div style="margin-top:4px;font-size:14px;color:#A7A8AE">${escapeHtml(info.detail)}</div></div></div></body></html>`
+  <div style="margin-top:4px;font-size:14px;color:#BDB5A6">${escapeHtml(info.detail)}</div></div></div></body></html>`
   void win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
   win.once('ready-to-show', () => win.showInactive())
   return win

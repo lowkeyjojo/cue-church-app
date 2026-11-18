@@ -154,7 +154,7 @@ export interface Deck {
 // Ambient
 // ---------------------------------------------------------------------------
 
-export type AmbientThemeId = 'ember' | 'dawn' | 'ocean' | 'aurora' | 'graphite'
+export type AmbientThemeId = 'sage' | 'walnut' | 'ember' | 'dawn' | 'ocean' | 'aurora' | 'graphite'
 
 export interface AmbientOverlay {
   kind: 'none' | 'text' | 'clock' | 'countdown'

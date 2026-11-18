@@ -5,52 +5,60 @@
   background: var(--bg-0);
 }
 
+/* Three rounded panels float on the black, with a little air between them. */
 .main {
   display: grid;
   /* Side panels keep their chosen widths, but yield on small windows so nothing is cut off. */
   grid-template-columns:
-    clamp(220px, var(--left-w), 26vw) 0 minmax(360px, 1fr) 0
+    clamp(220px, var(--left-w), 26vw) var(--gap) minmax(360px, 1fr) var(--gap)
     clamp(320px, var(--right-w), 38vw);
   min-height: 0;
-  border-top: 1px solid var(--line-2);
-  border-bottom: 1px solid var(--line-2);
+  padding: 0 var(--gap);
+}
+.main > aside,
+.main > main {
+  border-radius: var(--r-14);
+  background: var(--bg-1);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  overflow: hidden;
 }
 
-/* Opening: the desk switches on. Bars first, then the three panels left to right. */
+/* Opening: the bars settle in and the three panels rise one after another. */
 .app > :first-child {
-  animation: fromTop 320ms var(--ease-out) backwards;
+  animation: fromTop 520ms var(--ease-out) backwards;
 }
 .app > :last-child {
-  animation: fromBottom 320ms var(--ease-out) 80ms backwards;
+  animation: fromBottom 620ms var(--ease-spring) 140ms backwards;
 }
-.main > * {
-  animation: panelIn 360ms var(--ease-out) backwards;
+.main > aside,
+.main > main {
+  animation: panelIn 620ms var(--ease-spring) backwards;
 }
 .main > :nth-child(1) {
-  animation-delay: 40ms;
+  animation-delay: 60ms;
 }
 .main > :nth-child(3) {
-  animation-delay: 100ms;
+  animation-delay: 120ms;
 }
 .main > :nth-child(5) {
-  animation-delay: 160ms;
+  animation-delay: 180ms;
 }
 @keyframes fromTop {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(-8px);
   }
 }
 @keyframes fromBottom {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(14px);
   }
 }
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(14px) scale(0.985);
   }
 }
 
@@ -63,13 +71,14 @@
 .splashMark {
   width: 14px;
   height: 14px;
-  border-radius: 1px;
-  background: var(--amber-500);
-  animation: blink 900ms steps(2, jump-none) infinite;
+  border-radius: 50%;
+  background: var(--accent-500);
+  animation: breathe 1.4s ease-in-out infinite;
 }
-@keyframes blink {
+@keyframes breathe {
   50% {
-    opacity: 0.25;
+    opacity: 0.4;
+    transform: scale(0.8);
   }
 }
 
@@ -79,21 +88,29 @@
   z-index: 700;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(5, 4, 3, 0.55);
+  backdrop-filter: blur(6px);
   pointer-events: none;
-  animation: fade 120ms var(--ease);
+  animation: fade 160ms var(--ease);
 }
 .dropCard {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 28px;
-  border: 2px dashed var(--amber-500);
-  border-radius: var(--r-10);
-  background: var(--bg-1);
-  color: var(--amber-300);
+  padding: 22px 30px;
+  border-radius: var(--r-18);
+  border: 1.5px dashed var(--accent-a60);
+  background: var(--glass);
+  color: var(--accent-200);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
+  box-shadow: var(--shadow-pop);
+  animation: dropIn 320ms var(--ease-spring);
+}
+@keyframes dropIn {
+  from {
+    transform: scale(0.92);
+  }
 }
 @keyframes fade {
   from {

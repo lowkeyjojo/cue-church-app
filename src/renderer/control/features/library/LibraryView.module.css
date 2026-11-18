@@ -13,7 +13,7 @@
 }
 .search {
   flex: 1;
-  min-width: 110px;
+  min-width: 140px;
   max-width: 260px;
 }
 .sort {
@@ -37,22 +37,23 @@
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 8px 0;
-  border-right: 1px solid var(--line-2);
+  gap: 2px;
+  padding: 10px 8px;
+  border-right: 1px solid var(--line-1);
   overflow-y: auto;
 }
 .navItem {
   display: flex;
   align-items: center;
   gap: 9px;
-  height: 30px;
-  padding: 0 12px 0 15px;
+  height: 32px;
+  padding: 0 10px;
   border: none;
+  border-radius: var(--r-8);
   background: transparent;
   color: var(--text-2);
-  font-size: 12.5px;
-  font-weight: 550;
+  font-size: 13px;
+  font-weight: 500;
   text-align: left;
   transition:
     background-color var(--t-fast) var(--ease),
@@ -64,28 +65,25 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.navItem svg {
-  color: var(--text-3);
-}
 .navItem:hover {
-  color: var(--text-1);
-}
-.navOn {
   background: var(--bg-3);
   color: var(--text-1);
-  font-weight: 700;
-  box-shadow: inset 3px 0 0 var(--amber-500);
+}
+.navOn,
+.navOn:hover {
+  background: var(--accent-a24);
+  color: var(--text-1);
+  font-weight: 600;
 }
 .navOn svg {
-  color: var(--text-1);
+  color: var(--accent-300);
 }
 .navDrop {
-  background: var(--amber-a14);
-  box-shadow: inset 0 0 0 1px var(--amber-a40);
+  background: var(--accent-a14);
+  box-shadow: inset 0 0 0 1px var(--accent-a40);
 }
 .navCount {
   color: var(--text-3);
-  font-family: var(--font-mono);
   font-size: 10.5px;
   font-variant-numeric: tabular-nums;
 }
@@ -94,16 +92,13 @@
   align-items: center;
   justify-content: space-between;
   margin: 14px 0 4px;
-  padding: 0 8px 0 15px;
+  padding: 0 4px 0 10px;
   color: var(--text-3);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  font-stretch: 78%;
-  text-transform: uppercase;
 }
 .navHint {
-  padding: 4px 15px;
+  padding: 4px 10px;
   color: var(--text-4);
   font-size: 11.5px;
   line-height: 1.45;
@@ -112,8 +107,8 @@
   height: 28px;
   margin: 1px 0;
   padding: 0 9px;
-  border: 1px solid var(--amber-a60);
-  border-radius: 2px;
+  border: 1px solid var(--accent-a60);
+  border-radius: var(--r-8);
   background: var(--bg-1);
   color: var(--text-1);
   font-size: 12.5px;
@@ -127,8 +122,8 @@
   min-height: 0;
 }
 .gridDrop {
-  background: var(--amber-a08);
-  box-shadow: inset 0 0 0 2px var(--amber-a40);
+  background: var(--accent-a08);
+  box-shadow: inset 0 0 0 2px var(--accent-a40);
 }
 .gridRow {
   position: absolute;
@@ -158,27 +153,27 @@
   box-shadow: var(--focus-ring);
 }
 .selected {
-  background: var(--amber-a14);
-  box-shadow: inset 0 0 0 2px var(--amber-500);
+  background: var(--accent-a14);
+  box-shadow: inset 0 0 0 2px var(--accent-a60);
 }
 .tileThumb {
   position: relative;
 }
 .tileImg {
   width: 100%;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   transition:
     transform var(--t-slow) var(--ease-out),
     box-shadow var(--t-med) var(--ease);
 }
 .tile:hover .tileImg {
-  transform: none;
+  transform: scale(1.015);
 }
 .tileLive .tileImg {
   box-shadow: 0 0 0 2px var(--live-500);
 }
 .tilePreview .tileImg {
-  box-shadow: 0 0 0 2px var(--amber-400);
+  box-shadow: 0 0 0 2px var(--gold-400);
 }
 .tileError .tileImg {
   opacity: 0.4;
@@ -188,7 +183,7 @@
   right: 6px;
   bottom: 6px;
   padding: 1px 6px;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: rgba(0, 0, 0, 0.72);
   color: #fff;
   font-size: 10.5px;
@@ -203,7 +198,7 @@
   align-items: center;
   gap: 5px;
   padding: 2px 7px;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: rgba(0, 0, 0, 0.72);
   color: #fff;
   font-size: 10.5px;
@@ -214,12 +209,9 @@
   left: 6px;
   top: 6px;
   padding: 1px 6px;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   font-size: 9.5px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  font-stretch: 78%;
-  text-transform: uppercase;
 }
 .tagLive {
   background: var(--live-500);
@@ -234,7 +226,7 @@
   width: 24px;
   height: 24px;
   border: none;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: rgba(0, 0, 0, 0.55);
   color: rgba(255, 255, 255, 0.85);
   opacity: 0;
@@ -245,7 +237,7 @@
   opacity: 1;
 }
 .favOn {
-  color: var(--amber-300);
+  color: var(--accent-300);
 }
 .favOn svg {
   fill: currentColor;
@@ -264,19 +256,18 @@
 .tileMeta {
   margin-top: 2px;
   color: var(--text-3);
-  font-family: var(--font-mono);
   font-size: 10.5px;
-  text-transform: uppercase;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 .tileInput {
   width: 100%;
   height: 22px;
   padding: 0 6px;
-  border: 1px solid var(--amber-a60);
-  border-radius: 2px;
+  border: 1px solid var(--accent-a60);
+  border-radius: var(--r-8);
   background: var(--bg-1);
   color: var(--text-1);
   font-size: 12px;

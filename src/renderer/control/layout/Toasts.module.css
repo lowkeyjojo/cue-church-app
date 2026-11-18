@@ -1,7 +1,7 @@
 .stack {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--livebar-h) + 14px);
+  bottom: calc(var(--livebar-h) + 18px);
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
@@ -16,37 +16,28 @@
   gap: 10px;
   width: max-content;
   max-width: min(440px, 80vw);
-  padding: 10px 10px 10px 12px;
-  border-left: 3px solid var(--info-400);
-  border-radius: var(--r-8);
-  background: var(--bg-4);
+  padding: 11px 11px 11px 14px;
+  border-radius: var(--r-12);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
   box-shadow: var(--shadow-pop);
   pointer-events: auto;
-  animation: up 200ms var(--ease-out);
+  animation: up 420ms var(--ease-spring);
 }
 .leaving {
-  animation: out 140ms var(--ease) forwards;
+  animation: out 200ms var(--ease) forwards;
   pointer-events: none;
 }
 .icon {
   flex: none;
   margin-top: 1px;
-  color: var(--info-400);
-}
-.success {
-  border-left-color: var(--ok-400);
-}
-.warning {
-  border-left-color: var(--amber-400);
-}
-.error {
-  border-left-color: var(--live-500);
+  color: var(--text-2);
 }
 .success .icon {
-  color: var(--ok-400);
+  color: var(--accent-400);
 }
 .warning .icon {
-  color: var(--amber-400);
+  color: var(--gold-400);
 }
 .error .icon {
   color: var(--live-400);
@@ -55,14 +46,14 @@
   min-width: 0;
 }
 .title {
-  font-size: 12.5px;
-  font-weight: 650;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1.35;
 }
 .message {
   margin-top: 2px;
   color: var(--text-2);
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1.4;
 }
 .close {
@@ -70,8 +61,8 @@
   border: none;
   background: transparent;
   color: var(--text-3);
-  padding: 2px;
-  border-radius: 2px;
+  padding: 3px;
+  border-radius: 50%;
 }
 .close:hover {
   color: var(--text-1);
@@ -80,12 +71,12 @@
 @keyframes up {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px) scale(0.92);
   }
 }
 @keyframes out {
   to {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(6px) scale(0.96);
   }
 }

@@ -7,38 +7,42 @@
     justify-content: center;
     gap: 7px;
     flex: none;
-    border: 1px solid transparent;
+    border: none;
     border-radius: var(--r-8);
     font-weight: 600;
     white-space: nowrap;
     transition:
       background-color var(--t-fast) var(--ease),
-      border-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease);
+      color var(--t-fast) var(--ease),
+      box-shadow var(--t-fast) var(--ease),
+      transform var(--t-med) var(--ease-spring),
+      filter var(--t-fast) var(--ease);
   }
-  /* Pressed like a key: it goes down, it doesn't shrink. */
+  /* A soft press: it gives a little, then springs back. */
   .button:active:not(:disabled) {
-    transform: translateY(1px);
+    transform: scale(0.965);
+    transition-duration: 70ms;
   }
   .button:disabled {
-    opacity: 0.38;
+    opacity: 0.4;
     pointer-events: none;
   }
 
   .sm {
-    height: 26px;
-    padding: 0 10px;
-    font-size: 12px;
-  }
-  .md {
-    height: 30px;
-    padding: 0 12px;
+    height: 28px;
+    padding: 0 11px;
     font-size: 12.5px;
   }
+  .md {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
   .lg {
-    height: 40px;
-    padding: 0 18px;
-    font-size: 14px;
+    height: 42px;
+    padding: 0 20px;
+    font-size: 14.5px;
+    border-radius: var(--r-10);
   }
 
   .icon {
@@ -61,17 +65,16 @@
     display: inline-flex;
     align-items: center;
     margin-right: -4px;
-    opacity: 0.8;
+    opacity: 0.85;
   }
 
   .secondary {
     background: var(--bg-4);
-    border-color: var(--line-3);
     color: var(--text-1);
+    box-shadow: var(--hi);
   }
   .secondary:hover {
     background: var(--bg-5);
-    border-color: var(--line-4);
   }
 
   .ghost {
@@ -84,37 +87,32 @@
   }
 
   .quiet {
-    background: transparent;
+    background: var(--bg-3);
     color: var(--text-2);
-    border-color: var(--line-3);
   }
   .quiet:hover {
     background: var(--bg-4);
-    border-color: var(--line-4);
     color: var(--text-1);
   }
 
-  /* The one amber button on a surface: the thing you came to do. */
+  /* Sage: the thing you came to do. */
   .primary {
-    background: var(--amber-500);
-    color: var(--amber-ink);
-    font-weight: 700;
+    background: var(--accent-500);
+    color: var(--accent-ink);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
   }
   .primary:hover {
-    background: var(--amber-400);
-  }
-  .primary:active:not(:disabled) {
-    background: var(--amber-600);
+    background: var(--accent-400);
   }
   .primary kbd {
-    border-color: rgba(23, 15, 0, 0.45);
-    color: var(--amber-ink);
+    background: rgba(16, 22, 11, 0.16);
+    color: var(--accent-ink);
   }
 
   .danger {
     background: var(--live-500);
     color: #fff;
-    font-weight: 700;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
   .danger:hover {
     background: var(--live-400);
@@ -122,9 +120,8 @@
 
   .pressed.secondary,
   .pressed.quiet {
-    background: var(--amber-a14);
-    border-color: var(--amber-500);
-    color: var(--amber-200);
+    background: var(--accent-a24);
+    color: var(--accent-200);
   }
 
   /* Icon buttons */
@@ -136,10 +133,11 @@
     border: none;
     background: transparent;
     color: var(--text-2);
-    border-radius: var(--r-8);
+    border-radius: var(--r-6);
     transition:
       background-color var(--t-fast) var(--ease),
-      color var(--t-fast) var(--ease);
+      color var(--t-fast) var(--ease),
+      transform var(--t-med) var(--ease-spring);
   }
   .iconButton:hover {
     background: var(--bg-4);
@@ -147,30 +145,32 @@
   }
   .iconButton:active:not(:disabled) {
     background: var(--bg-5);
+    transform: scale(0.92);
   }
   .iconButton:disabled {
     opacity: 0.35;
     pointer-events: none;
   }
   .i_sm {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
   }
   .i_sm svg {
     width: 14px;
     height: 14px;
   }
   .i_md {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
   }
   .i_md svg {
     width: 16px;
     height: 16px;
   }
   .i_lg {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-8);
   }
   .i_lg svg {
     width: 18px;
@@ -182,10 +182,10 @@
   }
   .tone_amber.iconPressed,
   .tone_amber:hover {
-    color: var(--amber-300);
+    color: var(--accent-300);
   }
   .tone_amber.iconPressed {
-    background: var(--amber-a14);
+    background: var(--accent-a14);
   }
   .tone_live.iconPressed {
     background: var(--live-a18);

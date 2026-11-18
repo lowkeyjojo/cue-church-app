@@ -1,30 +1,29 @@
-/*
- * First run. A poster, not a wizard: the name set large in black on the
- * standby amber, and three short steps beside it.
- */
+/* First run: Cue's mark, a warm welcome and three short steps on one calm sheet. */
 .overlay {
   position: fixed;
   inset: 0;
-  background: var(--bg-0);
+  background: rgba(5, 4, 3, 0.6);
+  backdrop-filter: blur(18px) saturate(1.2);
   z-index: 800;
-  animation: fade 200ms var(--ease);
+  animation: fade 400ms var(--ease-out);
 }
 .welcome {
   position: fixed;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  display: grid;
-  grid-template-columns: 380px minmax(0, 1fr);
-  width: min(940px, calc(100vw - 48px));
-  height: min(560px, calc(100vh - 48px));
-  overflow: hidden;
-  border-radius: var(--r-14);
-  background: var(--bg-1);
-  box-shadow: 0 0 0 1px var(--line-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(560px, calc(100vw - 48px));
+  height: min(596px, calc(100vh - 48px));
+  padding: 40px 44px 28px;
+  border-radius: var(--r-18);
+  background: var(--bg-2);
+  box-shadow: var(--shadow-dialog);
   z-index: 801;
   outline: none;
-  animation: open 360ms var(--ease-out);
+  animation: open 620ms var(--ease-spring);
 }
 @keyframes fade {
   from {
@@ -34,244 +33,209 @@
 @keyframes open {
   from {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 10px));
+    transform: translate(-50%, calc(-50% + 18px)) scale(0.94);
   }
 }
 
-.hero {
+/* The app's mark: a sage tile with the C cut from it. */
+.mark {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 26px 28px 28px;
-  background: var(--amber-500);
-  color: var(--amber-ink);
-  overflow: hidden;
+  flex: none;
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, var(--accent-400), var(--accent-600));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 10px 28px rgba(0, 0, 0, 0.45);
+  animation: markIn 720ms var(--ease-spring) 120ms backwards;
 }
-/* The slab wipes in from the left edge, like a lamp coming up. */
-.hero::after {
+.mark::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: var(--bg-1);
-  transform-origin: right;
-  animation: wipe 520ms var(--ease-out) 80ms both;
+  inset: 17px;
+  border-radius: 50%;
+  border: 8px solid var(--text-1);
+  border-right-color: transparent;
 }
-@keyframes wipe {
-  to {
-    transform: scaleX(0);
-  }
-}
-.heroLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.heroLabel::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  background: var(--amber-ink);
-  animation: standby 1.2s steps(2, jump-none) infinite;
-}
-@keyframes standby {
-  50% {
-    opacity: 0.2;
-  }
-}
-.word {
-  margin-top: auto;
-  font-size: 132px;
-  font-stretch: 125%;
-  font-weight: 900;
-  line-height: 0.82;
-  letter-spacing: -0.035em;
-  margin-left: -6px;
-  animation: wordIn 520ms var(--ease-out) 320ms backwards;
-}
-@keyframes wordIn {
+@keyframes markIn {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: scale(0.6) rotate(-12deg);
   }
-}
-.tagline {
-  margin: 22px 0 0;
-  padding-top: 14px;
-  border-top: 2px solid var(--amber-ink);
-  font-size: 19px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  animation: wordIn 520ms var(--ease-out) 420ms backwards;
 }
 
 .side {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  padding: 26px 32px 24px;
+  align-self: stretch;
+  min-height: 0;
 }
-.progress {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.count {
-  margin-right: 10px;
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-}
-.count strong {
-  color: var(--text-1);
-  font-weight: 600;
-}
-.bar {
-  flex: 1;
-  height: 2px;
-  background: var(--line-3);
-  transition: background-color var(--t-slow) var(--ease);
-}
-.barOn {
-  background: var(--amber-500);
-}
-
 .step {
   flex: 1;
   min-height: 0;
-  padding-top: 26px;
+  padding-top: 22px;
+  text-align: center;
 }
 .fromRight {
-  animation: fromRight 280ms var(--ease-out);
+  animation: fromRight 460ms var(--ease-spring);
 }
 .fromLeft {
-  animation: fromLeft 280ms var(--ease-out);
+  animation: fromLeft 460ms var(--ease-spring);
 }
 @keyframes fromRight {
   from {
     opacity: 0;
-    transform: translateX(18px);
+    transform: translateX(28px);
   }
 }
 @keyframes fromLeft {
   from {
     opacity: 0;
-    transform: translateX(-18px);
+    transform: translateX(-28px);
   }
 }
 .title {
   margin: 0;
   font-size: 30px;
-  font-weight: 750;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  line-height: 1.1;
 }
 .lead {
   margin: 8px 0 0;
   color: var(--text-2);
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.4;
 }
 
-/* What Cue does, as three numbered lines on a ruled sheet. */
 .features {
   list-style: none;
-  margin: 24px 0 0;
+  margin: 30px 0 0;
   padding: 0;
-  border-top: 1px solid var(--line-3);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
 }
 .features li {
   display: grid;
-  grid-template-columns: 38px 1fr;
-  align-items: baseline;
-  padding: 13px 0 14px;
-  border-bottom: 1px solid var(--line-3);
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  align-items: center;
+  animation: featureIn 520ms var(--ease-spring) backwards;
 }
-.no {
-  color: var(--amber-400);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
+.features li:nth-child(1) {
+  animation-delay: 220ms;
+}
+.features li:nth-child(2) {
+  animation-delay: 300ms;
+}
+.features li:nth-child(3) {
+  animation-delay: 380ms;
+}
+@keyframes featureIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.featureIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+.sage {
+  background: var(--accent-a24);
+  color: var(--accent-300);
+}
+.gold {
+  background: var(--gold-a24);
+  color: var(--gold-300);
+}
+.sand {
+  background: rgba(240, 228, 205, 0.1);
+  color: var(--text-1);
 }
 .features strong {
   display: block;
   font-size: 14.5px;
-  font-weight: 700;
+  font-weight: 650;
+  letter-spacing: -0.005em;
 }
 .features li div span {
   display: block;
   margin-top: 2px;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.4;
 }
 
 .stepBody {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 18px;
-  margin-top: 24px;
+  align-items: center;
+  gap: 20px;
+  margin-top: 26px;
 }
 .statusCard {
   align-self: stretch;
-  padding: 12px 14px;
-  border-left: 3px solid var(--line-4);
-  background: var(--bg-2);
+  padding: 14px 16px;
+  border-radius: var(--r-12);
+  background: var(--bg-3);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  text-align: left;
 }
 .statusOn {
-  border-left-color: var(--ok-400);
+  background: var(--accent-a14);
 }
 .statusCard strong {
   display: block;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 14.5px;
+  font-weight: 650;
 }
 .statusCard span {
   display: block;
   margin-top: 3px;
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.45;
 }
 .nameField {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: 260px;
+  gap: 7px;
+  width: 280px;
+  text-align: left;
 }
 .nameField > span {
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 13.5px;
+  font-weight: 600;
 }
 .nameField small {
   color: var(--text-3);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
-/* The three keys, drawn as keys. Space is the one that sends. */
+/* The three keys, drawn as keys. */
 .bigKeys {
   align-self: stretch;
   display: grid;
   grid-template-columns: 1.5fr 1fr 1fr;
-  border-top: 1px solid var(--line-3);
-  border-bottom: 1px solid var(--line-3);
+  gap: 10px;
 }
 .bigKeys > div {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 12px;
-  padding: 16px 14px 16px 0;
-}
-.bigKeys > div + div {
-  padding-left: 14px;
-  border-left: 1px solid var(--line-3);
+  padding: 18px 10px 16px;
+  border-radius: var(--r-12);
+  background: var(--bg-3);
+  box-shadow: inset 0 0 0 1px var(--line-1);
 }
 .bigKeys span {
   display: inline-flex;
@@ -280,36 +244,34 @@
   color: var(--text-2);
   font-size: 13px;
   line-height: 1.3;
+  text-align: center;
 }
 .bigKbd {
-  align-self: flex-start;
-  min-width: 46px;
-  height: 46px;
+  min-width: 48px;
+  height: 48px;
   padding: 0 14px;
-  border: 1px solid var(--line-4);
-  border-radius: 3px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--bg-6), var(--bg-5));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 244, 220, 0.14),
+    0 2px 0 rgba(0, 0, 0, 0.5),
+    0 6px 14px rgba(0, 0, 0, 0.3);
   color: var(--text-1);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
 }
 .bigKeys > div:first-child .bigKbd {
-  min-width: 128px;
-  border-color: var(--amber-500);
-  background: var(--amber-500);
-  color: var(--amber-ink);
-  font-weight: 600;
-  animation: press 2.6s var(--ease) 900ms infinite;
+  min-width: 132px;
+  animation: press 2.8s var(--ease) 1s infinite;
 }
 @keyframes press {
   0%,
-  12%,
+  14%,
   100% {
     transform: none;
-    background: var(--amber-500);
   }
-  6% {
-    transform: translateY(2px);
-    background: var(--amber-600);
+  7% {
+    transform: translateY(2px) scale(0.98);
   }
 }
 .note {
@@ -317,17 +279,39 @@
   color: var(--text-3);
   font-size: 12.5px;
   line-height: 1.5;
+  text-align: center;
 }
 
 .footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 8px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line-2);
+  padding-top: 16px;
 }
-.grow {
-  flex: 1;
+.footer > :first-child {
+  justify-self: start;
+}
+.footer > :last-child {
+  justify-self: end;
+}
+.dots {
+  display: flex;
+  gap: 7px;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bg-6);
+  transition:
+    background-color var(--t-slow) var(--ease),
+    width var(--t-slow) var(--ease-spring);
+}
+.dotOn {
+  width: 20px;
+  border-radius: 7px;
+  background: var(--accent-400);
 }
 
 .shortcuts {
@@ -339,9 +323,6 @@
   color: var(--text-3);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  font-stretch: 78%;
-  text-transform: uppercase;
 }
 .keyList {
   display: grid;
@@ -361,33 +342,38 @@
 .about {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
+  text-align: center;
   padding-bottom: 6px;
 }
 .aboutMark {
-  width: 18px;
-  height: 18px;
-  border-radius: 2px;
-  background: var(--amber-500);
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 17px;
+  background: linear-gradient(160deg, var(--accent-400), var(--accent-600));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 10px 28px rgba(0, 0, 0, 0.45);
 }
 .aboutMark span {
-  display: none;
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  border: 7.5px solid var(--text-1);
+  border-right-color: transparent;
 }
 .aboutName {
-  margin-top: 4px;
-  font-size: 44px;
-  font-stretch: 125%;
-  font-weight: 900;
-  line-height: 0.9;
+  margin-top: 10px;
+  font-size: 22px;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  text-transform: uppercase;
 }
 .aboutVersion {
   color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  text-transform: uppercase;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
 }
 .aboutText {
   margin: 6px 0;
@@ -400,9 +386,9 @@
   gap: 4px 12px;
   margin: 6px 0;
   max-width: 100%;
-  font-family: var(--font-mono);
   font-size: 10.5px;
   text-align: left;
+  font-variant-numeric: tabular-nums;
 }
 .aboutMeta dt {
   color: var(--text-3);

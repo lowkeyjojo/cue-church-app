@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Draws Cue's app icon: the standby amber as a tile, with a heavy black C
-// cut from it. Flat, like the app. Writes every file the platforms need:
+// Draws Cue's app icon: a sage-green tile, softly lit from above, with a
+// cream C on it. Writes every file the platforms need:
 //   build/icon.icns     macOS app icon
 //   build/icon.ico      Windows app and installer icon
 //   build/icon.png      1024 px master (Linux packages)
@@ -20,8 +20,10 @@ const smoothstep = (a, b, x) => {
   const t = clamp01((x - a) / (b - a))
   return t * t * (3 - 2 * t)
 }
-const AMBER = hex('#f7a81b')
-const INK = hex('#170f00')
+const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t)
+const SAGE_TOP = hex('#b3c79f')
+const SAGE_BOTTOM = hex('#6f8859')
+const CREAM = hex('#f6f0e3')
 
 /** Signed distance (in canvas units) to a superellipse "squircle" of half-size a. */
 function squircle(u, v, a, n = 5) {
@@ -72,13 +74,14 @@ function render(size, { body, shadow }) {
       const d = squircle(u, v, body)
       const inside = aa(d)
       if (inside > 0) {
-        over(AMBER, inside)
+        // Lit from above: lighter sage at the top, deeper at the bottom.
+        over(mix(SAGE_TOP, SAGE_BOTTOM, clamp01((v + body) / (2 * body))), inside)
         const rc = Math.hypot(u, v)
         // Distance to the ring, then to the ring minus the slot on its right.
         const ring = Math.abs(rc - (outer - stroke / 2)) - stroke / 2
         const inSlot = u > 0 ? slot - Math.abs(v) : -1
         const c = Math.max(ring, inSlot)
-        over(INK, aa(c) * inside)
+        over(CREAM, aa(c) * inside)
       }
 
       const i = (y * size + x) * 4

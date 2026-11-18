@@ -1,9 +1,0 @@
-/* Archivo's ampersand is easy to read as an 8 at small sizes, so that one character comes from Inter. */
-@font-face {
-  font-family: 'Cue Ampersand';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: block;
-  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2-variations');
-  unicode-range: U+0026;
-}

@@ -3,9 +3,10 @@
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.72);
+    background: rgba(5, 4, 3, 0.55);
+    backdrop-filter: blur(6px);
     z-index: 800;
-    animation: fade 160ms var(--ease);
+    animation: fade 240ms var(--ease-out);
   }
   .content {
     position: fixed;
@@ -20,15 +21,15 @@
     background: var(--bg-2);
     box-shadow: var(--shadow-dialog);
     z-index: 801;
-    animation: rise 200ms var(--ease-out);
+    /* It grows into place from just behind the glass. */
+    animation: rise 380ms var(--ease-spring);
     outline: none;
   }
   .header {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    padding: 16px 16px 14px 22px;
-    border-bottom: 1px solid var(--line-2);
+    padding: 20px 18px 10px 24px;
   }
   .headings {
     flex: 1;
@@ -37,13 +38,13 @@
   .title {
     margin: 0;
     font-size: 17px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-weight: 650;
+    letter-spacing: -0.015em;
   }
   .description {
     margin: 4px 0 0;
     color: var(--text-2);
-    font-size: 12.5px;
+    font-size: 13px;
     line-height: 1.45;
   }
   .close {
@@ -54,16 +55,23 @@
     height: 26px;
     flex: none;
     border: none;
-    border-radius: var(--r-8);
-    background: transparent;
-    color: var(--text-3);
+    border-radius: 50%;
+    background: var(--bg-4);
+    color: var(--text-2);
+    transition:
+      background-color var(--t-fast) var(--ease),
+      color var(--t-fast) var(--ease),
+      transform var(--t-med) var(--ease-spring);
   }
   .close:hover {
     background: var(--bg-5);
     color: var(--text-1);
   }
+  .close:active {
+    transform: scale(0.9);
+  }
   .body {
-    padding: 16px 22px 20px;
+    padding: 8px 24px 20px;
     overflow-x: hidden;
     overflow-y: auto;
     min-height: 0;
@@ -73,8 +81,7 @@
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
-    padding: 14px 18px;
-    border-top: 1px solid var(--line-2);
+    padding: 14px 20px 18px;
   }
 }
 
@@ -86,6 +93,6 @@
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translate(-50%, calc(-50% + 8px));
+    transform: translate(-50%, calc(-50% + 10px)) scale(0.955);
   }
 }

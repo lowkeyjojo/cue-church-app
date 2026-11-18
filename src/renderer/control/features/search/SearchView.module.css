@@ -83,7 +83,7 @@
   margin-top: 6px;
   padding: 6px 12px;
   border: 1px solid var(--line-3);
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: var(--bg-3);
   color: var(--text-1);
   font-weight: 600;
@@ -100,12 +100,10 @@
   gap: 12px;
   width: min(760px, calc(100% - 32px));
   padding: 8px 8px 8px 8px;
-  border-radius: 2px;
-  background: rgba(22, 23, 27, 0.96);
-  box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(14px);
+  border-radius: var(--r-8);
+  background: var(--glass);
+  box-shadow: var(--shadow-pop);
+  backdrop-filter: var(--glass-blur);
   animation: rise 220ms var(--ease);
   z-index: 5;
 }
@@ -120,7 +118,7 @@
   width: 72px;
   height: 48px;
   flex: none;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   overflow: hidden;
   background: #000;
 }
@@ -151,10 +149,10 @@
   overflow: hidden;
 }
 .lowres {
-  color: var(--amber-300);
+  color: var(--accent-300);
 }
 .inPreview {
-  color: var(--amber-300);
+  color: var(--accent-300);
   font-weight: 600;
 }
 .pickActions {
@@ -186,7 +184,7 @@
   height: 100%;
   padding: 0;
   border: none;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   overflow: hidden;
   background: var(--bg-3);
   cursor: pointer;
@@ -202,7 +200,7 @@
   transform: scale(1.03);
 }
 .result:focus-visible {
-  box-shadow: 0 0 0 2px var(--amber-400);
+  box-shadow: 0 0 0 2px var(--accent-400);
 }
 .resultInfo {
   position: absolute;
@@ -241,7 +239,7 @@
   top: 6px;
   right: 6px;
   padding: 1px 6px;
-  border-radius: 2px;
+  border-radius: var(--r-8);
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
   font-size: 10.5px;
@@ -292,7 +290,7 @@
 .safe button {
   border: none;
   background: transparent;
-  color: var(--amber-300);
+  color: var(--accent-300);
   font-size: 11.5px;
   font-weight: 600;
   padding: 0;
